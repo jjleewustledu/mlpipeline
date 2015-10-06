@@ -50,7 +50,7 @@ classdef Np755
             addOptional(p, 'hand', @mlpipeline.Np755.invmorph2bt1default, @(h) isa(h, 'function_handle'));
             parse(p, varargin{:});
             
-            dt = mlfourd.DirTools(p.Results.str);
+            dt = mlsystem.DirTools(p.Results.str);
             for d = 1:length(dt.fqdns)
                 fprintf('Np755.sessionWrapper:  calling %s within %s\n', func2str(p.Results.hand), dt.fqdns{d});
                 p.Results.hand(fullfile(dt.fqdns{d}, 'fsl'));
