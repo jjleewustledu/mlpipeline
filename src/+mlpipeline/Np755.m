@@ -204,7 +204,7 @@ classdef Np755
             ic = mlfourd.ImagingContext.load(this.stand_fqfn);
         end
         function f = get.t1_fqfn(this)
-            f = fullfile(this.workPath, 't1_default');
+            f = fullfile(this.workPath, mlsurfer.SurferFilesystem.T1_FILEPREFIX);
         end
         function ic = get.t1Cntxt(this)
             ic = mlfourd.ImagingContext.load(this.t1_fqfn);
