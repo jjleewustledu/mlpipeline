@@ -74,7 +74,7 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
         end
         function xfm   = thisOnThatDatFilename(varargin)
             xfm = mlpipeline.PipelineVisitor.thisOnThatImageFilename(varargin{:});
-            xfm = [fileprefix(xfm) mlsurfer.SurferVisitor.DAT_SUFFIX];
+            xfm = mlsurfer.SurferFilesystem.datFilename('', fileprefix(xfm));
         end
         
         function pth   = guessSessionPath
@@ -107,11 +107,11 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
             p = inputParser;
             p.KeepUnmatched = true;
             import mlpipeline.*;
-            addParamValue(p, 'logged',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
-            addParamValue(p, 'image',       []);
-            addParamValue(p, 'product',     []);
-            addParamValue(p, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
-            addParamValue(p, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
+            addParameter(p, 'logged',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
+            addParameter(p, 'image',       []);
+            addParameter(p, 'product',     []);
+            addParameter(p, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
+            addParameter(p, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
             parse(p, varargin{:});
             
             this.logged_     = p.Results.logged; 
