@@ -49,8 +49,8 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
             pth = this.sessionPath_;
             assert(lexist(pth, 'dir'));
         end
-        function pth  = get.studyPath(this)
-            pth = fileparts(trimpath(this.sessionPath));
+        function pth  = get.studyPath(~)
+            pth = getenv('SUBJECTS_DIR');
         end
         function this = set.workPath(this, pth)
             assert(lexist(pth, 'dir'));
@@ -102,7 +102,8 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
 	methods 
  		function this = PipelineVisitor(varargin) 
  			%% PIPELINEVISITOR 
- 			%  Usage:  this = PipelineVisitor() 
+ 			%  Usage:  this = PipelineVisitor([parameter_name, parameter_value]) 
+            %                                  ^ logged, image, product, sessionPath, workPath
  			
             p = inputParser;
             p.KeepUnmatched = true;
