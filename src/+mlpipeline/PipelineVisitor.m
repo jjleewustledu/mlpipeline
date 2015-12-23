@@ -1,4 +1,4 @@
-classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
+classdef PipelineVisitor
 	%% PIPELINEVISITOR   
 
 	%  $Revision$ 
@@ -10,28 +10,28 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
  	%  $Id$ 
     
     properties (Constant)
-        WORKFOLDERS = {'fsl' 'mri' 'surf'}
+        WORKFOLDERS = {'fsl' 'mri' 'surf' 'ECAT_EXACT/pet'}
     end
  	     
     properties (Dependent)
-        logged
+        logger
         product
         sessionPath
         studyPath
+        subjectsDir
         workPath
     end    
 
     methods %% GET/SET
-        function this = set.logged(this, lggr)
+        function this = set.logger(this, lggr)
             assert(isa(lggr, 'mlpipeline.Logger'));
             this.logged_ = lggr;
         end
-        function lggr = get.logged(this)
-            assert(isa(this.logged_, 'mlpipeline.Logger'));
+        function lggr = get.logger(this)
             lggr = this.logged_;
         end
         function this = set.product(this, prd)
-            this.product_ = imcast(prd, 'mlfourd.ImagingContext');
+            this.product_ = mlfourd.ImagingContext(prd);
         end
         function prd  = get.product(this)
             assert(isa(this.product_, 'mlfourd.ImagingContext'));
@@ -49,7 +49,10 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
             pth = this.sessionPath_;
             assert(lexist(pth, 'dir'));
         end
-        function pth  = get.studyPath(~)
+        function pth  = get.studyPath(this)
+            pth = this.subjectsDir;
+        end
+        function pth  = get.subjectsDir(~)
             pth = getenv('SUBJECTS_DIR');
         end
         function this = set.workPath(this, pth)
@@ -75,8 +78,44 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
         function xfm   = thisOnThatDatFilename(varargin)
             xfm = mlpipeline.PipelineVisitor.thisOnThatImageFilename(varargin{:});
             xfm = mlsurfer.SurferFilesystem.datFilename('', fileprefix(xfm));
-        end
-        
+        end             
+    end
+    
+	methods 
+ 		function this = PipelineVisitor(varargin) 
+ 			%% PIPELINEVISITOR 
+ 			%  Usage:  this = PipelineVisitor([parameter_name, parameter_value]) 
+            %                                  ^ logger, image, product, sessionPath, workPath
+ 			
+            p = inputParser;
+            p.KeepUnmatched = true;
+            import mlpipeline.*;
+            addParameter(p, 'logger',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
+            addParameter(p, 'image',       []);
+            addParameter(p, 'product',     []);
+            addParameter(p, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
+            addParameter(p, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
+            parse(p, varargin{:});
+            
+            this.logged_     = p.Results.logger; 
+            this.product_    = p.Results.image;
+            if (~isempty(p.Results.image))
+            this.product_    = p.Results.product; end
+            this.sessionPath = p.Results.sessionPath;
+            this.workPath    = p.Results.workPath;
+ 		end 
+    end 
+
+    %% PRIVATE
+    
+    properties (Access = 'private')
+        logged_
+        product_
+        sessionPath_
+        workPath_
+    end
+    
+    methods (Static, Access = 'private')        
         function pth   = guessSessionPath
             pth = pwd;     
             import mlpipeline.*;
@@ -96,41 +135,7 @@ classdef PipelineVisitor < mlpipeline.PipelineVisitorInterface
                     return;
                 end
             end
-        end        
-    end
-    
-	methods 
- 		function this = PipelineVisitor(varargin) 
- 			%% PIPELINEVISITOR 
- 			%  Usage:  this = PipelineVisitor([parameter_name, parameter_value]) 
-            %                                  ^ logged, image, product, sessionPath, workPath
- 			
-            p = inputParser;
-            p.KeepUnmatched = true;
-            import mlpipeline.*;
-            addParameter(p, 'logged',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
-            addParameter(p, 'image',       []);
-            addParameter(p, 'product',     []);
-            addParameter(p, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
-            addParameter(p, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
-            parse(p, varargin{:});
-            
-            this.logged_     = p.Results.logged; 
-            this.product_    = p.Results.image;
-            if (~isempty(p.Results.image))
-            this.product_    = p.Results.product; end
-            this.sessionPath = p.Results.sessionPath;
-            this.workPath    = p.Results.workPath;
- 		end 
-    end 
-
-    %% PRIVATE
-    
-    properties (Access = 'private')
-        logged_
-        product_
-        sessionPath_
-        workPath_
+        end   
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy 

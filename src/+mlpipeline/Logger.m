@@ -7,11 +7,16 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
  	%  $Id: Logger.m 2647 2013-09-21 22:59:08Z jjlee $ 
  	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad) 
 
-    properties (Constant)
-        LOGFILE_EXT = '.log';
+    properties
+        defaultFilesuffix = '.log';
     end
+    
     properties (Dependent)
+        callerid
+        contents
         creationDate
+        hostname
+        id
     end
     
     methods (Static)
@@ -24,9 +29,21 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
     end
     
     methods %% Get
-        function cdat = get.creationDate(this)
-            cdat = this.creationDate_;
-        end     
+        function g = get.callerid(this)
+            g = this.callerid_;
+        end
+        function g = get.contents(this)
+            g = this.char;
+        end
+        function g = get.creationDate(this)
+            g = this.creationDate_;
+        end
+        function g = get.hostname(this)
+            g = this.hostname_;
+        end
+        function g = get.id(this)
+            g = this.id_;
+        end
     end
     
     methods 
@@ -42,9 +59,6 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
         function elts    = get(this,locs)
             elts = this.cellArrayList_.get(locs);
         end
-        function elts    = remove(this,locs)
-            elts = this.cellArrayList_.remove(locs);
-        end
         function count   = countOf(this,elt)
             count = this.cellArrayList_.countOf(elt);
         end
@@ -54,41 +68,72 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
         function str     = char(this)
             str = this.cellArrayList_.char;
         end
-        function           display(this) 
-            this.cellArrayList_.display;
-        end
         function iter    = createIterator(this)
             iter = this.cellArrayList_.createIterator;
         end
-        
-        function           save(this)
-            mlsystem.FilesystemRegistry.cellArrayListToTextfile(this.cellArrayList_, this.fqfilename);
+        function elts    = remove(~, ~)
+            elts = [];
         end
         
-        function this    = Logger(varargin)
-            this.filesuffix_ = this.LOGFILE_EXT;
-            p = inputParser;
-            p.KeepUnmatched = true;
-            addParamValue(p, 'filename', fullfile(this.filepath, ['Logger_' datestr(now,30) mlpipeline.Logger.LOGFILE_EXT]), @ischar);
-            addParamValue(p, 'callback', this,                                                                              @isobject);
-            parse(p, varargin{:});          
-                this.fqfilename = p.Results.filename;
-                this.fileprefix = [class(p.Results.callback) '_' this.fileprefix]; 
+        function save(this)
+            if (isempty(this.filesuffix))
+                this.filesuffix = this.defaultFilesuffix; 
+            end                
+            mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
+                this.cellArrayList_, this.fqfilename);
+        end
+        
+        function this = Logger(varargin)
+            %% LOGGER
+            %  Usage:  this = Logger([filename, callback])
+            %                                   ^ reference to calling object
             
-            this.creationDate_ = datestr(now);
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addOptional(ip, 'filename', this.defaultFqfilename, @ischar);
+            addOptional(ip, 'callback', this,                   @isobject);
+            parse(ip, varargin{:});
+            
+            this.fqfilename     = ip.Results.filename;
+            this.callerid_      = strrep(class(ip.Results.callback), '.', '_');
+            this.fileprefix     = this.updateFileprefix(ip.Results.callback);            
             this.cellArrayList_ = mlpatterns.CellArrayList;
-            this.cellArrayList_.add( ...
-                sprintf('mlpipeline.Logger.ctor initialized at %s for logging to %s\n', this.creationDate, this.fqfilename));            
-        end % ctor
+            this.creationDate_  = datestr(now);
+            [~,this.hostname_]  = mlbash('hostname');
+               this.hostname_   = strtrim(this.hostname_);
+            [~,this.id_]        = mlbash('id -u -n');
+               this.id_         = strtrim(this.id_);
+            this.cellArrayList_.add(this.header);
+        end 
     end
     
+    %% PRIVATE
+    
     properties (Access = 'private')
+        callerid_
         cellArrayList_
         creationDate_
-        fid_
-        fidmsg_
+        hostname_
+        id_
     end
-
+    
+    methods (Access = 'private')
+        function fn  = defaultFqfilename(this)
+            fn = fullfile(this.filepath, ['Logger_' datestr(now,30) this.defaultFilesuffix]);
+        end
+        function fp  = updateFileprefix(this, callback)
+            if (isa(callback, 'mlpipeline.Logger'))
+                fp = this.fileprefix;
+                return
+            end
+            fp = [this.callerid '_' this.fileprefix];
+        end
+        function txt = header(this)
+            txt = sprintf('%s\ninitialized by %s by %s at %s on %s\n', ...
+                          this.fqfilename, strrep(this.callerid, '_', '.'), this.id, this.hostname, this.creationDate);
+        end
+    end
+    
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy 
 end
 
