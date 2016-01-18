@@ -1,5 +1,7 @@
 classdef PipelineVisitor
-	%% PIPELINEVISITOR   
+	%% PIPELINEVISITOR's subclasses must implement visit-methods.  The visited class
+    %  must have an accept-method in order to establish double dispatch.  
+    %  See also:  Design Patterns, GoF   
 
 	%  $Revision$ 
  	%  was created $Date$ 
@@ -10,12 +12,11 @@ classdef PipelineVisitor
  	%  $Id$ 
     
     properties (Constant)
-        WORKFOLDERS = {'fsl' 'mri' 'surf' 'ECAT_EXACT/pet'}
+        WORKFOLDERS = {'fsl' 'mri' 'surf' 'ECAT_EXACT/pet' 'PET' 'perfusion_4dfp' 'quality'}
     end
  	     
     properties (Dependent)
         logger
-        product
         sessionPath
         studyPath
         subjectsDir
@@ -30,24 +31,17 @@ classdef PipelineVisitor
         function lggr = get.logger(this)
             lggr = this.logged_;
         end
-        function this = set.product(this, prd)
-            this.product_ = mlfourd.ImagingContext(prd);
-        end
-        function prd  = get.product(this)
-            assert(isa(this.product_, 'mlfourd.ImagingContext'));
-            prd = this.product_;
-        end
         function this = set.sessionPath(this, pth)
             assert(lexist(pth, 'dir'));
-            if (lstrfind(pth, 'mri'))
-                pth = fileparts(trimpath(pth)); end
-            if (lstrfind(pth, 'fsl'))
-                pth = fileparts(trimpath(pth)); end
+            for w = 1:length(this.WORKFOLDERS) % KLUDGE
+                if (lstrfind(pth, this.WORKFOLDERS{w}))
+                    pth = fileparts(trimpath(pth)); 
+                end
+            end
             this.sessionPath_ = pth;
         end
         function pth  = get.sessionPath(this)
             pth = this.sessionPath_;
-            assert(lexist(pth, 'dir'));
         end
         function pth  = get.studyPath(this)
             pth = this.subjectsDir;
@@ -60,25 +54,75 @@ classdef PipelineVisitor
             this.workPath_ = trimpath(pth);
         end
         function pth  = get.workPath(this)
-            if (isempty(this.workPath_))
-                this.workPath_ = this.product.filepath; end
             pth = this.workPath_;
         end
     end
     
     methods (Static)
-        function imfn  = thisOnThatImageFilename(varargin)
-            len = length(varargin);
-            varargin{len} = imcast(varargin{len}, 'fqfilename');
+        function [s,r,c] = cmd(exe, varargin)
+            %% FSLCMD is a mini-facade to the FSL command-line
+            %  [s,r] = FslVisitor.cmd(executable[, option, option2, ...])
+            %                         ^ cmd name; without options, typically returns usage help 
+            %                                      ^ structs, strings or cell-arrays of
+            %  structs, strings and cells of options may be arranged to reflect cmd-line ordering 
+            
+            assert(ischar(exe));            
+            args = ''; r = '';
+            import mlfsl.*;
+            for v = 1:length(varargin)
+                args = sprintf('%s %s', args, FslVisitor.oany2str(varargin{v}, exe));
+            end
+            c = strtrim(sprintf('%s %s %s', exe, args, FslVisitor.outputRedirection));
+            try
+                [s,r] = mlbash(c);
+                if (0 ~= s)
+                    error('mlfsl:shellFailure', 'FslVisitor.cmd %s\nreturned %i', c, s); 
+                end
+            catch ME
+                handexcept(ME,'mlfsl:shellError',r);
+            end
+        end 
+        function msg     = help(exe)
+            %% HELP returns cmd-line help in a single string
+           
+            assert(~isempty(exe));
+            cmds = { '%s -h' '%s' '%s -?' }; msg = '';
+            for c = 1:length(cmds)
+                try
+                    [~,v] = mlbash(sprintf(cmds{c}, exe));
+                    if (~allempty(strfind(v, 'Usage')) && ~allempty(strfind(v, exe)))
+                        msg = v;
+                        break
+                    end
+                catch ME
+                    handexcept(ME);
+                end
+            end
+        end
+        function str     = outputRedirection
+            if (mlpipeline.PipelineRegistry.instance.logging)
+                str = sprintf('>> %s 2>&1', ...
+                             ['FslVisitor_' datestr(now,30) '.log']); %% KLUDGE 
+            else
+                str = '';
+            end            
+        end
+        function fn      = thisOnThatExtFilename(ext, varargin)
+            assert(ischar(ext));
+            if (~strcmp(ext(1), '.'))
+                ext = ['.' ext];
+            end
+            imfn = mlpipeline.PipelineVisitor.thisOnThatImageFilename(varargin{:});
+            [p,n] = myfileparts(imfn);
+            fn = fullfile(p, [n ext]);
+        end   
+        function imfn    = thisOnThatImageFilename(varargin)
+            varargin{end} = imcast(varargin{end}, 'fqfilename');
             imfn = mlchoosers.ImagingChoosers.imageObject(varargin{:});
         end
-        function xfm   = thisOnThatXfmFilename(varargin)
-            xfm = [mlpipeline.PipelineVisitor.thisOnThatImageFilename(varargin{:}) mlfsl.FlirtVisitor.XFM_SUFFIX];
+        function           view(~)
+            %% VIEW is a template method which may be subclassed
         end
-        function xfm   = thisOnThatDatFilename(varargin)
-            xfm = mlpipeline.PipelineVisitor.thisOnThatImageFilename(varargin{:});
-            xfm = mlsurfer.SurferFilesystem.datFilename('', fileprefix(xfm));
-        end             
     end
     
 	methods 
@@ -91,26 +135,93 @@ classdef PipelineVisitor
             p.KeepUnmatched = true;
             import mlpipeline.*;
             addParameter(p, 'logger',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
-            addParameter(p, 'image',       []);
-            addParameter(p, 'product',     []);
             addParameter(p, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
+            addParameter(p, 'studyPath',   getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
+            addParameter(p, 'subjectsDir', getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
             addParameter(p, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
             parse(p, varargin{:});
             
             this.logged_     = p.Results.logger; 
-            this.product_    = p.Results.image;
-            if (~isempty(p.Results.image))
-            this.product_    = p.Results.product; end
             this.sessionPath = p.Results.sessionPath;
+            if (~strcmp(getenv('SUBJECTS_DIR'), p.Results.studyPath))
+                        setenv('SUBJECTS_DIR',  p.Results.studyPath);  end
+            if (~strcmp(getenv('SUBJECTS_DIR'), p.Results.subjectsDir))
+                        setenv('SUBJECTS_DIR',  p.Results.subjectsDir); end
             this.workPath    = p.Results.workPath;
  		end 
     end 
 
+    
+    %% PROTECTED
+    
+    methods (Static, Access = 'protected')
+        function str   = oany2str(obj, exe)
+            import mlfsl.*;
+            switch (class(obj))
+                case 'char'
+                    str = obj;
+                case 'struct'
+                    str = FslVisitor.ostruct2str(obj, exe);
+                case 'cell'
+                    str = FslVisitor.ocell2str(obj, true, false);
+                case 'function_handle'
+                    str = func2str(obj);
+                otherwise
+                    str = FslVisitor.otherwise2str(obj);
+            end
+        end
+        function str   = otherwise2str(obj)
+            if (isnumeric(obj))
+                str = mat2str(obj);
+            elseif (isa(obj, 'mlfourd.INIfTI'))
+                str = obj.fqfilename;
+            elseif (isobject(obj))
+                try
+                    str = char(obj);
+                catch ME                
+                    handexcept(ME);
+                end
+            else
+                error('mfiles:unsupportedType', 'FslVisitor.otherwise2str does not support objects of type %s', class(ob));
+            end
+        end
+        function str   = ocell2str(opts)
+            assert(~isemptyCell(opts));
+            opts = cellfun(@(x) [x ' '], opts, 'UniformOutput', false);
+            str  = cell2str(opts);
+        end
+        function str   = ostruct2str(opts, ~)
+            assert(~isstructEmpty(opts));
+            fields = fieldnames(opts);
+            str = '';
+            for f  = 1:length(fields)
+                assert(~isempty(fields{f}));
+                if (~isemptyChar(opts.(fields{f})))
+                    opts.(fields{f}) = ensureString(opts.(fields{f}));
+                end                
+                if (exist('exe','var'))
+                    mlfsl.FslVisitor.assertOptionAllowed(fields{f}, exe);
+                end
+                assert(1 == length(opts))
+                str = sprintf(' %s -%s %s', str,  fields{f}, opts.(fields{f}));
+            end
+        end
+        function         assertOptionAllowed(opt, exe)
+            warning('mlfsl:notImplemented', 'FslVisitor.assertOptionAllowed');
+            assert(isstruct(opt));
+            assert(ischar(exe));
+            msg = mlfsl.FslVisitor.help(exe);
+            fields = fieldnames(opt);
+            for f = 1:length(fields)
+                assert(lstrfind(fields{f}), msg);
+            end
+        end
+    end 
+    
     %% PRIVATE
     
     properties (Access = 'private')
         logged_
-        product_
         sessionPath_
         workPath_
     end
