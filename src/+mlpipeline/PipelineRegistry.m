@@ -12,11 +12,8 @@ classdef PipelineRegistry < mlpatterns.Singleton
 
 	properties 
         debugging 
-        deprecationSeverity
+        deprecationSeverity = 'error'
         logging
-    end 
-    
-    properties (Dependent)
         verbosity
         warningLevel
         verbose
@@ -24,36 +21,34 @@ classdef PipelineRegistry < mlpatterns.Singleton
 
 	methods %% set/get
         function tf   = get.debugging(this) 
-            tf = this.parseTruthvalue(getenv('DEBUG'));
+            tf = this.parseTruthvalue(getenv('DEBUGGING'));
         end
         function tf   = get.logging(this) 
-            tf = this.parseTruthvalue(getenv('LOGGING')) && ...
-                ~this.parseTruthvalue(getenv('MLUNIT_TESTING'));
+            tf = this.parseTruthvalue(getenv('LOGGING'));
+        end
+        function v    = get.verbosity(this)
+            v = this.getenvVerbosity;
+        end
+        function wl   = get.warningLevel(this)
+            wl = this.getenvWarningLevel;
         end
         function tf   = get.verbose(this)
             %% GET.VERBOSE returns a logical value based on debugging and verbosity settings
             
-            if (this.parseTruthvalue(getenv('MLUNIT_TESTING')))
-                tf = false; return; end
             tf = this.debugging || this.verbosity > 0 || this.warningLevel > 0;
-        end            
+        end     
+               
+        function this = set.debugging(this,d)
+            setenv('DEBUGGING', num2str(this.checkValueRange(d, [0 1])));
+        end  
+        function this = set.logging(this,lg)
+            setenv('LOGGING', num2str(this.checkValueRange(lg, [0 1])));
+        end  
         function this = set.verbosity(this,v)
-            this.verbosity_ = this.checkValueRange(v, [0 1]);
+            setenv('VERBOSITY', num2str(this.checkValueRange(v, [0 1])));
         end 
-        function v    = get.verbosity(this)
-            if (this.parseTruthvalue(getenv('MLUNIT_TESTING')))
-                v = eps; return; end
-            if (isempty(this.verbosity_))
-                v = this.getenvVerbosity; end
-        end
         function this = set.warningLevel(this, w)
-            this.warningLevel_ = this.checkValueRange(w, [0 1]);
-        end
-        function wl   = get.warningLevel(this)
-            if (this.parseTruthvalue(getenv('MLUNIT_TESTING')))
-                wl = eps; return; end
-            if (isempty(this.warningLevel_));
-                wl = this.getenvWarningLevel; end
+            setenv('WARNING_LEVEL', num2str(this.checkValueRange(w, [0 1])));
         end
     end
     
@@ -81,16 +76,11 @@ classdef PipelineRegistry < mlpatterns.Singleton
     
     %% PRIVATE
     
-    properties (Access = 'private')
-        verbosity_
-        warningLevel_
-    end
-    
     methods (Access = 'private')
  		function this = PipelineRegistry()
  			this = this@mlpatterns.Singleton;
-            this.deprecationSeverity = 'error';
- 		end % PipelineRegistry (ctor)
+        end 
+        
         function v    = getenvVerbosity(this)
             if (isempty(getenv('VERBOSITY')))
                 if (isempty(getenv('VERBOSE')))
