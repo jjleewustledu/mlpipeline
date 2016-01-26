@@ -81,7 +81,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyTrue(lexist(this.testObj.fqfilename, 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{1}(1:23), 'rec p7377ho1_frames.img');
-            this.verifyEqual(c{157}, 'testing log element 1');
+            this.verifyEqual(c{end}, 'testing log element 2');
         end
         function test_saveas(this)
             FQFP = fullfile(this.workPath, 'Test_Logger_test_saveas');
@@ -89,7 +89,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{1}(1:23), 'rec p7377ho1_frames.img');
-            this.verifyEqual(c{157}, 'testing log element 1');
+            this.verifyEqual(c{end}, 'testing log element 2');
         end
  	end
 
