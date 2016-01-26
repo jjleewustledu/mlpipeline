@@ -43,8 +43,8 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
     end
     
     methods (Static)
-         function this = load(fn)
-            this = mlpipeline.Logger(fn);
+         function this = load(varargin)
+            this = mlpipeline.Logger(varargin{:});
         end
     end
     
@@ -59,8 +59,7 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             %  prescribed by abstract data type mlpatterns.List.
             %  @throws 
 
-            if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger'))
-                % copy-ctor
+            if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger')) 
                 this.filepath_   = varargin{1}.filepath_;
                 this.fileprefix_ = varargin{1}.fileprefix_;
                 this.filesuffix_ = varargin{1}.filesuffix_;
@@ -72,7 +71,7 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
                 this.hostname_      = varargin{1}.hostname_;
                 this.id_            = varargin{1}.id_;
                 return
-            end            
+            end % for copy-ctor      
             
             ip = inputParser;
             ip.KeepUnmatched = true;
@@ -100,16 +99,21 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             c = mlpipeline.Logger(this);
         end
         
-        %% implementation of AbstractHandleIO
+        %% mlio.AbstractHandleIO
         
         function save(this)
+            if (this.noclobber && lexist(this.fqfilename, 'file'))
+                error('mlpipeline:IOError:noclobberPreventedSaving', ...
+                      'Logger.save.noclobber->%i and fqfilename->%s already exists; data not saved', this.noclobber, this.fqfilename);
+            end
             if (isempty(this.filesuffix))
                 this.filesuffix = this.FILETYPE_EXT; 
-            end                
-            mlsystem.FilesystemRegistry.cellArrayListToTextfile(this.cellArrayList_, this.fqfilename);
+            end
+            mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
+                this.cellArrayList_, this.fqfilename);
         end
         
-        %% implementations of List
+        %% mlpatterns.List
         
         function numElts = length(this)
             numElts = this.cellArrayList_.length;
@@ -160,8 +164,8 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             fn = fullfile(this.filepath, ['Logger_' datestr(now,30) this.FILETYPE_EXT]);
         end
         function txt = header(this)
-            txt = sprintf('%s from %s at %s on %s initialized %s', ...
-                          strrep(this.callerid, '_', '.'), this.id, this.hostname, this.creationDate, this.fqfilename);
+            txt = sprintf('%s:\n%s from %s at %s initialized\n%s', ...
+                          this.creationDate, strrep(this.callerid, '_', '.'), this.id, this.hostname, this.fqfilename);
         end
     end
     
