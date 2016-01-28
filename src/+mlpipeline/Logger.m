@@ -102,12 +102,18 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
         %% mlio.AbstractHandleIO
         
         function save(this)
+            %% SAVE supports extensions 
+            %  mlfourd.JimmyShenInterface.SUPPORTED_EXT and mlsurfer.SurferRegistry.SUPPORTED_EXT,
+            %  defaulting to this.FILETYPE_EXT if needed. 
+            %  If this.noclobber == true,  it will never overwrite files.
+            %  If this.noclobber == false, it may overwrite files. 
+            %  @return saves this Logger to this.fqfilename.  
+            %  @throws mlpipeline.IOError:noclobberPreventedSaving
+            
+            this = this.ensureExtension;
             if (this.noclobber && lexist(this.fqfilename, 'file'))
                 error('mlpipeline:IOError:noclobberPreventedSaving', ...
                       'Logger.save.noclobber->%i and fqfilename->%s already exists; data not saved', this.noclobber, this.fqfilename);
-            end
-            if (isempty(this.filesuffix))
-                this.filesuffix = this.FILETYPE_EXT; 
             end
             mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
                 this.cellArrayList_, this.fqfilename);
@@ -160,10 +166,15 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
     end
     
     methods (Access = 'private')
-        function fn  = defaultFqfilename(this)
+        function fn   = defaultFqfilename(this)
             fn = fullfile(this.filepath, ['Logger_' datestr(now,30) this.FILETYPE_EXT]);
         end
-        function txt = header(this)
+        function this = ensureExtension(this)
+            if (isempty(this.filesuffix))
+                this.filesuffix = this.FILETYPE_EXT;
+            end
+        end
+        function txt  = header(this)
             txt = sprintf('%s:\n%s from %s at %s initialized\n%s', ...
                           this.creationDate, strrep(this.callerid, '_', '.'), this.id, this.hostname, this.fqfilename);
         end

@@ -11,10 +11,18 @@ classdef StudyDataSingleton < handle
 
 	properties (Abstract)
         loggingPath
- 	end
+    end
+    
+    methods (Static, Abstract)
+        instance(qualifier)
+        register(varargin)
+    end
+    
+    properties
+        comments
+    end
 
-	methods
-        
+	methods        
         function diaryOff(~)
             diary off;
         end
@@ -43,8 +51,7 @@ classdef StudyDataSingleton < handle
     end
     
     methods (Access = protected)
-        function this = StudyDataSingleton()
-            
+        function this = StudyDataSingleton()            
         end
  	end 
 

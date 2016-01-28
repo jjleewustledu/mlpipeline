@@ -34,7 +34,7 @@ classdef Test_Logger < matlab.unittest.TestCase
         function test_ctor(this)
             this.verifyEqual(this.testObj.callerid, 'mlpipeline_Logger');
             this.verifyEqual(this.testObj.contents(end-20:end), 'testing log element 2');
-            this.verifyEqual(this.testObj.hostname, 'innominate');
+            this.verifyEqual(this.testObj.hostname(1:10), 'innominate');
             this.verifyEqual(this.testObj.id, 'jjlee');
             this.verifyEqual(this.testObj.filename, 'Test_Logger.log');
         end
@@ -107,10 +107,18 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.testObj.add('testing log element 1');
             this.testObj.add('testing log element 2');
             this.testObj.fqfilename = this.test_fqfn;
-            deleteExisting(this.test_fqfn);
+            this.addTeardown(@this.deleteFiles);
         end
     end
 
+    methods (Access = private)
+        function deleteFiles(this)
+            deleteExisting(this.test_fqfn);
+            deleteExisting2(fullfile(this.workPath, 'Test_Logger*'));
+        end
+    end
+    
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end
+ 
 
