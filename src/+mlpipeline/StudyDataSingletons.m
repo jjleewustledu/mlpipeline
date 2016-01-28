@@ -11,19 +11,42 @@ classdef StudyDataSingletons < handle
 
     methods (Static)
         function this = instance(name)
+            %% NAME
+            %  @param name is 'arbelaez', 'derdeyn', 'raichle' or similar name for an mlpipeline.StudyDataSingleton.
+            %  @return a specific mlpipeline.StudyDataSingleton.
+            %  @throws mlpipeline:unsupportedEmptyState
+            
             persistent instance_
-            assert(exist('name','var'));
-            if (isempty(instance_))
+            if (exist('name','var'))
+                assert(ischar(name));
+                if (strcmp(name, 'initialize'))
+                    instance_ = [];
+                    this = instance_;
+                    return
+                end
+                mlarbelaez.StudyDataSingleton.register;
+                mlderdeyn.StudyDataSingleton.register;
+                mlraichle.StudyDataSingleton.register;
                 instance_ = mlpipeline.StudyDataSingletons.lookup(name);
+            end
+            if (isempty(instance_))
+                error('mlpipeline:unsupportedEmptyState', ...
+                     ['StudyDataSingletons.instance requires an initial choice of concrete StudyDataSingle; ' ...
+                      'persistent instance is empty.']);
             end
             this = instance_;
         end
         function register(name, asingleton)
+            %% REGISTER
+            %  @param name will be used to look up the registered instance of asingleton.
+            %  @param asingleton is any instance of any mlpipeline.StudyDataSingleton.
+            
             h = mlpipeline.StudyDataSingletons.studyDataStorage_;
             if (isempty(h.registry))
                 h.registry = containers.Map;
             end
-            h.registry(name) = asingleton;
+            h.registry(name) = asingleton; % h.registry is modifiable over lifetime of StudyDataSingletons
+                                           % via any StudyDataSingleton.register operation.
         end
     end
     
@@ -32,7 +55,7 @@ classdef StudyDataSingletons < handle
     methods (Static, Access = protected)        
         function asingleton = lookup(name)
             try
-                ctor = mlpipeline.StudyDataSingleton;
+                ctor = mlpipeline.StudyDataSingletons;
                 h = ctor.studyDataStorage_;
                 asingleton = h.registry(name);
             catch %#ok<CTCH>
@@ -49,9 +72,6 @@ classdef StudyDataSingletons < handle
     
     methods (Access = private)
  		function this = StudyDataSingletons()
-            mlarbelaez.StudyDataSingleton.register;
-            mlderdeyn.StudyDataSingleton.register;
-            mlraichle.StudyDataSingleton.register;
  		end
  	end
 
