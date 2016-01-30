@@ -21,6 +21,7 @@ classdef PipelineVisitor
         studyPath
         subjectsDir
         workPath
+        filetypeExt
     end    
 
     methods %% GET/SET
@@ -41,12 +42,24 @@ classdef PipelineVisitor
             this.sessionPath_ = pth;
         end
         function pth  = get.sessionPath(this)
+            if (~isempty(this.sessionData_))
+                pth = this.sessionData_.sessionPath;
+                return
+            end
             pth = this.sessionPath_;
         end
-        function pth  = get.studyPath(this)
+        function pth  = get.studyPath(this)            
+            if (~isempty(this.sessionData_))
+                pth = this.sessionData_.subjectsDir;
+                return
+            end
             pth = this.subjectsDir;
         end
-        function pth  = get.subjectsDir(~)
+        function pth  = get.subjectsDir(this)
+            if (~isempty(this.sessionData_))
+                pth = this.sessionData_.subjectsDir;
+                return
+            end
             pth = getenv('SUBJECTS_DIR');
         end
         function this = set.workPath(this, pth)
@@ -55,6 +68,9 @@ classdef PipelineVisitor
         end
         function pth  = get.workPath(this)
             pth = this.workPath_;
+        end
+        function e    = get.filetypeExt(this)
+            e = mlfourd.NIfTId.FILETYPE_EXT;
         end
     end
     
@@ -131,26 +147,40 @@ classdef PipelineVisitor
  			%  Usage:  this = PipelineVisitor([parameter_name, parameter_value]) 
             %                                  ^ logger, image, product, sessionPath, workPath
  			
-            p = inputParser;
-            p.KeepUnmatched = true;
+            ip = inputParser;
+            ip.KeepUnmatched = true;
             import mlpipeline.*;
-            addParameter(p, 'logger',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
-            addParameter(p, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
-            addParameter(p, 'studyPath',   getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
-            addParameter(p, 'subjectsDir', getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
-            addParameter(p, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
-            parse(p, varargin{:});
+            addOptional(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.SessionData'));
+            addParameter(ip, 'logger',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
+            addParameter(ip, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
+            addParameter(ip, 'studyPath',   getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
+            addParameter(ip, 'subjectsDir', getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
+            addParameter(ip, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
+            parse(ip, varargin{:});
             
-            this.logged_     = p.Results.logger; 
-            this.sessionPath = p.Results.sessionPath;
-            if (~strcmp(getenv('SUBJECTS_DIR'), p.Results.studyPath))
-                        setenv('SUBJECTS_DIR',  p.Results.studyPath);  end
-            if (~strcmp(getenv('SUBJECTS_DIR'), p.Results.subjectsDir))
-                        setenv('SUBJECTS_DIR',  p.Results.subjectsDir); end
-            this.workPath    = p.Results.workPath;
+            %% prefer using SessionData; use Logger within mlfourd.ImagingContext
+            
+            if (~isempty(ip.Results.sessionData))
+                this.sessionData_ = ip.Results.sessionData;
+                this.sessionPath_ = this.sessionData_.sessionPath;
+                this.workPath_    = this.sessionData_.sessionPath;
+                if (~strcmp(getenv('SUBJECTS_DIR'), this.sessionData_.subjectsDir))
+                            setenv('SUBJECTS_DIR',  this.sessionData_.subjectsDir); 
+                end
+                return
+            end
+            
+            %% legacy
+            
+            this.logged_     = ip.Results.logger; 
+            this.sessionPath = ip.Results.sessionPath;
+            if (~strcmp(getenv('SUBJECTS_DIR'), ip.Results.studyPath))
+                        setenv('SUBJECTS_DIR',  ip.Results.studyPath);  end
+            if (~strcmp(getenv('SUBJECTS_DIR'), ip.Results.subjectsDir))
+                        setenv('SUBJECTS_DIR',  ip.Results.subjectsDir); end
+            this.workPath    = ip.Results.workPath;
  		end 
     end 
-
     
     %% PROTECTED
     
@@ -222,11 +252,12 @@ classdef PipelineVisitor
     
     properties (Access = 'private')
         logged_
+        sessionData_
         sessionPath_
         workPath_
     end
     
-    methods (Static, Access = 'private')        
+    methods (Static, Access = 'private')
         function pth   = guessSessionPath
             pth = pwd;     
             import mlpipeline.*;

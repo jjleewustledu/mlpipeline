@@ -23,6 +23,39 @@ classdef StudyDataSingleton < handle
     end
 
 	methods        
+        function fn = fdg_fn(~, sessDat)
+            fn = [sessDat.sessionFolder 'fdg.4dfp.nii.gz'];
+        end
+        function fn = gluc_fn(~, sessDat)
+            fp = sprintf('%sgluc%i', sessDat.pnumber, sessDat.snumber);
+            fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+        end
+        function fn = ho_fn(~, sessDat)
+            fp = sprintf('%sho%i', sessDat.pnumber, sessDat.snumber);
+            fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+        end
+        function fn = oc_fn(~, sessDat)
+            frames = sprintf('%soc%i_frames', sessDat.pnumber, sessDat.snumber);
+            dt = mlsystem.DirTool( ...
+                fullfile(sessDat.petPath, frames, ...
+                    sprintf('%soc%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
+            fn = fullfile(frames, dt.fns{1});
+        end
+        function fn = oo_fn(~, sessDat)
+            fp = sprintf('%soo%i', sessDat.pnumber, sessDat.snumber);
+            fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+        end
+        function fn = tr_fn(~, sessDat)
+            frames = sprintf('%str%i_frames', sessDat.pnumber, sessDat.snumber);
+            dt = mlsystem.DirTool( ...
+                fullfile(sessDat.petPath, frames, ...
+                    sprintf('%str%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
+            fn = fullfile(frames, dt.fns{1});
+        end
+        function iter = createIteratorForSessionData(this)
+            iter = this.sessionDataComposite_.createIterator;
+        end  
+        
         function diaryOff(~)
             diary off;
         end
@@ -50,11 +83,17 @@ classdef StudyDataSingleton < handle
         end
     end
     
+    %% PROTECTED
+
+    properties (Access = protected)
+        sessionDataComposite_
+    end
+    
     methods (Access = protected)
         function this = StudyDataSingleton()            
         end
- 	end 
-
+    end 
+    
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end
 
