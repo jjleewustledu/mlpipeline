@@ -24,6 +24,7 @@ classdef StudyDataSingletons < handle
                     this = instance_;
                     return
                 end
+                mlpipeline.TestDataSingleton.register;
                 mlarbelaez.StudyDataSingleton.register;
                 mlderdeyn.StudyDataSingleton.register;
                 mlraichle.StudyDataSingleton.register;

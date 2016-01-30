@@ -1,4 +1,4 @@
-classdef SessionData 
+classdef SessionData < mlpipeline.ISessionData
 	%% SESSIONDATA  
 
 	%  $Revision$
@@ -55,10 +55,10 @@ classdef SessionData
             g = fullfile(this.sessionPath_, this.studyData_.mriFolder, '');
         end
         function g = get.petPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.petFolder, '');
+            g = fullfile(this.sessionPath_, this.studyData_.petFolder(this), '');
         end
         function g = get.hdrinfoPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder, '');
+            g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder(this), '');
         end
         function g = get.fslPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.fslFolder, '');
@@ -109,6 +109,7 @@ classdef SessionData
             ip = inputParser;
             addParameter(ip, 'studyData', [], @(x) isa(x, 'mlpipeline.StudyDataSingleton'));
             addParameter(ip, 'sessionPath', pwd, @isdir);
+            addParameter(ip, 'snumber', 1, @isnumeric);
             parse(ip, varargin{:});
             
             this.studyData_   = ip.Results.studyData;

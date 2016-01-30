@@ -60,6 +60,8 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             %  @throws 
 
             if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger')) 
+                this.includeTimeStamp = varargin{1}.includeTimeStamp;
+                
                 this.filepath_   = varargin{1}.filepath_;
                 this.fileprefix_ = varargin{1}.fileprefix_;
                 this.filesuffix_ = varargin{1}.filesuffix_;
@@ -75,10 +77,12 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional(ip, 'filename', this.defaultFqfilename, @ischar);
-            addOptional(ip, 'callback', this,                   @isobject);
+            addOptional(ip, 'filename',         this.defaultFqfilename, @ischar);
+            addOptional(ip, 'callback',         this,                   @isobject);
+            addOptional(ip, 'includeTimeStamp', true,                   @islogical);
             parse(ip, varargin{:});
             
+            this.includeTimeStamp = ip.Results.includeTimeStamp;
             this.fqfilename = ip.Results.filename;
             this.callerid_  = strrep(class(ip.Results.callback), '.', '_');            
             if (lexist(ip.Results.filename))                
@@ -127,13 +131,13 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
         function empty   = isempty(this)
             empty = logical(this.cellArrayList_.isempty);
         end
-        function           add(this, varargin)
+        function           add(this, varargin) 
             if (this.includeTimeStamp)
                 s = sprintf('%s:  ', datestr(now, 31));
-                this.cellArrayList_.add([s varargin]);
+                this.cellArrayList_.add([s sprintf(varargin{:})]);
                 return
             end
-            this.cellArrayList_.add(varargin);
+            this.cellArrayList_.add(sprintf(varargin{:}));
         end
         function elts    = get(this,locs)
             elts = this.cellArrayList_.get(locs);

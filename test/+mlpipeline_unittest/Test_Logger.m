@@ -16,6 +16,7 @@ classdef Test_Logger < matlab.unittest.TestCase
 	properties
         sessionPath
         test_fqfn
+        testNoStamp
  		testObj
         workPath
  	end
@@ -29,7 +30,7 @@ classdef Test_Logger < matlab.unittest.TestCase
                 this.verifyEqual(copy.(prps{p}), this.testObj.(prps{p}));
             end
             copy.add('from test_copyCtor');
-            this.verifyEqual(copy.length, this.testObj.length + 2);
+            this.verifyEqual(copy.length, this.testObj.length + 1);
         end
         function test_ctor(this)
             this.verifyEqual(this.testObj.callerid, 'mlpipeline_Logger');
@@ -48,7 +49,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyEqual(c(end-20:end), 'testing log element 2');
         end
         function test_countOf(this)
-            this.verifyEqual(this.testObj.countOf('testing log element 2'), 1);
+            this.verifyEqual(this.testNoStamp.countOf('testing log element 2'), 1);
         end
         function test_createIterator(this)
             iter = this.testObj.createIterator;
@@ -56,13 +57,13 @@ classdef Test_Logger < matlab.unittest.TestCase
             while (iter.hasNext)
                 n = iter.next;
             end
-            this.verifyEqual(n, 'testing log element 2');
+            this.verifyEqual(n(end-20:end), 'testing log element 2');
         end
         function test_fqfilename(this)
             this.verifyEqual(this.testObj.fqfilename, this.test_fqfn)
         end
         function test_get(this)
-            this.verifyEqual(this.testObj.get(159), 'testing log element 2');
+            this.verifyEqual(this.testNoStamp.get(157), 'testing log element 2');
         end
         function test_isempty(this)
             this.verifyFalse(this.testObj.isempty);
@@ -71,17 +72,17 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyFalse(obj.isempty);
         end
         function test_length(this)
-            this.verifyEqual(this.testObj.length, 159);
+            this.verifyEqual(this.testObj.length, 157);
         end
         function test_locationsOf(this)
-            this.verifyEqual(this.testObj.locationsOf('testing log element 1'), 157);
+            this.verifyEqual(this.testNoStamp.locationsOf('testing log element 1'), 156);
         end
         function test_save(this) 
             this.testObj.save;
             this.verifyTrue(lexist(this.testObj.fqfilename, 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{1}(1:23), 'rec p7377ho1_frames.img');
-            this.verifyEqual(c{end}, 'testing log element 2');
+            this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
         function test_saveas(this)
             FQFP = fullfile(this.workPath, 'Test_Logger_test_saveas');
@@ -89,7 +90,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{1}(1:23), 'rec p7377ho1_frames.img');
-            this.verifyEqual(c{end}, 'testing log element 2');
+            this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
  	end
 
@@ -107,6 +108,11 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.testObj.add('testing log element 1');
             this.testObj.add('testing log element 2');
             this.testObj.fqfilename = this.test_fqfn;
+            this.testNoStamp = mlpipeline.Logger(fullfile(this.workPath, 'p7377ho1.img.rec'), 'includeTimeStamp', false);
+            this.testNoStamp.add('testing log element 1');
+            this.testNoStamp.add('testing log element 2');
+            this.testNoStamp.fqfilename = this.test_fqfn;
+            
             this.addTeardown(@this.deleteFiles);
         end
     end
