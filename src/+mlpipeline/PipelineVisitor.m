@@ -11,68 +11,6 @@ classdef PipelineVisitor
  	%  developed on Matlab 8.1.0.604 (R2013a) 
  	%  $Id$ 
     
-    properties (Constant)
-        WORKFOLDERS = {'fsl' 'mri' 'surf' 'ECAT_EXACT/pet' 'PET' 'perfusion_4dfp' 'quality'}
-    end
- 	     
-    properties (Dependent)
-        logger
-        sessionPath
-        studyPath
-        subjectsDir
-        workPath
-        filetypeExt
-    end    
-
-    methods %% GET/SET
-        function this = set.logger(this, lggr)
-            assert(isa(lggr, 'mlpipeline.Logger'));
-            this.logged_ = lggr;
-        end
-        function lggr = get.logger(this)
-            lggr = this.logged_;
-        end
-        function this = set.sessionPath(this, pth)
-            assert(lexist(pth, 'dir'));
-            for w = 1:length(this.WORKFOLDERS) % KLUDGE
-                if (lstrfind(pth, this.WORKFOLDERS{w}))
-                    pth = fileparts(trimpath(pth)); 
-                end
-            end
-            this.sessionPath_ = pth;
-        end
-        function pth  = get.sessionPath(this)
-            if (~isempty(this.sessionData_))
-                pth = this.sessionData_.sessionPath;
-                return
-            end
-            pth = this.sessionPath_;
-        end
-        function pth  = get.studyPath(this)            
-            if (~isempty(this.sessionData_))
-                pth = this.sessionData_.subjectsDir;
-                return
-            end
-            pth = this.subjectsDir;
-        end
-        function pth  = get.subjectsDir(this)
-            if (~isempty(this.sessionData_))
-                pth = this.sessionData_.subjectsDir;
-                return
-            end
-            pth = getenv('SUBJECTS_DIR');
-        end
-        function this = set.workPath(this, pth)
-            assert(lexist(pth, 'dir'));
-            this.workPath_ = trimpath(pth);
-        end
-        function pth  = get.workPath(this)
-            pth = this.workPath_;
-        end
-        function e    = get.filetypeExt(this)
-            e = mlfourd.NIfTId.FILETYPE_EXT;
-        end
-    end
     
     methods (Static)
         function [s,r,c] = cmd(exe, varargin)
@@ -132,59 +70,127 @@ classdef PipelineVisitor
             [p,n] = myfileparts(imfn);
             fn = fullfile(p, [n ext]);
         end   
-        function imfn    = thisOnThatImageFilename(varargin)
-            varargin{end} = imcast(varargin{end}, 'fqfilename');
-            imfn = mlchoosers.ImagingChoosers.imageObject(varargin{:});
-        end
-        function           view(~)
-            %% VIEW is a template method which may be subclassed
+        function fn      = thisOnThatImageFilename(varargin)
+            %% THISONTHATIMAGEFILENAME 
+            %  @param [varargin] are well-formed (fully-qual.) filenames.
+            %  @returns an image filename specifying on the first and last nodes from a graph of registrations.
+            
+            assert(all(cellfun(@ischar, varargin)));
+            try
+                if (1 == length(varargin))
+                    fn = filename(varargin{1});
+                    return
+                end
+                nstruct = mlpipeline.PipelineVisitor.coregNameStruct(varargin{:});
+                fn      = fullfilename(nstruct.path, ...
+                                      [nstruct.pre mlfsl.FslRegistry.INTERIMAGE_TOKEN nstruct.post]);
+            catch ME
+                handexcept(ME);
+            end
         end
     end
-    
-	methods 
- 		function this = PipelineVisitor(varargin) 
- 			%% PIPELINEVISITOR 
- 			%  Usage:  this = PipelineVisitor([parameter_name, parameter_value]) 
-            %                                  ^ logger, image, product, sessionPath, workPath
- 			
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            import mlpipeline.*;
-            addOptional(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.SessionData'));
-            addParameter(ip, 'logger',      mlpipeline.Logger,                @(l) isa(l, 'mlpipeline.Logger'));
-            addParameter(ip, 'sessionPath', PipelineVisitor.guessSessionPath, @(v) lexist(v, 'dir'));
-            addParameter(ip, 'studyPath',   getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
-            addParameter(ip, 'subjectsDir', getenv('SUBJECTS_DIR'),           @(s) lexist(s, 'dir'));
-            addParameter(ip, 'workPath',    PipelineVisitor.guessWorkpath,    @(v) lexist(v, 'dir')); 
-            parse(ip, varargin{:});
-            
-            %% prefer using SessionData; use Logger within mlfourd.ImagingContext
-            
-            if (~isempty(ip.Results.sessionData))
-                this.sessionData_ = ip.Results.sessionData;
-                this.sessionPath_ = this.sessionData_.sessionPath;
-                this.workPath_    = this.sessionData_.sessionPath;
-                if (~strcmp(getenv('SUBJECTS_DIR'), this.sessionData_.subjectsDir))
-                            setenv('SUBJECTS_DIR',  this.sessionData_.subjectsDir); 
-                end
-                return
-            end
-            
-            %% legacy
-            
-            this.logged_     = ip.Results.logger; 
-            this.sessionPath = ip.Results.sessionPath;
-            if (~strcmp(getenv('SUBJECTS_DIR'), ip.Results.studyPath))
-                        setenv('SUBJECTS_DIR',  ip.Results.studyPath);  end
-            if (~strcmp(getenv('SUBJECTS_DIR'), ip.Results.subjectsDir))
-                        setenv('SUBJECTS_DIR',  ip.Results.subjectsDir); end
-            this.workPath    = ip.Results.workPath;
- 		end 
-    end 
     
     %% PROTECTED
     
     methods (Static, Access = 'protected')
+        
+        %% FILENAME METHODS
+        
+        function nameStruct = coregNameStruct(varargin)
+            %% COREGNAME 
+            %  @param varargin[,...] are strings
+            %  @returns a struct-array with string fields path, pre, post;
+            %  dispatches to *2coregNameStruct methods that update path, pre, post so that 
+            %  varargin{1} updates path, pre and varargin{N}, N = length(varargin), updates post.
+            %  the coregistered name will have the form:   [char(varargin{1}) '_on_' char(varargin{N})]
+            
+            nameStruct = struct('path', '', 'pre', '', 'post', '');
+            import mlpipeline.*;
+            for v = 1:length(varargin)
+                arg = imcast(varargin{v}, 'char');
+                assert(~isempty(arg));
+                assert( ischar( arg));
+                nameStruct = PipelineVisitor.char2nameStruct(nameStruct, arg);
+            end
+            nameStruct = PipelineVisitor.finalizeNameStruct(nameStruct);
+        end
+        function nameStruct = char2nameStruct(nameStruct, strng)
+            %% CHAR2NAMESTRUCT
+            %  @param nameStruct with fields path, pre, post
+            %  @param strng containing path, prefix, extension information
+            %  @returns nameStruct with updated path, pre, post
+            
+            import mlpipeline.*;
+            assert(ischar(strng));
+            [pth,strng] = myfileparts(strng);
+            if (isempty(nameStruct.path))
+                nameStruct.path = pth; end
+            if (isempty(nameStruct.pre))
+                nameStruct.pre  = PipelineVisitor.beforeToken(strng); end
+                nameStruct.post = PipelineVisitor.afterToken( strng);
+        end
+        function nameStruct = finalizeNameStruct(nameStruct)
+            %% FINALIZENAMESTRUCT
+            %  @param nameStruct with fields path, pre, post
+            %  @returns nameStruct updated
+            
+            if (~isempty(nameStruct.path))
+                assert(isdir(nameStruct.path)); 
+            end
+            nameStruct.pre  = fileprefix(nameStruct.pre);
+            nameStruct.post = fileprefix(nameStruct.post);
+        end
+        function str        = beforeToken(str, varargin)
+            %% BEFORETOKEN 
+            %  @param str is a string possibly containing the token.
+            %  @param tok is the char token.
+            %  @returns the substring in front of the first token, excluding filename suffixes .mat/.nii.gz; 
+            %  default is mlfsl.FslRegistry.INTERIMAGE_TOKEN
+            
+            import mlfsl.*;
+            ip = inputParser;
+            addRequired(ip, 'str', @ischar);
+            addOptional(ip, 'tok', FslRegistry.INTERIMAGE_TOKEN, @ischar);
+            parse(ip, str, varargin{:});
+            
+            str  = fileprefix(fileprefix(str, FlirtVisitor.XFM_SUFFIX));
+            locs = strfind(str, ip.Results.tok);
+            if (~isempty(locs))
+                str = str(1:locs(1)-1);
+            end
+        end
+        function str        = afterToken(str, varargin)
+            %% AFTERTOKEN 
+            %  @param str is a string possibly containing the token.
+            %  @param tok is the char token.
+            %  @returns the substring after the last token, excluding filename suffixes .mat/.nii.gz; 
+            %  default is mlfsl.FslRegistry.INTERIMAGE_TOKEN
+           
+            import mlfsl.*;
+            ip = inputParser;
+            addRequired(ip, 'str', @ischar);
+            addOptional(ip, 'tok', FslRegistry.INTERIMAGE_TOKEN, @ischar);
+            parse(ip, str, varargin{:});
+            
+            str  = fileprefix(fileprefix(str, FlirtVisitor.XFM_SUFFIX));
+            locs = strfind(str, ip.Results.tok);
+            if (~isempty(locs))
+                str = str(locs(end)+length(ip.Results.tok):end);
+            end
+        end
+        
+        %% OPTION METHODS
+        
+        function         assertOptionAllowed(opt, exe)
+            warning('mlfsl:notImplemented', 'FslVisitor.assertOptionAllowed');
+            assert(isstruct(opt));
+            assert(ischar(exe));
+            msg = mlfsl.FslVisitor.help(exe);
+            fields = fieldnames(opt);
+            for f = 1:length(fields)
+                assert(lstrfind(fields{f}), msg);
+            end
+        end
         function str   = oany2str(obj, exe)
             import mlfsl.*;
             switch (class(obj))
@@ -235,50 +241,8 @@ classdef PipelineVisitor
                 assert(1 == length(opts))
                 str = sprintf(' %s -%s %s', str,  fields{f}, opts.(fields{f}));
             end
-        end
-        function         assertOptionAllowed(opt, exe)
-            warning('mlfsl:notImplemented', 'FslVisitor.assertOptionAllowed');
-            assert(isstruct(opt));
-            assert(ischar(exe));
-            msg = mlfsl.FslVisitor.help(exe);
-            fields = fieldnames(opt);
-            for f = 1:length(fields)
-                assert(lstrfind(fields{f}), msg);
-            end
-        end
+        end        
     end 
-    
-    %% PRIVATE
-    
-    properties (Access = 'private')
-        logged_
-        sessionData_
-        sessionPath_
-        workPath_
-    end
-    
-    methods (Static, Access = 'private')
-        function pth   = guessSessionPath
-            pth = pwd;     
-            import mlpipeline.*;
-            for w = 1:length(PipelineVisitor.WORKFOLDERS)
-                pos = strfind(pth, PipelineVisitor.WORKFOLDERS{w});
-                if (~isempty(pos))
-                    pth = pth(1:pos-2);
-                end
-            end
-        end
-        function pth   = guessWorkpath
-            pth = pwd;            
-            import mlpipeline.*;
-            for w = 1:length(PipelineVisitor.WORKFOLDERS)
-                pos = strfind(pth, PipelineVisitor.WORKFOLDERS{w});
-                if (~isempty(pos))
-                    return;
-                end
-            end
-        end   
-    end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy 
 end

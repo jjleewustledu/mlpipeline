@@ -132,7 +132,7 @@ classdef Np755
                 handwarning(ME);
             end
             try
-                this.mad.motionCorrect(this.ep2dCntxt);
+                this.mad.directMotionCorrection(this.ep2dCntxt);
                 this.mad.alignPerfusion(this.ep2dCntxt, this.t2Cntxt);
             catch ME
                 handwarning(ME);
