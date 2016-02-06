@@ -91,7 +91,7 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             else                 
                 this.cellArrayList_ = mlpatterns.CellArrayList;
             end            
-            this.creationDate_  = datestr(now, 31);
+            this.creationDate_  = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
             [~,this.hostname_]  = mlbash('hostname'); this.hostname_ = strtrim(this.hostname_);
             [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);
             this.cellArrayList_.add(this.header);            
@@ -115,10 +115,6 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             %  @throws mlpipeline.IOError:noclobberPreventedSaving
             
             this = this.ensureExtension;
-            if (this.noclobber && lexist(this.fqfilename, 'file'))
-                error('mlpipeline:IOError:noclobberPreventedSaving', ...
-                      'Logger.save.noclobber->%i and fqfilename->%s already exists; data not saved', this.noclobber, this.fqfilename);
-            end
             mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
                 this.cellArrayList_, this.fqfilename);
         end
@@ -133,7 +129,7 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
         end
         function           add(this, varargin) 
             if (this.includeTimeStamp)
-                s = sprintf('%s:  ', datestr(now, 31));
+                s = sprintf('%s:  ', datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF'));
                 this.cellArrayList_.add([s sprintf(varargin{:})]);
                 return
             end
@@ -179,7 +175,7 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             end
         end
         function txt  = header(this)
-            txt = sprintf('%s:\n%s from %s at %s initialized\n%s', ...
+            txt = sprintf('%s:  %s from %s at %s initialized %s', ...
                           this.creationDate, strrep(this.callerid, '_', '.'), this.id, this.hostname, this.fqfilename);
         end
     end

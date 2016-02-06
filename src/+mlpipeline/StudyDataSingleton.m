@@ -18,39 +18,87 @@ classdef StudyDataSingleton < handle
         register(varargin)
     end
     
+    methods (Abstract)
+        f = fslFolder(    this, sessDat)
+        f = hdrinfoFolder(this, sessDat)
+        f = mriFolder(    this, sessDat)
+        f = petFolder(    this, sessDat)
+    end
+    
     properties
         comments
     end
 
-	methods        
+	methods    
+        function fn = ep2d_fn(~, ~)
+            fn = 'ep2d_default.nii.gz';
+        end
         function fn = fdg_fn(~, sessDat)
-            fn = [sessDat.sessionFolder 'fdg.4dfp.nii.gz'];
+            try
+                fn = sprintf('%sfdg.4dfp.nii.gz', sessDat.sessionFolder);
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
         end
         function fn = gluc_fn(~, sessDat)
-            fp = sprintf('%sgluc%i', sessDat.pnumber, sessDat.snumber);
-            fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+            try
+                fp = sprintf('%sgluc%i', sessDat.pnumber, sessDat.snumber);
+                fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
         end
         function fn = ho_fn(~, sessDat)
-            fp = sprintf('%sho%i', sessDat.pnumber, sessDat.snumber);
-            fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+            try
+                fp = sprintf('%sho%i', sessDat.pnumber, sessDat.snumber);
+                fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
         end
         function fn = oc_fn(~, sessDat)
-            frames = sprintf('%soc%i_frames', sessDat.pnumber, sessDat.snumber);
-            dt = mlsystem.DirTool( ...
-                fullfile(sessDat.petPath, frames, ...
-                    sprintf('%soc%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
-            fn = fullfile(frames, dt.fns{1});
+            try
+                frames = sprintf('%soc%i_frames', sessDat.pnumber, sessDat.snumber);
+                dt = mlsystem.DirTool( ...
+                    fullfile(sessDat.petPath, frames, ...
+                        sprintf('%soc%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
+                if (isempty(dt.fns))
+                    fn = '';
+                    return
+                end
+                fn = fullfile(frames, dt.fns{1});
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
         end
         function fn = oo_fn(~, sessDat)
-            fp = sprintf('%soo%i', sessDat.pnumber, sessDat.snumber);
-            fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+            try
+                fp = sprintf('%soo%i', sessDat.pnumber, sessDat.snumber);
+                fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
         end
         function fn = tr_fn(~, sessDat)
-            frames = sprintf('%str%i_frames', sessDat.pnumber, sessDat.snumber);
-            dt = mlsystem.DirTool( ...
-                fullfile(sessDat.petPath, frames, ...
-                    sprintf('%str%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
-            fn = fullfile(frames, dt.fns{1});
+            try
+                frames = sprintf('%str%i_frames', sessDat.pnumber, sessDat.snumber);
+                dt = mlsystem.DirTool( ...
+                    fullfile(sessDat.petPath, frames, ...
+                        sprintf('%str%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
+                if (isempty(dt.fns))
+                    fn = '';
+                    return
+                end
+                fn = fullfile(frames, dt.fns{1});
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
         end
         function iter = createIteratorForSessionData(this)
             iter = this.sessionDataComposite_.createIterator;

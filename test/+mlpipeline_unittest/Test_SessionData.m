@@ -15,22 +15,28 @@ classdef Test_SessionData < matlab.unittest.TestCase
 
 	properties
  		registry
+        subjectsDir = '/Volumes/InnominateHD3/Local/test/raichle/PPGdata/idaif'
  		testObj
  	end
 
 	methods (Test)
-		function test_afun(this)
- 			import mlpipeline.*;
- 			this.assumeEqual(1,1);
- 			this.verifyEqual(1,1);
- 			this.assertEqual(1,1);
+		function test_ctor(this)
+            this.assertInstanceOf(this.testObj, 'mlpipeline.SessionData');
+            this.assertEqual(this.testObj.subjectsDir, this.subjectsDir);
+            this.assertEqual(this.testObj.sessionPath, fullfile(this.subjectsDir, 'NP995_14'));
+            this.assertEqual(this.testObj.fdg_fqfn,    fullfile(this.testObj.sessionPath, 'V1', 'NP995_14fdg.4dfp.nii.gz'));
+
  		end
 	end
 
  	methods (TestClassSetup)
 		function setupSessionData(this)
  			import mlpipeline.*;
- 			this.testObj_ = SessionData;
+ 			this.testObj_ = SessionData( ...
+                'studyData', StudyDataSingletons.instance('test_raichle'), ...
+                'sessionPath', fullfile(this.subjectsDir, 'NP995_14'), ...
+                'snumber', 1, ...
+                'vnumber', 1);
  		end
 	end
 

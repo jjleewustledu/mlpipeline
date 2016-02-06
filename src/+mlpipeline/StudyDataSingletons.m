@@ -24,10 +24,12 @@ classdef StudyDataSingletons < handle
                     this = instance_;
                     return
                 end
-                mlpipeline.TestDataSingleton.register;
                 mlarbelaez.StudyDataSingleton.register;
+                mlarbelaez.TestDataSingleton.register;
                 mlderdeyn.StudyDataSingleton.register;
+                mlderdeyn.TestDataSingleton.register;
                 mlraichle.StudyDataSingleton.register;
+                mlraichle.TestDataSingleton.register;
                 instance_ = mlpipeline.StudyDataSingletons.lookup(name);
             end
             if (isempty(instance_))

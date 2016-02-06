@@ -47,8 +47,8 @@ classdef AbstractOptions
         function imobj = imageObject(~, varargin)
             imobj = mlchoosers.ImagingChoosers.imageObject(varargin{:});
         end
-        function xfm   = xfmName(~, varargin)
-            xfm = mlfsl.FslVisitor.xfmName(varargin{:});
+        function xfm   = transformFilename(~, varargin)
+            xfm = mlfsl.FslVisitor.transformFilename(varargin{:});
         end
         function str   = underscores2dashes(~, str)
             idxs = strfind(str, '_');

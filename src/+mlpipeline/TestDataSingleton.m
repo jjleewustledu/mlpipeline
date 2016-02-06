@@ -10,21 +10,21 @@ classdef TestDataSingleton < mlpipeline.StudyDataSingleton
  	
     
     properties (SetAccess = private)
-        testTrunk = '/Volumes/InnominateHD3/Local/test/cvl'
+        testTrunk = '/Volumes/InnominateHD3/Local/test'
 
         mriFolder = 'mri'
         fslFolder = 'fsl'
     end
     
 	properties (Dependent)
-        subjectsDirs
+        subjectsDir
         loggingPath
     end
     
     methods %% GET
-        function g = get.subjectsDirs(this)
-            g = { fullfile(this.testTrunk, 'np755', '') ...
-                  fullfile(this.testTrunk, 'np797', '') };
+        function g = get.subjectsDir(this)
+            g = { fullfile(this.testTrunk, 'cvl', 'np755', '') ...
+                  fullfile(this.testTrunk, 'cvl', 'np797', '')};
         end
         function g = get.loggingPath(this)
             g = this.testTrunk;
@@ -71,7 +71,7 @@ classdef TestDataSingleton < mlpipeline.StudyDataSingleton
  		function this = TestDataSingleton(varargin)
  			this = this@mlpipeline.StudyDataSingleton(varargin{:});
             
-            dt = mlsystem.DirTools(this.subjectsDirs);
+            dt = mlsystem.DirTools(this.subjectsDir);
             fqdns = {};
             for di = 1:length(dt.dns)
                 if (lstrfind(dt.dns{di}, 'mm0') || lstrfind(dt.dns{di}, 'wu0'))
