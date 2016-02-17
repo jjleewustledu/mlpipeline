@@ -15,8 +15,8 @@ classdef ISessionData
         sessionFolder
  		mriPath
         
-        T1_fqfn
-        aparcA2009sAseg_fqfn
+        %T1_fqfn
+        %aparcA2009sAseg_fqfn
     end
 
 	methods (Abstract)

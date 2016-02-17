@@ -30,38 +30,64 @@ classdef StudyDataSingleton < handle
     end
 
 	methods    
-        function fn = ep2d_fn(~, ~)
-            fn = 'ep2d_default.nii.gz';
-        end
-        function fn = fdg_fn(~, sessDat)
+        function fn = ep2d_fn(~, ~, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
             try
-                fn = sprintf('%sfdg.4dfp.nii.gz', sessDat.sessionFolder);
+                fn = sprintf('ep2d_default%s.nii.gz', ip.Results.suff);
             catch ME
                 handwarning(ME);
                 fn = '';
             end
         end
-        function fn = gluc_fn(~, sessDat)
+        function fn = fdg_fn(~, sessDat, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
+            try                
+                fp = sprintf('%sfdg', sessDat.sessionFolde);
+                fn = fullfile([fp '_frames'], [fp ip.Results.suff '.nii.gz']);
+            catch ME
+                handwarning(ME);
+                fn = '';
+            end
+        end
+        function fn = gluc_fn(~, sessDat, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
             try
                 fp = sprintf('%sgluc%i', sessDat.pnumber, sessDat.snumber);
-                fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+                fn = fullfile([fp '_frames'], [fp ip.Results.suff '.nii.gz']);
             catch ME
                 handwarning(ME);
                 fn = '';
             end
         end
-        function fn = ho_fn(~, sessDat)
+        function fn = ho_fn(~, sessDat, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
             try
                 fp = sprintf('%sho%i', sessDat.pnumber, sessDat.snumber);
-                fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+                fn = fullfile([fp '_frames'], [fp ip.Results.suff '.nii.gz']);
             catch ME
                 handwarning(ME);
                 fn = '';
             end
         end
-        function fn = oc_fn(~, sessDat)
+        function fn = oc_fn(~, sessDat, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
             try
                 frames = sprintf('%soc%i_frames', sessDat.pnumber, sessDat.snumber);
+                if (~isempty(ip.Results.suff))                    
+                    fn = fullfile(frames, sprintf('%soc%i%s.nii.gz', sessDat.pnumber, sessDat.snumber, ip.Results.suff));
+                    return
+                end
+                
                 dt = mlsystem.DirTool( ...
                     fullfile(sessDat.petPath, frames, ...
                         sprintf('%soc%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
@@ -75,18 +101,29 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = oo_fn(~, sessDat)
+        function fn = oo_fn(~, sessDat, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
             try
                 fp = sprintf('%soo%i', sessDat.pnumber, sessDat.snumber);
-                fn = fullfile([fp '_frames'], [fp '.nii.gz']);
+                fn = fullfile([fp '_frames'], [fp ip.Results.suff '.nii.gz']);
             catch ME
                 handwarning(ME);
                 fn = '';
             end
         end
-        function fn = tr_fn(~, sessDat)
+        function fn = tr_fn(~, sessDat, varargin)            
+            ip = inputParser;
+            addOptional(ip, 'suff', '', @ischar);
+            parse(ip, varargin{:})
             try
                 frames = sprintf('%str%i_frames', sessDat.pnumber, sessDat.snumber);
+                if (~isempty(ip.Results.suff))                    
+                    fn = fullfile(frames, sprintf('%str%i%s.nii.gz', sessDat.pnumber, sessDat.snumber, ip.Results.suff));
+                    return
+                end
+                
                 dt = mlsystem.DirTool( ...
                     fullfile(sessDat.petPath, frames, ...
                         sprintf('%str%i*.nii.gz', sessDat.pnumber, sessDat.snumber))); 
