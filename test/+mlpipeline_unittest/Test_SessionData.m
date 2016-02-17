@@ -26,14 +26,44 @@ classdef Test_SessionData < matlab.unittest.TestCase
             this.assertEqual(this.testObj.sessionPath, fullfile(this.subjectsDir, 'NP995_14'));
             this.assertEqual(this.testObj.fdg_fqfn,    fullfile(this.testObj.sessionPath, 'V1', 'NP995_14fdg.4dfp.nii.gz'));
 
- 		end
+        end
+        function test_ho1(this)
+            this.testObj.snumber = 1;
+            ho1 = this.testObj.ho;
+            ho1.view;
+            ho1.save;            
+            this.verifyTrue(lexist(ho1.fqfilename, 'file'));
+            %deleteExisting(oc2.fqfilename);
+        end
+        function test_oc2(this)
+            this.testObj.snumber = 2;
+            oc2 = this.testObj.oc;
+            oc2.view;
+            oc2.save;            
+            this.verifyTrue(lexist(oc2.fqfilename, 'file'));
+            %deleteExisting(oc2.fqfilename);
+        end
+        function test_oo2(this)
+            this.testObj.snumber = 2;
+            oo2 = this.testObj.oo;
+            oo2.view;
+            oo2.save;            
+            this.verifyTrue(lexist(oo2.fqfilename, 'file'));
+            %deleteExisting(oc2.fqfilename);
+        end
+        function test_fdg(this)
+            fdg = this.testObj.fdg;
+            fdg.view;
+            fdg.save;
+            this.verifyTrue(lexist(fdg.fqfilename, 'file'));
+            %deleteExisting(fdg.fqfilename);
+        end
 	end
 
  	methods (TestClassSetup)
 		function setupSessionData(this)
- 			import mlpipeline.*;
- 			this.testObj_ = SessionData( ...
-                'studyData', StudyDataSingletons.instance('test_raichle'), ...
+ 			this.testObj_ = mlraichle.SessionData( ...
+                'studyData', mlpipeline.StudyDataSingletons.instance('test_raichle'), ...
                 'sessionPath', fullfile(this.subjectsDir, 'NP995_14'), ...
                 'snumber', 1, ...
                 'vnumber', 1);
