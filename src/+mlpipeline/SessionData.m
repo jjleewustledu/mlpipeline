@@ -66,6 +66,73 @@ classdef SessionData < mlpipeline.ISessionData
         function g = get.fslPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.fslFolder(this), '');
         end
+    end    
+    
+    methods (Static)
+        function ic   = cropImaging(ic, varargin)
+            ip = inputParser;
+            addRequired(ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
+            addOptional(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
+            parse(ip, ic, varargin{:});
+            fr = ip.Results.fractions;
+            
+            niid = ic.niftid;
+            for r = 1:niid.rank
+                if (fr(r) < 1)
+                    cropping{r} = ceil(0.5*fr(r)*niid.size(r)):floor((1-0.5*fr(r))*niid.size(r));
+                else
+                    cropping{r} = 1:niid.size(r);
+                end
+            end
+            niid.img = niid.img(cropping{:});            
+            niid = niid.append_fileprefix('_crop');
+            ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
+        end
+        function ic  = flip(ic, dim)
+            niid = ic.niftid;
+            niid.img = flip(niid.img, dim);
+            niid = niid.append_fileprefix(sprintf('_flip%i', dim));
+            ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
+        end
+        function fn   = fslchfiletype(fn, varargin)
+            ip = inputParser;
+            addRequired(ip, 'fn', @(x) lexist(x, 'file'));
+            addOptional(ip, 'type', 'NIFTI_GZ', @ischar);
+            parse(ip, fn, varargin{:});
+            
+            fprintf('mlpipeline.SessionData.fslchfiletype is working on %s\n', ip.Results.fn);
+            mlpipeline.PipelineVisitor.cmd('fslchfiletype', 'NIFTI_GZ', ip.Results.fn);
+            [p,f] = myfileparts(fn);
+            fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
+        end
+        function fn  = mri_convert(fn, varargin)
+            import mlpipeline.*;
+            ip = inputParser;
+            addRequired(ip, 'fn',                                 @(x) lexist(x, 'file'));
+            addOptional(ip, 'fn2', SessionData.niigzFilename(fn), @ischar);
+            parse(ip, fn, varargin{:});            
+            
+            fprintf('mlpipeline.SessionData.mri_convert is working on %s\n', ip.Results.fn);
+            mlpipeline.PipelineVisitor.cmd('mri_convert', ip.Results.fn, ip.Results.fn2);
+            fn = ip.Results.fn2;
+        end
+        function fn  = niigzFilename(fn)
+            [p,f] = myfileparts(fn);
+            fn = fullfile(p, [f '.nii.gz']);
+        end
+        function ic  = repackageImagingContext(obj, oriClass)
+            switch (oriClass)
+                case 'mlfourd.ImagingContext'
+                    ic = mlfourd.ImagingContext(obj);
+                case 'mlmr.MRImagingContext'
+                    ic = mlmr.MRImagingContext(obj);
+                case 'mlpet.PETImagingContext'
+                    ic = mlpet.PETImagingContext(obj);
+                otherwise
+                    error('mlfsl:unsupportedSwitchCase', ....
+                          'SessionData.repackageImagingContext.oriClass->%s is not supported', oriClass);
+            end
+        end
     end
     
 	methods        
@@ -103,13 +170,68 @@ classdef SessionData < mlpipeline.ISessionData
 %             fprintf('             hdrinfoPath: ''%s''\n', this.hdrinfoPath);
 %             fprintf('                 fslPath: ''%s''\n', this.fslPath);
 %         end
-        function        ensureNIFTI_GZ(this, fn)
-            [p,f] = myfileparts(fn);
-            analyzefn = fullfile(p, [f '.hdr']);
-            niftifn   = fullfile(p, [f '.nii.gz']);
-            if (lexist(analyzefn) && ~lexist(niftifn))
-                this.fslchfiletype(analyzefn);
+        function fqfn = ensureNIFTI_GZ(this, obj)
+            %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
+            %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext.
+            %  @returns changes on the filesystem so that input fn manifests as an imaging file of type NIFTI_GZ 
+            %  per the notation of fsl's fslchfiletype.
+            %  See also:  mlpipeline.SessionData.fslchfiletype, mlpipeline.SessionData.mri_convert.
+            
+            if (isa(obj, 'mlfourd.ImagingContext'))   
+                fqfn = obj.fqfilename;             
+                if (~lexist(fqfn, 'file'))
+                    obj.save;
+                end
+                return
             end
+            if (ischar(obj))
+                if (~lexist(obj, 'file'))
+                    fprintf('Info: SessionData.ensureNIFTI_GZ could not find file %s\n', obj);
+                    fqfn = obj;
+                    return
+                end
+                [p,f,e] = myfileparts(obj);
+                switch (e)
+                    case '.nii.gz'
+                        fqfn = obj;
+                        return
+                    case '.hdr'
+                        analyzefn = fullfile(p, [f '.hdr']);
+                        fqfn      = fullfile(p, [f '.nii.gz']);
+                        if (~lexist(fqfn))
+                            this.fslchfiletype(analyzefn);
+                        end
+                        return
+                    otherwise
+                        fqfn = fullfile(p, [f '.nii.gz']);
+                        this.mri_convert(obj, fqfn)
+                        return
+                end
+            end            
+            error('mlpipeline:unsupportedTypeclass', ...
+                  'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
+        end
+        function f = fullfile(this, varargin)
+            assert(~isempty(varargin));
+            if (1 == length(varargin))
+                f = varargin{1};
+                return
+            end
+            path = fullfile(varargin{1:end-1});
+            assert(isdir(path));
+            assert(ischar(varargin{end}));
+            
+            f = fullfile(path,                           varargin{end});
+            if (lexist(f, 'file')); return; end            
+            f = fullfile(path, sprintf('%s.nii.gz',      varargin{end}));
+            if (lexist(f, 'file')); return; end
+            f = fullfile(path, sprintf('%s.4dfp.nii.gz', varargin{end}));
+            if (lexist(f, 'file')); return; end
+            f = fullfile(path, sprintf('%s.4dfp.hdr',    varargin{end}));
+            f = this.ensureNIFTI_GZ(f);            
+            if (lexist(f, 'file')); return; end
+            f = '';
+            return
         end
     end 
 
@@ -123,31 +245,6 @@ classdef SessionData < mlpipeline.ISessionData
     end
     
     methods (Static, Access = protected)
-        function ic   = cropImaging(ic, varargin)
-            ip = inputParser;
-            addRequired(ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
-            addOptional(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
-            parse(ip, ic, varargin{:});
-            fr = ip.Results.fractions;
-            
-            niid = ic.niftid;
-            for r = 1:niid.rank
-                if (fr(r) < 1)
-                    cropping{r} = ceil(0.5*fr(r)*niid.size(r)):floor((1-0.5*fr(r))*niid.size(r));
-                else
-                    cropping{r} = 1:niid.size(r);
-                end
-            end
-            niid.img = niid.img(cropping{:});            
-            niid = niid.append_fileprefix('_crop');
-            ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
-        end
-        function ic  = flip(ic, dim)
-            niid = ic.niftid;
-            niid.img = flip(niid.img, dim);
-            niid = niid.append_fileprefix(sprintf('_flip%i', dim));
-            ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
-        end
         function ic   = flipAndCropImaging(ic, varargin)
             ip = inputParser;
             addRequired( ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
@@ -172,49 +269,7 @@ classdef SessionData < mlpipeline.ISessionData
             niid.fileprefix = niid.fileprefix(1:strfind(niid.fileprefix, '.4dfp')-1);
             niid = niid.append_fileprefix(sprintf('_flip%i_crop', ip.Results.flipdim));
             ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
-        end
-        function fn   = fslchfiletype(fn, varargin)
-            ip = inputParser;
-            addRequired(ip, 'fn', @(x) lexist(x, 'file'));
-            addOptional(ip, 'type', 'NIFTI_GZ', @ischar);
-            parse(ip, fn, varargin{:});
-            
-            fprintf('mlpipeline.SessionData.fslchfiletype is working on %s\n', ip.Results.fn);
-            mlpipeline.PipelineVisitor.cmd('fslchfiletype', 'NIFTI_GZ', ip.Results.fn);
-            [p,f] = myfileparts(fn);
-            fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
-        end
-        function ic  = repackageImagingContext(obj, oriClass)
-            switch (oriClass)
-                case 'mlfourd.ImagingContext'
-                    ic = mlfourd.ImagingContext(obj);
-                case 'mlmr.MRImagingContext'
-                    ic = mlmr.MRImagingContext(obj);
-                case 'mlpet.PETImagingContext'
-                    ic = mlpet.PETImagingContext(obj);
-                otherwise
-                    error('mlfsl:unsupportedSwitchCase', ....
-                          'SessionData.repackageImagingContext.oriClass->%s is not supported', oriClass);
-            end
-        end
-    end
-    
-    methods (Access = protected)
-        function f = fullfile(this, varargin)
-            ip = inputParser;
-            addRequired(ip, 'path', @isdir);
-            addOptional(ip, 'basename', '', @ischar);
-            parse(ip, varargin{:})
-            
-            f = fullfile(ip.Results.path, sprintf('%s.nii.gz',      ip.Results.basename));
-            if (lexist(f, 'file')); return; end
-            f = fullfile(ip.Results.path, sprintf('%s.4dfp.nii.gz', ip.Results.basename));
-            if (lexist(f, 'file')); return; end
-            f = fullfile(ip.Results.path, sprintf('%s.4dfp.hdr',    ip.Results.basename));
-            this.ensureNIFTI_GZ(f);            
-            if (lexist(f, 'file')); return; end
-            f = '';
-            return
+            ic.save;
         end
     end
     

@@ -17,6 +17,7 @@ classdef Test_SessionData < matlab.unittest.TestCase
  		registry
         subjectsDir = '/Volumes/InnominateHD3/Local/test/raichle/PPGdata/idaif'
  		testObj
+        view
  	end
 
 	methods (Test)
@@ -29,31 +30,35 @@ classdef Test_SessionData < matlab.unittest.TestCase
         end
         function test_ho1(this)
             this.testObj.snumber = 1;
+            this.verifyTrue(lexist(this.testObj.ho_fqfn));
             ho1 = this.testObj.ho;
-            ho1.view;
+            if (this.view); ho1.view; end
             ho1.save;            
             this.verifyTrue(lexist(ho1.fqfilename, 'file'));
             %deleteExisting(oc2.fqfilename);
         end
         function test_oc2(this)
             this.testObj.snumber = 2;
+            this.verifyTrue(lexist(this.testObj.oc_fqfn));
             oc2 = this.testObj.oc;
-            oc2.view;
+            if (this.view); oc2.view; end
             oc2.save;            
             this.verifyTrue(lexist(oc2.fqfilename, 'file'));
             %deleteExisting(oc2.fqfilename);
         end
         function test_oo2(this)
             this.testObj.snumber = 2;
+            this.verifyTrue(lexist(this.testObj.oo_fqfn));
             oo2 = this.testObj.oo;
-            oo2.view;
+            if (this.view); oo2.view; end
             oo2.save;            
             this.verifyTrue(lexist(oo2.fqfilename, 'file'));
             %deleteExisting(oc2.fqfilename);
         end
         function test_fdg(this)
             fdg = this.testObj.fdg;
-            fdg.view;
+            this.verifyTrue(lexist(this.testObj.fdg_fqfn));
+            if (this.view); fdg.view; end
             fdg.save;
             this.verifyTrue(lexist(fdg.fqfilename, 'file'));
             %deleteExisting(fdg.fqfilename);
