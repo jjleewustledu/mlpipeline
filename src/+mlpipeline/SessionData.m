@@ -156,20 +156,13 @@ classdef SessionData < mlpipeline.ISessionData
             this.vnumber_     = ip.Results.vnumber;
             this.suffix       = ip.Results.suffix;
         end
-%         function        disp(this)
-%             fprintf('  %s with properties:\n\n', class(this));
-%             fprintf('                  suffix: ''%s''\n', this.suffix);
-%             fprintf('             subjectsDir: ''%s''\n', this.subjectsDir);
-%             fprintf('             sessionPath: ''%s''\n', this.sessionPath);
-%             fprintf('           sessionFolder: ''%s''\n', this.sessionFolder);
-%             fprintf('                 pnumber: ''%s''\n', this.pnumber);
-%             fprintf('                 snumber: ''%s''\n', this.snumber);
-%             fprintf('                 vnumber: ''%s''\n', this.vnumber);
-%             fprintf('                 mriPath: ''%s''\n', this.mriPath);
-%             fprintf('                 petPath: ''%s''\n', this.petPath);
-%             fprintf('             hdrinfoPath: ''%s''\n', this.hdrinfoPath);
-%             fprintf('                 fslPath: ''%s''\n', this.fslPath);
-%         end
+        
+        function ic = assembleImagingWeight(this, ic1, rng1, ic2, rng2)
+            nn1 = ic1.numericalNiftid;
+            nn2 = ic2.numericalNiftid;
+            nn  = nn1*rng1 + nn2*rng2;
+            ic  = this.repackageImagingContext(nn, class(ic1));
+        end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
             %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext.
