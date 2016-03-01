@@ -94,6 +94,34 @@ classdef SessionData < mlpipeline.ISessionData
             niid = niid.append_fileprefix(sprintf('_flip%i', dim));
             ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
         end
+        function ic   = flipAndCropImaging(ic, varargin)
+            ip = inputParser;
+            addRequired( ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
+            addParameter(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
+            addParameter(ip, 'flipdim', 2, @isnumeric);
+            parse(ip, ic, varargin{:});
+            fr = ip.Results.fractions;
+            
+            niid = ic.niftid;
+            fprintf('SessionData.flipAndCropImaging is flipping %s\n', niid.fqfilename);
+            niid.img = flip(niid.img, ip.Results.flipdim);
+            
+            fprintf('SessionData.flipAndCropImaging is cropping %s\n', niid.fqfilename);
+            for r = 1:niid.rank
+                if (fr(r) < 1)
+                    cropping{r} = ceil(0.5*fr(r)*niid.size(r)):floor((1-0.5*fr(r))*niid.size(r));
+                else
+                    cropping{r} = 1:niid.size(r);
+                end
+            end
+            niid.img = niid.img(cropping{:});
+            if (lstrfind(niid.fileprefix, '.4dfp'))
+                niid.fileprefix = niid.fileprefix(1:strfind(niid.fileprefix, '.4dfp')-1);
+            end
+            niid = niid.append_fileprefix(sprintf('_flip%i_crop', ip.Results.flipdim));
+            ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
+            ic.save;
+        end
         function fn   = fslchfiletype(fn, varargin)
             ip = inputParser;
             addRequired(ip, 'fn', @(x) lexist(x, 'file'));
@@ -238,32 +266,6 @@ classdef SessionData < mlpipeline.ISessionData
     end
     
     methods (Static, Access = protected)
-        function ic   = flipAndCropImaging(ic, varargin)
-            ip = inputParser;
-            addRequired( ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
-            addParameter(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
-            addParameter(ip, 'flipdim', 2, @isnumeric);
-            parse(ip, ic, varargin{:});
-            fr = ip.Results.fractions;
-            
-            niid = ic.niftid;
-            fprintf('SessionData.flipAndCropImaging is flipping %s\n', niid.fqfilename);
-            niid.img = flip(niid.img, ip.Results.flipdim);
-            
-            fprintf('SessionData.flipAndCropImaging is cropping %s\n', niid.fqfilename);
-            for r = 1:niid.rank
-                if (fr(r) < 1)
-                    cropping{r} = ceil(0.5*fr(r)*niid.size(r)):floor((1-0.5*fr(r))*niid.size(r));
-                else
-                    cropping{r} = 1:niid.size(r);
-                end
-            end
-            niid.img = niid.img(cropping{:});
-            niid.fileprefix = niid.fileprefix(1:strfind(niid.fileprefix, '.4dfp')-1);
-            niid = niid.append_fileprefix(sprintf('_flip%i_crop', ip.Results.flipdim));
-            ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
-            ic.save;
-        end
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
