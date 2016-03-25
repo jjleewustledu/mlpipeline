@@ -14,7 +14,7 @@ classdef PipelineVisitor
     
     methods (Static)
         function [s,r,c] = cmd(exe, varargin)
-            %% FSLCMD is a mini-facade to the FSL command-line
+            %% CMD is a mini-facade to the FSL command-line
             %  [s,r] = FslVisitor.cmd(executable[, option, option2, ...])
             %                         ^ cmd name; without options, typically returns usage help 
             %                                      ^ structs, strings or cell-arrays of
