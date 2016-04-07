@@ -18,6 +18,7 @@ classdef SessionData < mlpipeline.ISessionData
         sessionPath
         sessionFolder
         pnumber
+        rnumber
         snumber
         vnumber
  		mriPath
@@ -42,6 +43,12 @@ classdef SessionData < mlpipeline.ISessionData
             g = str2pnum(this.sessionFolder);
             warning('on', 'mfiles:regexpNotFound');
         end
+        function g = get.rnumber(this)
+            g = this.rnumber_;
+        end
+        function this = set.rnumber(this, r)
+            this.rnumber_ = r;
+        end
         function g = get.snumber(this)
             g = this.snumber_;
         end
@@ -58,7 +65,7 @@ classdef SessionData < mlpipeline.ISessionData
             g = fullfile(this.sessionPath_, this.studyData_.mriFolder(this), '');
         end
         function g = get.petPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.petFolder(this), '');
+            g = fullfile(this.sessionPath_, this.studyData_.petFolder, '');
         end
         function g = get.hdrinfoPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder(this), '');
@@ -69,7 +76,7 @@ classdef SessionData < mlpipeline.ISessionData
     end    
     
     methods (Static)
-        function ic   = cropImaging(ic, varargin)
+        function ic = cropImaging(ic, varargin)
             ip = inputParser;
             addRequired(ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
             addOptional(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
@@ -88,13 +95,13 @@ classdef SessionData < mlpipeline.ISessionData
             niid = niid.append_fileprefix('_crop');
             ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
         end
-        function ic  = flip(ic, dim)
+        function ic = flip(ic, dim)
             niid = ic.niftid;
             niid.img = flip(niid.img, dim);
             niid = niid.append_fileprefix(sprintf('_flip%i', dim));
             ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
         end
-        function ic   = flipAndCropImaging(ic, varargin)
+        function ic = flipAndCropImaging(ic, varargin)
             ip = inputParser;
             addRequired( ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
             addParameter(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
@@ -122,7 +129,7 @@ classdef SessionData < mlpipeline.ISessionData
             ic = mlpipeline.SessionData.repackageImagingContext(niid, class(ic));
             ic.save;
         end
-        function fn   = fslchfiletype(fn, varargin)
+        function fn = fslchfiletype(fn, varargin)
             ip = inputParser;
             addRequired(ip, 'fn', @(x) lexist(x, 'file'));
             addOptional(ip, 'type', 'NIFTI_GZ', @ischar);
@@ -133,7 +140,7 @@ classdef SessionData < mlpipeline.ISessionData
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
         end
-        function fn  = mri_convert(fn, varargin)
+        function fn = mri_convert(fn, varargin)
             import mlpipeline.*;
             ip = inputParser;
             addRequired(ip, 'fn',                                 @(x) lexist(x, 'file'));
@@ -144,11 +151,11 @@ classdef SessionData < mlpipeline.ISessionData
             mlpipeline.PipelineVisitor.cmd('mri_convert', ip.Results.fn, ip.Results.fn2);
             fn = ip.Results.fn2;
         end
-        function fn  = niigzFilename(fn)
+        function fn = niigzFilename(fn)
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f '.nii.gz']);
         end
-        function ic  = repackageImagingContext(obj, oriClass)
+        function ic = repackageImagingContext(obj, oriClass)
             switch (oriClass)
                 case 'mlfourd.ImagingContext'
                     ic = mlfourd.ImagingContext(obj);
@@ -163,7 +170,7 @@ classdef SessionData < mlpipeline.ISessionData
         end
     end
     
-	methods        
+	methods
  		function this = SessionData(varargin)
  			%% SESSIONDATA
  			%  @param [param-name, param-value[, ...]]
@@ -173,6 +180,7 @@ classdef SessionData < mlpipeline.ISessionData
             ip = inputParser;
             addParameter(ip, 'studyData', [], @(x) isa(x, 'mlpipeline.StudyDataSingleton'));
             addParameter(ip, 'sessionPath', pwd, @isdir);
+            addParameter(ip, 'rnumber', 1, @isnumeric);
             addParameter(ip, 'snumber', 1, @isnumeric);
             addParameter(ip, 'vnumber', 1, @isnumeric);
             addParameter(ip, 'suffix', '', @ischar);
@@ -180,12 +188,13 @@ classdef SessionData < mlpipeline.ISessionData
             
             this.studyData_   = ip.Results.studyData;
             this.sessionPath_ = ip.Results.sessionPath;
+            this.rnumber_     = ip.Results.rnumber;
             this.snumber_     = ip.Results.snumber;
             this.vnumber_     = ip.Results.vnumber;
             this.suffix       = ip.Results.suffix;
         end
         
-        function ic = assembleImagingWeight(this, ic1, rng1, ic2, rng2)
+        function ic   = assembleImagingWeight(this, ic1, rng1, ic2, rng2)
             nn1 = ic1.numericalNiftid;
             nn2 = ic2.numericalNiftid;
             nn  = nn1*rng1 + nn2*rng2;
@@ -232,7 +241,7 @@ classdef SessionData < mlpipeline.ISessionData
             error('mlpipeline:unsupportedTypeclass', ...
                   'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
         end
-        function f = fullfile(this, varargin)
+        function f    = fullfile(this, varargin)
             assert(~isempty(varargin));
             if (1 == length(varargin))
                 f = varargin{1};
@@ -261,6 +270,7 @@ classdef SessionData < mlpipeline.ISessionData
     properties (Access = protected)
         studyData_
         sessionPath_
+        rnumber_ = 1
         snumber_ = 1
         vnumber_ = 1
     end

@@ -30,6 +30,8 @@ classdef StudyDataSingletons < handle
                 mlderdeyn.TestDataSingleton.register;
                 mlraichle.StudyDataSingleton.register;
                 mlraichle.TestDataSingleton.register;
+                mlpowers.StudyDataSingleton.register;
+                mlpowers.TestDataSingleton.register;
                 instance_ = mlpipeline.StudyDataSingletons.lookup(name);
             end
             if (isempty(instance_))
