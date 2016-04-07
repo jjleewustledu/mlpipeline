@@ -29,8 +29,8 @@ classdef StudyDataSingleton < handle
         comments
     end
 
-	methods    
-        function fn = ep2d_fn(~, ~, varargin)            
+	methods
+        function fn = ep2d_fn(~, ~, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -41,7 +41,7 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = fdg_fn(~, sessDat, varargin)            
+        function fn = fdg_fn(~, sessDat, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -53,7 +53,7 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = gluc_fn(~, sessDat, varargin)            
+        function fn = gluc_fn(~, sessDat, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -65,7 +65,7 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = ho_fn(~, sessDat, varargin)            
+        function fn = ho_fn(~, sessDat, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -77,7 +77,7 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = oc_fn(~, sessDat, varargin)            
+        function fn = oc_fn(~, sessDat, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -101,7 +101,7 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = oo_fn(~, sessDat, varargin)            
+        function fn = oo_fn(~, sessDat, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -113,7 +113,7 @@ classdef StudyDataSingleton < handle
                 fn = '';
             end
         end
-        function fn = tr_fn(~, sessDat, varargin)            
+        function fn = tr_fn(~, sessDat, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
@@ -139,12 +139,15 @@ classdef StudyDataSingleton < handle
         end
         function iter = createIteratorForSessionData(this)
             iter = this.sessionDataComposite_.createIterator;
-        end  
+        end
+        function sess = sessionData(~, varargin)
+            sess = mlpipeline.SessionData(varargin{:});
+        end
         
         function diaryOff(~)
             diary off;
         end
-        function diaryOn(this)     
+        function diaryOn(this)
             diary(fullfile(this.loggingPath, sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
         end
         function tf = isLocalhost(~)
@@ -175,7 +178,7 @@ classdef StudyDataSingleton < handle
     end
     
     methods (Access = protected)
-        function this = StudyDataSingleton()            
+        function this = StudyDataSingleton()
         end
     end 
     
