@@ -28,49 +28,49 @@ classdef SessionData < mlpipeline.ISessionData
     end
     
     methods %% GET 
-        function g = get.subjectsDir(this)
+        function g    = get.subjectsDir(this)
             g = fileparts(this.sessionPath_); % by definition
         end
-        function g = get.sessionPath(this)
+        function g    = get.sessionPath(this)
             g = this.sessionPath_;
         end
-        function g = get.sessionFolder(this)
+        function g    = get.sessionFolder(this)
             [~,f] = myfileparts(this.sessionPath_);
             g = f;
         end
-        function g = get.pnumber(this)
+        function g    = get.pnumber(this)
             warning('off', 'mfiles:regexpNotFound');
             g = str2pnum(this.sessionFolder);
             warning('on', 'mfiles:regexpNotFound');
         end
-        function g = get.rnumber(this)
+        function g    = get.rnumber(this)
             g = this.rnumber_;
         end
         function this = set.rnumber(this, r)
             this.rnumber_ = r;
         end
-        function g = get.snumber(this)
+        function g    = get.snumber(this)
             g = this.snumber_;
         end
         function this = set.snumber(this, s)
             this.snumber_ = s;
         end
-        function g = get.vnumber(this)
+        function g    = get.vnumber(this)
             g = this.vnumber_;
         end
         function this = set.vnumber(this, s)
             this.vnumber_ = s;
         end
-        function g = get.mriPath(this)
+        function g    = get.mriPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.mriFolder(this), '');
         end
-        function g = get.petPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.petFolder, '');
+        function g    = get.petPath(this)
+            g = fullfile(this.sessionPath_, this.studyData_.petFolder(this), '');
         end
-        function g = get.hdrinfoPath(this)
+        function g    = get.hdrinfoPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder(this), '');
         end
-        function g = get.fslPath(this)
+        function g    = get.fslPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.fslFolder(this), '');
         end
     end    

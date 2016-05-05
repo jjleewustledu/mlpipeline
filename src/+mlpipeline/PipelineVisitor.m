@@ -30,7 +30,7 @@ classdef PipelineVisitor
             try
                 [s,r] = mlbash(c);
                 if (0 ~= s)
-                    error('mlfsl:shellFailure', 'FslVisitor.cmd %s\nreturned %i', c, s); 
+                    error('mlfsl:shellFailure', 'FslVisitor.cmd %s\nreturned %i\n%s', c, s, r); 
                 end
             catch ME
                 handexcept(ME,'mlfsl:shellError',r);
