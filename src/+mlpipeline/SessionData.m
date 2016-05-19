@@ -258,7 +258,6 @@ classdef SessionData < mlpipeline.ISessionData
             f = fullfile(path, sprintf('%s.4dfp.nii.gz', varargin{end}));
             if (lexist(f, 'file')); return; end
             f = fullfile(path, sprintf('%s.4dfp.hdr',    varargin{end}));
-            f = this.ensureNIFTI_GZ(f);            
             if (lexist(f, 'file')); return; end
             f = '';
             return
