@@ -10,7 +10,7 @@ classdef TestDataSingleton < mlpipeline.StudyDataSingleton
  	
     
     properties (SetAccess = private)
-        testTrunk = '/Volumes/InnominateHD3/Local/test'
+        testTrunk = fullfile(getenv('UNITTESTS'))
 
         mriFolder = 'mri'
         fslFolder = 'fsl'
