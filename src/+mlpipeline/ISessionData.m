@@ -11,15 +11,10 @@ classdef ISessionData
 	
 	properties (Abstract)
         subjectsDir
-        sessionPath
-        sessionFolder
- 		mriPath
-        
-        %T1_fqfn
-        %aparcA2009sAseg_fqfn
     end
 
 	methods (Abstract)
+        loc = sessionLocation(this)
  	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

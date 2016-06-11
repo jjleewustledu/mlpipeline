@@ -37,16 +37,13 @@ classdef Test_StudyDataSingletons < matlab.unittest.TestCase
             this.verifyEqual(sdss2.comments, 'test_persistentInstance');
             
             sdss.comments = 'test_persistentInstance again';
-            this.verifyEqual(sdss2.comments, 'test_persistentInstance again');
-            
+            this.verifyEqual(sdss2.comments, 'test_persistentInstance again');            
  		end
 		function test_arbelaez(this)
         end
 		function test_derdeyn(this)
         end
 		function test_raichle(this)
-        end
-		function test_noReregistration(this)
         end
 	end
 

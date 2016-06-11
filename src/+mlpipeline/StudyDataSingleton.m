@@ -1,5 +1,6 @@
-classdef StudyDataSingleton < handle
+classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle %%%& mlmr.MRDataHandle & mlpet.PETDataHandle
 	%% STUDYDATASINGLETON  
+    %  Override empty loggingLocation, sessionData and empty methods from IMRData and IPETData
 
 	%  $Revision$
  	%  was created 21-Jan-2016 15:29:29
@@ -8,28 +9,161 @@ classdef StudyDataSingleton < handle
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
  	
-
-	properties (Abstract)
-        loggingPath
-    end
-    
-    methods (Static, Abstract)
-        instance(qualifier)
-        register(varargin)
-    end
-    
-    methods (Abstract)
-        f = fslFolder(    this, sessDat)
-        f = hdrinfoFolder(this, sessDat)
-        f = mriFolder(    this, sessDat)
-        f = petFolder(    this, sessDat)
-    end
     
     properties
         comments
     end
 
+    methods (Static)
+        function im  = imagingType(typ, obj)
+            if (ischar(obj) && isdir(obj))
+                im = mlpipeline.StudyDataSingleton.locationType(typ, obj);
+                return
+            end
+            obj = mlfourd.ImagingContext(obj);
+            switch (typ)
+                case {'filename' 'fn'}
+                    im = obj.filename;
+                case {'fqfilename' 'fqfn'}
+                    im = obj.fqfn;
+                case {'fileprefix' 'fp'}
+                    im = obj.fileprefix;
+                case {'fqfileprefix' 'fqfp'}
+                    im = obj.fqfp;
+                case  'folder'
+                    [~,im] = fileparts(obj.filepath);
+                case  'path'
+                    im = obj.filepath;
+                case  'ext'
+                    [~,~,im] = myfileparts(obj.filename);
+                case  'imagingContext'
+                    im = mlfourd.ImagingContext(obj);
+                otherwise
+                    error('mlpipeline:insufficientSwitchCases', ...
+                          'StudyDataSingleton.imagingType.obj->%s not recognized', obj);
+            end
+        end
+        function loc = locationType(typ, pth)
+            assert(isdir(pth));
+            switch (typ)
+                case 'folder'
+                    [~,loc] = fileparts(pth);
+                case 'path'
+                    loc = pth;
+                otherwise
+                    error('mlpipeline:insufficientSwitchCases', ...
+                          'StudyDataSingleton.locationType.pth->%s not recognized', pth);
+            end
+        end
+        function tf  = isImagingType(t)
+            tf = lstrcmp(t, mlpipeline.StudyDataSingletonHandle.IMAGING_TYPES);
+        end
+        function tf  = isLocationType(t)
+            tf = lstrcmp(t, mlpipeline.StudyDataSingletonHandle.LOCATION_TYPES);
+        end
+    end
+    
 	methods
+        function iter = createIteratorForSessionData(this)
+            iter = this.sessionDataComposite_.createIterator;
+        end
+        function        diaryOff(~)
+            diary off;
+        end
+        function        diaryOn(this)
+            diary(fullfile(this.loggingLocation('path'), sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
+        end
+        function tf   = isChpcHostname(~)
+            [~,hn] = mlbash('hostname');
+            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
+        end
+        function loc  = loggingLocation(~) %#ok<STOUT>
+        end
+        function loc  = saveWorkspace(this)
+            loc = fullfile(this.loggingLocation('path'), sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30)));
+            if (this.isChpcHostname)
+                save(loc, '-v7.3');
+                return
+            end
+            save(loc);
+        end
+        function sess = sessionData(varargin)
+            %% SESSIONDATA
+            %  @param parameter names and values expected by mlpipeline.SessionData;
+            %  'studyData' and this are implicitly supplied.
+            %  @returns mlpipeline.SessionData object
+            
+            sess = mlpipeline.SessionData('studyData', this, varargin{:});
+        end
+        
+        %% IMRData
+        
+        function loc  = freesurferLocation(~) %#ok<STOUT>
+        end
+        function loc  = fslLocation(~) %#ok<STOUT>
+        end
+        function loc  = mriLocation(~) %#ok<STOUT>
+        end
+        
+        function obj  = adc(~) %#ok<STOUT>
+        end
+        function obj  = aparcA2009sAseg(~) %#ok<STOUT>
+        end
+        function obj  = asl(~) %#ok<STOUT>
+        end
+        function obj  = bold(~) %#ok<STOUT>
+        end
+        function obj  = brain(~) %#ok<STOUT>
+        end
+        function obj  = dwi(~) %#ok<STOUT>
+        end
+        function obj  = ep2d(~) %#ok<STOUT>
+        end
+        function obj  = fieldmap(~) %#ok<STOUT>
+        end
+        function obj  = localizer(~) %#ok<STOUT>
+        end
+        function obj  = mpr(~) %#ok<STOUT>
+        end
+        function obj  = orig(~) %#ok<STOUT>
+        end
+        function obj  = t1(~) %#ok<STOUT>
+        end
+        function obj  = t2(~) %#ok<STOUT>
+        end
+        function obj  = tof(~) %#ok<STOUT>
+        end
+        function obj  = wmparc(~) %#ok<STOUT>
+        end
+                
+        %% IPETData
+        
+        function loc  = hdrinfoLocation(~) %#ok<STOUT>
+        end
+        function loc  = petLocation(~) %#ok<STOUT>
+        end        
+        
+        function obj  = ct(~) %#ok<STOUT>
+        end
+        function obj  = fdg(~) %#ok<STOUT>
+        end
+        function obj  = gluc(~) %#ok<STOUT>
+        end
+        function obj  = ho(~) %#ok<STOUT>
+        end
+        function obj  = oc(~) %#ok<STOUT>
+        end
+        function obj  = oo(~) %#ok<STOUT>
+        end
+        function obj  = tr(~) %#ok<STOUT>
+        end
+        function obj  = umap(~) %#ok<STOUT>
+        end
+    end
+    
+    %% DEPRECATED, HIDDEN
+    
+    methods (Hidden)        
         function fn = ep2d_fn(~, ~, varargin)
             ip = inputParser;
             addOptional(ip, 'suff', '', @ischar);
@@ -46,7 +180,7 @@ classdef StudyDataSingleton < handle
             addOptional(ip, 'suff', '', @ischar);
             parse(ip, varargin{:})
             try                
-                fp = sprintf('%sfdg', sessDat.sessionFolde);
+                fp = sprintf('%sfdg', sessDat.sessionFolder);
                 fn = fullfile([fp '_frames'], [fp ip.Results.suff '.nii.gz']);
             catch ME
                 handwarning(ME);
@@ -83,7 +217,7 @@ classdef StudyDataSingleton < handle
             parse(ip, varargin{:})
             try
                 frames = sprintf('%soc%i_frames', sessDat.pnumber, sessDat.snumber);
-                if (~isempty(ip.Results.suff))                    
+                if (~isempty(ip.Results.suff))
                     fn = fullfile(frames, sprintf('%soc%i%s.nii.gz', sessDat.pnumber, sessDat.snumber, ip.Results.suff));
                     return
                 end
@@ -119,7 +253,7 @@ classdef StudyDataSingleton < handle
             parse(ip, varargin{:})
             try
                 frames = sprintf('%str%i_frames', sessDat.pnumber, sessDat.snumber);
-                if (~isempty(ip.Results.suff))                    
+                if (~isempty(ip.Results.suff))
                     fn = fullfile(frames, sprintf('%str%i%s.nii.gz', sessDat.pnumber, sessDat.snumber, ip.Results.suff));
                     return
                 end
@@ -136,39 +270,7 @@ classdef StudyDataSingleton < handle
                 handwarning(ME);
                 fn = '';
             end
-        end
-        function iter = createIteratorForSessionData(this)
-            iter = this.sessionDataComposite_.createIterator;
-        end
-        function sess = sessionData(~, varargin)
-            sess = mlpipeline.SessionData(varargin{:});
-        end
-        
-        function diaryOff(~)
-            diary off;
-        end
-        function diaryOn(this)
-            diary(fullfile(this.loggingPath, sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
-        end
-        function tf = isLocalhost(~)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, 'innominate');
-        end
-        function tf = isHostname(hn0)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, hn0);
-        end
-        function tf = isChpcHostname(~)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
-        end
-        function saveWorkspace(this)
-            if (this.isChpcHostname)
-                save(fullfile(this.loggingPath, sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30))), '-v7.3');
-                return
-            end
-            save(fullfile(this.loggingPath, sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30))));
-        end
+        end        
     end
     
     %% PROTECTED

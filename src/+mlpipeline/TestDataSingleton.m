@@ -18,16 +18,12 @@ classdef TestDataSingleton < mlpipeline.StudyDataSingleton
     
 	properties (Dependent)
         subjectsDir
-        loggingPath
     end
     
     methods %% GET
         function g = get.subjectsDir(this)
             g = { fullfile(this.testTrunk, 'cvl', 'np755', '') ...
                   fullfile(this.testTrunk, 'cvl', 'np797', '')};
-        end
-        function g = get.loggingPath(this)
-            g = this.testTrunk;
         end
     end
 
@@ -57,6 +53,21 @@ classdef TestDataSingleton < mlpipeline.StudyDataSingleton
     end
     
     methods
+        function loc = loggingLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'type', 'path', @(x) this.isLocationType(x));
+            parse(ip, varargin{:});
+            
+            switch (ip.Results.type)
+                case 'folder'
+                    [~,loc] = fileparts(this.testTrunk);
+                case 'path'
+                    loc = this.testTrunk;
+                otherwise
+                    error('mlpipeline:insufficientSwitchCases', ...
+                          'StudyDataSingleton.loggingLocation.ip.Results.type->%s not recognized', ip.Results.type);
+            end
+        end
         function f = hdrinfoFolder(~, ~)
             f = 'ECAT_EXACT/hdr_backup';
         end   
