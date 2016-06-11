@@ -1,4 +1,4 @@
-classdef SessionData < mlpipeline.ISessionData
+classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
 	%% SESSIONDATA  
 
 	%  $Revision$
@@ -8,58 +8,32 @@ classdef SessionData < mlpipeline.ISessionData
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
  	
-    
-    properties
-        suffix = ''
-    end
 
 	properties (Dependent)
         subjectsDir
         sessionPath
         sessionFolder
+ 		mriPath
+        petPath
+        fslPath
+        hdrinfoPath
+        
         pnumber
         rnumber
         snumber
         vnumber
- 		mriPath
-        petPath
-        hdrinfoPath
-        fslPath
+        tag
     end
     
     methods %% GET 
         function g    = get.subjectsDir(this)
-            g = fileparts(this.sessionPath_); % by definition
+            g = this.studyData_.subjectsDir;
         end
         function g    = get.sessionPath(this)
             g = this.sessionPath_;
         end
         function g    = get.sessionFolder(this)
-            [~,f] = myfileparts(this.sessionPath_);
-            g = f;
-        end
-        function g    = get.pnumber(this)
-            warning('off', 'mfiles:regexpNotFound');
-            g = str2pnum(this.sessionFolder);
-            warning('on', 'mfiles:regexpNotFound');
-        end
-        function g    = get.rnumber(this)
-            g = this.rnumber_;
-        end
-        function this = set.rnumber(this, r)
-            this.rnumber_ = r;
-        end
-        function g    = get.snumber(this)
-            g = this.snumber_;
-        end
-        function this = set.snumber(this, s)
-            this.snumber_ = s;
-        end
-        function g    = get.vnumber(this)
-            g = this.vnumber_;
-        end
-        function this = set.vnumber(this, s)
-            this.vnumber_ = s;
+            [~,g] = myfileparts(this.sessionPath_);
         end
         function g    = get.mriPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.mriFolder(this), '');
@@ -67,13 +41,47 @@ classdef SessionData < mlpipeline.ISessionData
         function g    = get.petPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.petFolder(this), '');
         end
-        function g    = get.hdrinfoPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder(this), '');
-        end
         function g    = get.fslPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.fslFolder(this), '');
         end
-    end    
+        function g    = get.hdrinfoPath(this)
+            g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder(this), '');
+        end
+        
+        function g    = get.pnumber(this)
+            warning('off', 'mfiles:regexpNotFound');
+            g = str2pnum(this.sessionLocation('folder'));
+            warning('on', 'mfiles:regexpNotFound');
+        end
+        function g    = get.rnumber(this)
+            g = this.rnumber_;
+        end
+        function this = set.rnumber(this, r)
+            assert(isnumeric(r));
+            this.rnumber_ = r;
+        end
+        function g    = get.snumber(this)
+            g = this.snumber_;
+        end
+        function this = set.snumber(this, s)
+            assert(isnumeric(s));
+            this.snumber_ = s;
+        end
+        function g    = get.vnumber(this)
+            g = this.vnumber_;
+        end
+        function this = set.vnumber(this, v)
+            assert(isnumeric(v));
+            this.vnumber_ = v;
+        end
+        function g    = get.tag(this)
+            g = this.tag_;
+        end
+        function this = set.tag(this, t)
+            assert(ischar(t));
+            this.tag_ = t;
+        end
+    end
     
     methods (Static)
         function ic = cropImaging(ic, varargin)
@@ -176,14 +184,18 @@ classdef SessionData < mlpipeline.ISessionData
  			%  @param [param-name, param-value[, ...]]
             %         'studyData'   is a mlpipeline.StudyDataSingleton
             %         'sessionPath' is a path to the session data
+            %         'rnumber'     is numeric
+            %         'snumber'     is numeric
+            %         'vnumber'     is numeric
+            %         'tag'         is appended to the fileprefix
 
             ip = inputParser;
-            addParameter(ip, 'studyData', [], @(x) isa(x, 'mlpipeline.StudyDataSingleton'));
+            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataSingletonHandle'));
             addParameter(ip, 'sessionPath', pwd, @isdir);
-            addParameter(ip, 'rnumber', 1, @isnumeric);
-            addParameter(ip, 'snumber', 1, @isnumeric);
-            addParameter(ip, 'vnumber', 1, @isnumeric);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'rnumber', 1,       @isnumeric);
+            addParameter(ip, 'snumber', 1,       @isnumeric);
+            addParameter(ip, 'vnumber', 1,       @isnumeric);
+            addParameter(ip, 'tag', '',          @ischar);
             parse(ip, varargin{:});
             
             this.studyData_   = ip.Results.studyData;
@@ -191,7 +203,7 @@ classdef SessionData < mlpipeline.ISessionData
             this.rnumber_     = ip.Results.rnumber;
             this.snumber_     = ip.Results.snumber;
             this.vnumber_     = ip.Results.vnumber;
-            this.suffix       = ip.Results.suffix;
+            this.tag          = ip.Results.tag;
         end
         
         function ic   = assembleImagingWeight(this, ic1, rng1, ic2, rng2)
@@ -241,7 +253,7 @@ classdef SessionData < mlpipeline.ISessionData
             error('mlpipeline:unsupportedTypeclass', ...
                   'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
         end
-        function f    = fullfile(this, varargin)
+        function f    = fullfile(~, varargin)
             assert(~isempty(varargin));
             if (1 == length(varargin))
                 f = varargin{1};
@@ -261,6 +273,77 @@ classdef SessionData < mlpipeline.ISessionData
             if (lexist(f, 'file')); return; end
             f = '';
             return
+        end        
+        function loc  = sessionLocation(this, typ)
+            loc = this.studyData_.locationType(typ, this.sessionPath_);
+        end
+        function loc  = vLocation(this, typ)
+            loc = this.studyData_.locationType(typ, ...
+                fullfile(this.sessionPath, sprintf('V%i', this.vnumber), ''));
+        end        
+        
+        %% IMRData
+        
+        function loc  = freesurferLocation(~) %#ok<STOUT>
+        end
+        function loc  = fslLocation(~) %#ok<STOUT>
+        end
+        function loc  = mriLocation(~) %#ok<STOUT>
+        end
+        
+        function obj  = adc(~) %#ok<STOUT>
+        end
+        function obj  = aparcA2009sAseg(~) %#ok<STOUT>
+        end
+        function obj  = asl(~) %#ok<STOUT>
+        end
+        function obj  = bold(~) %#ok<STOUT>
+        end
+        function obj  = brain(~) %#ok<STOUT>
+        end
+        function obj  = dwi(~) %#ok<STOUT>
+        end
+        function obj  = ep2d(~) %#ok<STOUT>
+        end
+        function obj  = fieldmap(~) %#ok<STOUT>
+        end
+        function obj  = localizer(~) %#ok<STOUT>
+        end
+        function obj  = mpr(~) %#ok<STOUT>
+        end
+        function obj  = orig(~) %#ok<STOUT>
+        end
+        function obj  = t1(~) %#ok<STOUT>
+        end
+        function obj  = t2(~) %#ok<STOUT>
+        end
+        function obj  = tof(~) %#ok<STOUT>
+        end
+        function obj  = wmparc(~) %#ok<STOUT>
+        end
+                
+        %% IPETData
+        
+        function loc  = hdrinfoLocation(~) %#ok<STOUT>
+        end
+        function loc  = petLocation(~) %#ok<STOUT>
+        end        
+        
+        function obj  = ct(~) %#ok<STOUT>
+        end
+        function obj  = fdg(~) %#ok<STOUT>
+        end
+        function obj  = gluc(~) %#ok<STOUT>
+        end
+        function obj  = ho(~) %#ok<STOUT>
+        end
+        function obj  = oc(~) %#ok<STOUT>
+        end
+        function obj  = oo(~) %#ok<STOUT>
+        end
+        function obj  = tr(~) %#ok<STOUT>
+        end
+        function obj  = umap(~) %#ok<STOUT>
         end
     end 
 
@@ -272,6 +355,7 @@ classdef SessionData < mlpipeline.ISessionData
         rnumber_ = 1
         snumber_ = 1
         vnumber_ = 1
+        tag_     = ''
     end
     
     methods (Static, Access = protected)

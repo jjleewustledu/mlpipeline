@@ -14,7 +14,8 @@ classdef Test_StudyDataSingleton < matlab.unittest.TestCase
  	
 
 	properties
-        studiesDir = '/Volumes/SeagateBP4'
+        studiesDir4 = '/Volumes/SeagateBP4'
+        studiesDir5 = '/Volumes/SeagateBP5'
         testsDir = '/Volumes/InnominateHD3/Local/test'
  	end
 
@@ -22,6 +23,7 @@ classdef Test_StudyDataSingleton < matlab.unittest.TestCase
 		function test_testArbelaez(this)
             sds  = mlarbelaez.TestDataSingleton.instance('initialize');
             iter = sds.createIteratorForSessionData;
+                   iter.next;
             nxt  = iter.next;
             this.verifyEqual(nxt.gluc_fqfn, ...
                 fullfile(this.testsDir, 'Arbelaez/GluT/p7891_JJL/PET/scan1/p7891gluc1.nii.gz'));
@@ -38,6 +40,7 @@ classdef Test_StudyDataSingleton < matlab.unittest.TestCase
             sds  = mlderdeyn.TestDataSingleton.instance('initialize');
             iter = sds.createIteratorForSessionData;
             iter.next;
+            iter.next;
             nxt  = iter.next;
             this.verifyEqual(nxt.ho_fqfn, ...
                 fullfile(this.testsDir, 'cvl/np755/mm01-020_p7377_2009feb5/ECAT_EXACT/pet/p7377ho1_frames/p7377ho1.nii.gz'));
@@ -50,41 +53,20 @@ classdef Test_StudyDataSingleton < matlab.unittest.TestCase
             this.verifyEqual(nxt.T1_fqfn, ...
                 fullfile(this.testsDir, 'cvl/np755/mm01-020_p7377_2009feb5/mri/T1.mgz'));
         end
-		function test_testRaichle(this)
-            sds  = mlraichle.TestDataSingleton.instance('initialize');
-            iter = sds.createIteratorForSessionData;
-            nxt  = iter.next;
-            this.verifyEqual(nxt.fdg_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/NP995_14fdg.4dfp.nii.gz'));
-            this.verifyEqual(nxt.ho_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/NP995_14ho1.4dfp.nii.gz'));
-            this.verifyEqual(nxt.mpr_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/NP995_14_mpr.4dfp.nii.gz'));
-            this.verifyEqual(nxt.oc_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/NP995_14oc1.4dfp.nii.gz'));
-            this.verifyEqual(nxt.oo_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/NP995_14oo1.4dfp.nii.gz'));
-            this.verifyEqual(nxt.petfov_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/PETFOV.4dfp.nii.gz'));
-            this.verifyEqual(nxt.tof_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/fdg/pet_proc/TOF_ART.4dfp.nii.gz'));
-            this.verifyEqual(nxt.T1_fqfn, ...
-                fullfile(this.testsDir, 'raichle/PPGdata/idaif/NP995_14/V1/T1.mgz'));
-        end
 		function test_mlarbelaez(this)
             sds  = mlarbelaez.StudyDataSingleton.instance('initialize');
             iter = sds.createIteratorForSessionData;
             nxt  = iter.next;
             this.verifyEqual(nxt.gluc_fqfn, ...
-                fullfile(this.studiesDir, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861gluc1.nii.gz'));
+                fullfile(this.studiesDir4, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861gluc1.nii.gz'));
             this.verifyEqual(nxt.ho_fqfn, ...
-                fullfile(this.studiesDir, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861ho1.nii.gz'));
+                fullfile(this.studiesDir4, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861ho1.nii.gz'));
             this.verifyEqual(nxt.oc_fqfn, ...
-                fullfile(this.studiesDir, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861oc1.nii.gz'));
+                fullfile(this.studiesDir4, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861oc1.nii.gz'));
             this.verifyEqual(nxt.tr_fqfn, ...
-                fullfile(this.studiesDir, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861tr1.nii.gz'));
+                fullfile(this.studiesDir4, 'Arbelaez/GluT/p7861_JJL/PET/scan1/p7861tr1.nii.gz'));
             this.verifyEqual(nxt.T1_fqfn, ...
-                fullfile(this.studiesDir, 'Arbelaez/GluT/p7861_JJL/freesurfer/mri/T1.mgz'));
+                fullfile(this.studiesDir4, 'Arbelaez/GluT/p7861_JJL/freesurfer/mri/T1.mgz'));
         end
 		function test_mlderdeyn(this)
             sds  = mlderdeyn.StudyDataSingleton.instance('initialize');
@@ -92,37 +74,15 @@ classdef Test_StudyDataSingleton < matlab.unittest.TestCase
             iter.next;
             nxt  = iter.next;
             this.verifyEqual(nxt.ho_fqfn, ...
-                fullfile(this.studiesDir, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239ho1_frames/p7239ho1.nii.gz'));
+                fullfile(this.studiesDir4, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239ho1_frames/p7239ho1.nii.gz'));
             this.verifyEqual(nxt.oc_fqfn, ...
-                fullfile(this.studiesDir, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239oc1_frames/p7239oc1_03.nii.gz'));
+                fullfile(this.studiesDir4, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239oc1_frames/p7239oc1_03.nii.gz'));
             this.verifyEqual(nxt.oo_fqfn, ...
-                fullfile(this.studiesDir, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239oo1_frames/p7239oo1.nii.gz'));
+                fullfile(this.studiesDir4, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239oo1_frames/p7239oo1.nii.gz'));
             this.verifyEqual(nxt.tr_fqfn, ...
-                fullfile(this.studiesDir, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239tr1_frames/p7239tr1_01.nii.gz'));
+                fullfile(this.studiesDir4, 'cvl/np755/mm01-001_p7239_2008may15/ECAT_EXACT/pet/p7239tr1_frames/p7239tr1_01.nii.gz'));
             this.verifyEqual(nxt.T1_fqfn, ...
-                fullfile(this.studiesDir, 'cvl/np755/mm01-001_p7239_2008may15/mri/T1.mgz'));
-        end
-		function test_mlraichle(this)
-            sds  = mlraichle.StudyDataSingleton.instance('initialize');
-            iter = sds.createIteratorForSessionData;
-            iter.next;
-            nxt  = iter.next;
-            this.verifyEqual(nxt.fdg_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/HYGLY08fdg.4dfp.nii.gz'));
-            this.verifyEqual(nxt.ho_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/HYGLY08ho1.4dfp.nii.gz'));
-            this.verifyEqual(nxt.mpr_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/HYGLY08_mpr.4dfp.nii.gz'));
-            this.verifyEqual(nxt.oc_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/HYGLY08oc1.4dfp.nii.gz'));
-            this.verifyEqual(nxt.oo_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/HYGLY08oo1.4dfp.nii.gz'));
-            this.verifyEqual(nxt.petfov_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/PETFOV.4dfp.nii.gz'));
-            this.verifyEqual(nxt.tof_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/fdg/pet_proc/TOF_ART.4dfp.nii.gz'));
-            this.verifyEqual(nxt.T1_fqfn, ...
-                fullfile(this.studiesDir, 'raichle/PPGdata/idaif/HYGLY08/V1/T1.mgz'));
+                fullfile(this.studiesDir4, 'cvl/np755/mm01-001_p7239_2008may15/mri/T1.mgz'));
         end
 	end
 
