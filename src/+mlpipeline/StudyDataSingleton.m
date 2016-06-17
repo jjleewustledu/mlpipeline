@@ -70,17 +70,23 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle %%%& mlmr.MRDa
         function        diaryOff(~)
             diary off;
         end
-        function        diaryOn(this)
-            diary(fullfile(this.loggingLocation('path'), sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
+        function        diaryOn(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.subjectsDir, @isdir);
+            parse(ip, varargin{:});
+            
+            diary(fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
         end
         function tf   = isChpcHostname(~)
             [~,hn] = mlbash('hostname');
             tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
         end
-        function loc  = loggingLocation(~) %#ok<STOUT>
-        end
-        function loc  = saveWorkspace(this)
-            loc = fullfile(this.loggingLocation('path'), sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30)));
+        function loc  = saveWorkspace(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.subjectsDir, @isdir);
+            parse(ip, varargin{:});
+            
+            loc = fullfile(ip.Results.path, sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30)));
             if (this.isChpcHostname)
                 save(loc, '-v7.3');
                 return
