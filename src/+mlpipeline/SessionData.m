@@ -39,7 +39,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             g = fullfile(this.sessionPath_, this.studyData_.mriFolder(this), '');
         end
         function g    = get.petPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.petFolder(this), '');
+            g = fullfile(this.sessionPath_, this.studyData_.petFolder, '');
         end
         function g    = get.fslPath(this)
             g = fullfile(this.sessionPath_, this.studyData_.fslFolder(this), '');
@@ -211,6 +211,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             nn2 = ic2.numericalNiftid;
             nn  = nn1*rng1 + nn2*rng2;
             ic  = this.repackageImagingContext(nn, class(ic1));
+        end
+        function iter = createIteratorForScans(this)
+        end
+        function iter = createIteratorForVisits(this)
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
