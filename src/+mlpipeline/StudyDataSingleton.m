@@ -1,4 +1,4 @@
-classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle %%%& mlmr.MRDataHandle & mlpet.PETDataHandle
+classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle
 	%% STUDYDATASINGLETON  
     %  Override empty loggingLocation, sessionData and empty methods from IMRData and IPETData
 
@@ -16,43 +16,78 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle %%%& mlmr.MRDa
 
     methods (Static)
         function im  = imagingType(typ, obj)
+            %% IMAGINGTYPE returns imaging data cast as a requested representative type detailed below.
+            %  @param typ is the requested representation:  'filename', 'fn', fqfilename', 'fqfn', 'fileprefix', 'fp',
+            %  'fqfileprefix', 'fqfp', 'folder', 'path', 'ext', 'imagingContext', 
+            %  '4dfp.hdr', '4dfp.ifh', '4dfp.img', '4dfp.img.rec', 'v', 'v.hdr', 'v.mhdr'. 
+            %  @param obj is the representation of imaging data provided by the client.  
+            %  @returns im is the imaging data obj cast as the requested representation.
+            %  See also mlfourd.ImagingContext
+            
             if (ischar(obj) && isdir(obj))
                 im = mlpipeline.StudyDataSingleton.locationType(typ, obj);
                 return
             end
             obj = mlfourd.ImagingContext(obj);
             switch (typ)
+                case  'ext'
+                    [~,~,im] = myfileparts(obj.filename);
                 case {'filename' 'fn'}
                     im = obj.filename;
                 case {'fqfilename' 'fqfn'}
-                    im = obj.fqfn;
+                    im = obj.fqfilename;
                 case {'fileprefix' 'fp'}
                     im = obj.fileprefix;
-                case {'fqfileprefix' 'fqfp'}
-                    im = obj.fqfp;
+                case {'fqfileprefix' 'fqfp' 'fdfp'}
+                    im = obj.fqfileprefix;
                 case  'folder'
                     [~,im] = fileparts(obj.filepath);
-                case  'path'
-                    im = obj.filepath;
-                case  'ext'
-                    [~,~,im] = myfileparts(obj.filename);
                 case  'imagingContext'
                     im = mlfourd.ImagingContext(obj);
+                case  'mgh'
+                    im = [obj.fqfileprefix '.mgh'];
+                case  'mgz'
+                    im = [obj.fqfileprefix '.mgz'];
+                case  'nii'
+                    im = [obj.fqfileprefix '.nii'];
+                case  'nii.gz'
+                    im = [obj.fqfileprefix '.nii.gz'];
+                case  'path'
+                    im = obj.filepath;
+                case  'v'
+                    im = [obj.fqfileprefix '.v'];
+                case  'v.hdr'
+                    im = [obj.fqfileprefix '.v.hdr'];
+                case  'v.mhdr'
+                    im = [obj.fqfileprefix '.v.mhdr'];
+                case  '4dfp.hdr'
+                    im = [obj.fqfileprefix '.4dfp.hdr'];
+                case  '4dfp.ifh'
+                    im = [obj.fqfileprefix '.4dfp.ifh'];
+                case  '4dfp.img'
+                    im = [obj.fqfileprefix '.4dfp.img'];
+                case  '4dfp.img.rec'
+                    im = [obj.fqfileprefix '.4dfp.img.rec'];
                 otherwise
                     error('mlpipeline:insufficientSwitchCases', ...
                           'StudyDataSingleton.imagingType.obj->%s not recognized', obj);
             end
         end
-        function loc = locationType(typ, pth)
-            assert(isdir(pth));
+        function loc = locationType(typ, loc0)
+            %% LOCATIONTYPE returns location data cast as a requested representative type detailed below.
+            %  @param typ is the requested representation:  'folder', 'path'.
+            %  @param loc0 is the representation of location data provided by the client.  
+            %  @returns loc is the location data loc0 cast as the requested representation.
+            
+            %assert(isdir(loc0));
             switch (typ)
                 case 'folder'
-                    [~,loc] = fileparts(pth);
+                    [~,loc] = fileparts(loc0);
                 case 'path'
-                    loc = pth;
+                    loc = loc0;
                 otherwise
                     error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.locationType.pth->%s not recognized', pth);
+                          'StudyDataSingleton.locationType.loc0->%s not recognized', loc0);
             end
         end
         function tf  = isImagingType(t)
