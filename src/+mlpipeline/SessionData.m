@@ -36,16 +36,20 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             [~,g] = myfileparts(this.sessionPath_);
         end
         function g    = get.mriPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.mriFolder(this), '');
+            g = this.studyData_.locationType('path', ...
+                fullfile(this.vLocation('path'), ''));
         end
         function g    = get.petPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.petFolder, '');
+            g = this.studyData_.locationType('path', ...
+                fullfile(this.vLocation('path'), ''));
         end
         function g    = get.fslPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.fslFolder(this), '');
+            g = this.studyData_.locationType('path', ...
+                fullfile(this.vLocation('path'), ''));
         end
         function g    = get.hdrinfoPath(this)
-            g = fullfile(this.sessionPath_, this.studyData_.hdrinfoFolder(this), '');
+            g = this.studyData_.locationType('path', ...
+                fullfile(this.vLocation('path'), ''));
         end
         
         function g    = get.pnumber(this)
@@ -186,6 +190,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             %         'sessionPath' is a path to the session data
             %         'rnumber'     is numeric
             %         'snumber'     is numeric
+            %         'tracer'      is char
             %         'vnumber'     is numeric
             %         'tag'         is appended to the fileprefix
 
@@ -194,6 +199,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'sessionPath', pwd, @isdir);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'snumber', 1,       @isnumeric);
+            addParameter(ip, 'tracer', '',       @ischar);
             addParameter(ip, 'vnumber', 1,       @isnumeric);
             addParameter(ip, 'tag', '',          @ischar);
             parse(ip, varargin{:});
@@ -202,6 +208,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             this.sessionPath_ = ip.Results.sessionPath;
             this.rnumber_     = ip.Results.rnumber;
             this.snumber_     = ip.Results.snumber;
+            this.tracer_      = ip.Results.tracer;
             this.vnumber_     = ip.Results.vnumber;
             this.tag          = ip.Results.tag;
         end
@@ -313,7 +320,12 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj  = localizer(~) %#ok<STOUT>
         end
-        function obj  = mpr(~) %#ok<STOUT>
+        function obj  = mpr(this, typ)
+            obj = this.mprage(typ);
+        end
+        function obj  = mprage(this, typ)
+            obj = this.studyData_.imagingType(typ, ...
+                fullfile(this.vLocation('path'), 'mpr.4dfp.img'));
         end
         function obj  = orig(~) %#ok<STOUT>
         end
@@ -337,6 +349,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj  = fdg(~) %#ok<STOUT>
         end
+        function obj  = fdgAC(~) %#ok<STOUT>
+        end
+        function obj  = fdgNAC(~) %#ok<STOUT>
+        end
         function obj  = gluc(~) %#ok<STOUT>
         end
         function obj  = ho(~) %#ok<STOUT>
@@ -358,6 +374,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         sessionPath_
         rnumber_ = 1
         snumber_ = 1
+        tracer_ = ''
         vnumber_ = 1
         tag_     = ''
     end
