@@ -32,6 +32,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.sessionPath(this)
             g = this.sessionPath_;
         end
+        function this = set.sessionPath(this, s)
+            assert(isdir(s));
+            this.sessionPath_ = s;
+        end
         function g    = get.sessionFolder(this)
             [~,g] = myfileparts(this.sessionPath_);
         end

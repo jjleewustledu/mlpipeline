@@ -62,10 +62,10 @@ classdef Logger < mlio.AbstractHandleIO & mlpatterns.List
             if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger')) 
                 this.includeTimeStamp = varargin{1}.includeTimeStamp;
                 
-                this.filepath_   = varargin{1}.filepath_;
-                this.fileprefix_ = varargin{1}.fileprefix_;
-                this.filesuffix_ = varargin{1}.filesuffix_;
-                this.noclobber_  = varargin{1}.noclobber_;
+                this.filepath_           = varargin{1}.filepath_;
+                this.fileprefix_         = varargin{1}.fileprefix_;
+                this.filesuffix_         = varargin{1}.filesuffix_;
+                this.filesystemRegistry_ = varargin{1}.filesystemRegistry_;
                 
                 this.callerid_      = varargin{1}.callerid_;
                 this.cellArrayList_ = mlpatterns.CellArrayList(varargin{1}.cellArrayList_); % copy-ctor
