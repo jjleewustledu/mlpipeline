@@ -16,25 +16,34 @@ classdef StudyDataSingletonHandle < handle
     end
 
 	properties (Abstract)
-        subjectsDir
+        comments
     end
     
     methods (Static, Abstract)
-        instance(qualifier)
-        register(varargin)
+        d   = freesurfersDir
+        im  = imagingType(typ, obj)
+              instance(qualifier)
+        tf  = isImagingType(t)
+        tf  = isLocationType(t)
+        loc = locationType(typ, loc0)
+        d   = rawdataDir
+        d   = subjectsDir
     end
     
     methods (Abstract)
         iter = createIteratorForSessionData(this)
-               diaryOff(this)
-               diaryOn(this)
-        im   = imagingType(typ, obj)
-        tf   = isImagingType(t)
-        tf   = isLocationType(t)
-        loc  = locationType(typ, pth)
+               diaryOff(~)
+               diaryOn(this, ~)
         loc  = loggingLocation(this, ~)
-               saveWorkspace(this)
+               register(this, varargin)
+        this = replaceSessionData(this, ~)
+        loc  = saveWorkspace(this, ~)
         sess = sessionData(~)
+        f    = subjectsDirFqdns(this)        
+    end
+    
+    methods (Abstract, Access = protected)
+        this = assignSessionDataCompositeFromPaths(this, ~)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

@@ -10,11 +10,31 @@ classdef ISessionData
  	
 	
 	properties (Abstract)
+        filetypeExt
+        freesurfersDir
         subjectsDir
+        sessionPath
+        sessionFolder
+        
+        nacSuffix
+        pnumber
+        rnumber
+        snumber
+        vnumber
+        tag
     end
 
+    methods (Static, Abstract)
+        fn = fslchfiletype(fn, ~)
+        fn = mri_convert(fn, ~)
+        [s,r] = nifti_4dfp_4(~)
+        [s,r] = nifti_4dfp_n(~)
+        [s,r] = nifti_4dfp_ng(~)
+    end
+    
 	methods (Abstract)
         loc = sessionLocation(this)
+        loc = vLocation(this)
  	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

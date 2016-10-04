@@ -9,35 +9,55 @@ classdef StudyDataSingletons < handle
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
  	
 
+    properties (Dependent)
+        length
+        registry
+    end
+    
+    methods %% GET
+        function g = get.length(this) %#ok<MANU>
+            ctor = mlpipeline.StudyDataSingletons;
+            h = ctor.studyDataStorage_;
+            if (isempty(h.registry))
+                g = 0; 
+                return
+            end
+            g = h.registry.length;
+        end
+        function g = get.registry(this) %#ok<MANU>
+            ctor = mlpipeline.StudyDataSingletons;
+            h = ctor.studyDataStorage_;
+            if (isempty(h.registry))
+                g = []; 
+                return
+            end
+            g = h.registry;
+        end
+    end
+    
     methods (Static)
-        function this = instance(name)
+        function this = instance(varargin)
             %% NAME
             %  @param name is 'arbelaez', 'derdeyn', 'raichle' or similar name for an mlpipeline.StudyDataSingleton.
-            %  @return a specific mlpipeline.StudyDataSingleton.
+            %  @returns a specific mlpipeline.StudyDataSingleton.
             %  @throws mlpipeline:unsupportedEmptyState
             
             persistent instance_
-            if (exist('name','var'))
-                assert(ischar(name));
-                if (strcmp(name, 'initialize'))
-                    instance_ = [];
-                    this = instance_;
-                    return
-                end
-                mlarbelaez.StudyDataSingleton.register;
-                mlarbelaez.TestDataSingleton.register;
-                mlderdeyn.StudyDataSingleton.register;
-                mlderdeyn.TestDataSingleton.register;
-                mlraichle.StudyDataSingleton.register;
-                mlraichle.TestDataSingleton.register;
-                mlpowers.StudyDataSingleton.register;
-                mlpowers.TestDataSingleton.register;
-                instance_ = mlpipeline.StudyDataSingletons.lookup(name);
+%             mlderdeyn.StudyDataSingleton.instance;
+%             mlderdeyn.TestDataSingleton.instance;
+%             mlarbelaez.StudyDataSingleton.instance;
+%             mlarbelaez.TestDataSingleton.instance;
+%             mlpowers.StudyDataSingleton.instance;
+%             mlpowers.TestDataSingleton.instance;
+            mlraichle.StudyDataSingleton.instance;
+            mlraichle.SynthDataSingleton.instance;
+            mlraichle.TestDataSingleton.instance;            
+            if (~isempty(varargin))
+                this = mlpipeline.StudyDataSingletons.lookup(varargin{:});
+                return
             end
             if (isempty(instance_))
-                error('mlpipeline:unsupportedEmptyState', ...
-                     ['StudyDataSingletons.instance requires an initial choice of concrete StudyDataSingle; ' ...
-                      'persistent instance is empty.']);
+                instance_ = mlpipeline.StudyDataSingletons;
             end
             this = instance_;
         end
@@ -51,18 +71,20 @@ classdef StudyDataSingletons < handle
                 h.registry = containers.Map;
             end
             h.registry(name) = asingleton; % h.registry is modifiable over lifetime of StudyDataSingletons
-                                           % via any StudyDataSingleton.register operation.
         end
     end
     
     %% PROTECTED
     
-    methods (Static, Access = protected)        
-        function asingleton = lookup(name)
+    methods (Static, Access = protected)
+        function asingleton = lookup(varargin)
+            ip = inputParser;
+            addRequired(ip, 'name', @ischar);
+            parse(ip, varargin{:});
             try
                 ctor = mlpipeline.StudyDataSingletons;
                 h = ctor.studyDataStorage_;
-                asingleton = h.registry(name);
+                asingleton = h.registry(ip.Results.name);
             catch %#ok<CTCH>
                 asingleton = [];
             end
