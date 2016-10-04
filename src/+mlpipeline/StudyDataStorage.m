@@ -1,5 +1,5 @@
 classdef StudyDataStorage < handle
-	%% STUDYDATASTORAGE 
+	%% STUDYDATASTORAGE provides persistent storage for mlpipeline.StudyDataSingletons.studyDataStorage_.
 
 	%  $Revision$
  	%  was created 21-Jan-2016 14:21:42
