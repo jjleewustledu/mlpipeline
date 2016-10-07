@@ -267,8 +267,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = mpr(this, varargin)
             obj = this.mprage(varargin{:});
-        end
-        function obj = mprage(~, obj)
+        end        
+        function obj = mprage(this, varargin)
+            obj = this.mrObject('mpr', varargin{:});
         end
         function obj = orig(this, varargin)
             obj = this.freesurferObject('orig', varargin{:});
@@ -281,8 +282,12 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = t1(this, varargin)
             obj = this.mprage(varargin{:});
-        end
-        function obj = t2(~, obj)
+        end        
+        function obj = t2(this, varargin)
+            obj = this.mrObject('', varargin{:});
+            
+            obj = this.studyData_.imagingType(typ, ...
+                fullfile(this.fourdfpLocation, ['t2' this.filetypeExt]));
         end
         function obj = tof(~, obj)
         end
