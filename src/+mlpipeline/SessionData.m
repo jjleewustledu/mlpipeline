@@ -36,7 +36,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function g    = get.pnumber(this)
             warning('off', 'mfiles:regexpNotFound');
-            g = str2pnum(this.sessionLocation('folder'));
+            g = str2pnum(this.sessionLocation('typ', 'folder'));
             warning('on', 'mfiles:regexpNotFound');
         end
         function g    = get.rnumber(this)
@@ -197,90 +197,90 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             error('mlpipeline:unsupportedTypeclass', ...
                   'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
         end
-        function loc  = sessionLocation(this, typ)
-            loc = this.studyData_.locationType(typ, this.sessionPath_);
+        function loc  = sessionLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = this.studyData_.locationType(ip.Results.typ, this.sessionPath_);
         end
-        function loc  = vLocation(this, typ)
-            loc = this.sessionLocation(typ);
+        function loc  = vLocation(this, varargin)
+            loc = this.sessionLocation(varargin{:});
         end
         
         %% IMRData
         
-        function loc = fourdfpLocation(this, typ)
-            loc = this.vLocation(typ);
-        end        
-        function loc = freesurferLocation(this, typ)
-            loc = this.studyData_.locationType(typ, ...
-                fullfile(this.freesurfersDir, this.sessionLocation('folder'), ''));
-        end        
-        function obj = freesurferObject(this, varargin)
+        function loc = fourdfpLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
+        end
+        function loc = freesurferLocation(this, varargin)
             ip = inputParser;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            obj = this.studyData_.imagingType(ip.Results.typ, ...
-                fullfile(this.mriLocation('path'), ...
-                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
+            loc = this.studyData_.locationType(ip.Results.typ, ...
+                fullfile(this.freesurfersDir, this.sessionLocation('typ', 'folder'), ''));
         end
-        function loc = fslLocation(this, typ)
-            loc = this.studyData_.locationType(typ, ...
-                fullfile(this.vLocation('path'), 'fsl', ''));
-        end
-        function loc = mriLocation(this, typ)
-            loc = this.studyData_.locationType(typ, ...
-                fullfile(this.freesurferLocation('path'), 'mri', ''));
-        end
-        function obj = mrObject(this, varargin)
+        function loc = fslLocation(this, varargin)
             ip = inputParser;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            obj = this.studyData_.imagingType(ip.Results.typ, ...
-                fullfile(this.fslLocation('path'), ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
-        end 
+            loc = this.studyData_.locationType(ip.Results.typ, ...
+                fullfile(this.vLocation, 'fsl', ''));
+        end
+        function loc = mriLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = this.studyData_.locationType(ip.Results.typ, ...
+                fullfile(this.freesurferLocation, 'mri', ''));
+        end
         
         function obj = adc(~, obj)
         end
         function obj = aparcA2009sAseg(this, varargin)
             obj = this.freesurferObject('aparc.a2009s+aseg', varargin{:});
         end
-        function obj = asl(~, obj)
+        function obj = asl(this, varargin)
+            obj = this.mrObject('pcasl', varargin{:});
         end
         function obj = atlas(~, obj)
         end
-        function obj = boldResting(~, obj)
+        function obj = boldResting(this, varargin)
+            obj = this.mrObject('ep2d_bold_150', varargin{:});
         end
-        function obj = boldTask(~, obj)
+        function obj = boldTask(this, varargin)
+            obj = this.mrObject('ep2d_bold_154', varargin{:});
         end
         function obj = brain(this, varargin)
             obj = this.freesurferObject('brain', varargin{:});
         end
         function obj = dwi(~, obj)
         end
-        function obj = fieldmap(~, obj)
+        function obj = fieldmap(this, varargin)
+            obj = this.mrObject('FieldMapping', varargin{:});
         end
-        function obj = localizer(~, obj)
+        function obj = localizer(this, varargin)
+            obj = this.mrObject('localizer', varargin{:});
         end
-        function obj = mpr(this, typ)
-            obj = this.mprage(typ);
+        function obj = mpr(this, varargin)
+            obj = this.mprage(varargin{:});
         end
         function obj = mprage(~, obj)
         end
         function obj = orig(this, varargin)
             obj = this.freesurferObject('orig', varargin{:});
-        end
-        function obj = perf(~, obj)
+        end        
+        function obj = perf(this, varargin)
+            obj = this.mrObject('ep2d_perf', varargin{:});
         end
         function obj = T1(this, varargin)
             obj = this.freesurferObject('T1', varargin{:});
         end
-        function obj = t1(this, typ)
-            obj = this.mprage(typ);
+        function obj = t1(this, varargin)
+            obj = this.mprage(varargin{:});
         end
         function obj = t2(~, obj)
         end
@@ -292,30 +292,20 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
                 
         %% IPETData
         
-        function loc = hdrinfoLocation(this, typ)
-            loc = this.vLocation(typ);
+        function loc = hdrinfoLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
         end
-        function loc = petLocation(this, typ)
-            loc = this.vLocation(typ);
+        function loc = petLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
         end
-        function obj = petObject(this, varargin)
-            ip = inputParser;
-            addRequired( ip, 'tracer', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlpet.PETImagingContext', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = this.studyData_.imagingType(ip.Results.typ, ...
-                fullfile(this.petLocation('path'), ...
-                         sprintf('%s%i%s%s%s', ip.Results.tracer, this.snumber, ip.Results.suffix, this.nacSuffix, this.filetypeExt)));
-        end
-        function loc = scanLocation(this, typ)
-            loc = this.vLocation(typ);
+        function loc = scanLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
         end
         
         function obj = ct(~, obj)
         end
-        function obj = fdg(~, obj)
+        function obj = fdg(this, varargin)
+            obj = this.petObject('fdg', 'noSnumber', true, varargin{:});
         end
         function obj = gluc(this, varargin)
             obj = this.petObject('gluc', varargin{:});
@@ -347,6 +337,51 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         tracer_
         vnumber_
         tag_
+    end
+    
+    methods (Access = protected)
+        function obj = fqfilenameObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = this.studyData_.imagingType(ip.Results.typ, ip.Results.fqfn);
+        end
+        function obj = freesurferObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = this.studyData_.imagingType(ip.Results.typ, ...
+                fullfile(this.mriLocation, ...
+                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
+        end
+        function obj = mrObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = this.studyData_.imagingType(ip.Results.typ, ...
+                fullfile(this.fslLocation, ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
+        end 
+        function obj = petObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'tracer', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlpet.PETImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = this.studyData_.imagingType(ip.Results.typ, ...
+                fullfile(this.petLocation, ...
+                         sprintf('%s%i%s%s%s', ip.Results.tracer, this.snumber, ip.Results.suffix, this.nacSuffix, this.filetypeExt)));
+        end
     end
     
     methods (Static, Access = protected)
