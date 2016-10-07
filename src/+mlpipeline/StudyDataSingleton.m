@@ -50,6 +50,8 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle
                     im = [obj.fqfileprefix '.mgh'];
                 case  'mgz'
                     im = [obj.fqfileprefix '.mgz'];
+                case  'mhdr'                    
+                    im = [obj.fqfileprefix '.mhdr'];
                 case {'mrImagingContext', 'mlmr.MRImagingContext'}
                     im = mlmr.MRImagingContext(obj);                    
                 case  'nii'
