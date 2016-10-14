@@ -26,6 +26,7 @@ classdef StudyDataSingletonHandle < handle
         tf  = isImagingType(t)
         tf  = isLocationType(t)
         loc = locationType(typ, loc0)
+        d   = RawDataDir
         d   = rawdataDir
         d   = subjectsDir
     end
