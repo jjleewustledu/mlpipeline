@@ -104,6 +104,9 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle
                           'StudyDataSingleton.locationType.loc0->%s not recognized', loc0);
             end
         end
+        function d   = RawDataDir
+            d = this.rawdataDir;
+        end
         function d   = rawdataDir
             d = this.subjectsDir;
         end
@@ -143,13 +146,6 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle
             end
         end
         function this = replaceSessionData(this, varargin)
-            %% REPLACESESSIONDATA
-            %  @param [parameter name,  parameter value, ...] as expected by mlpipeline.SessionData are optional;
-            %  'studyData' and this are always internally supplied.
-            %  @returns this.
-
-            this.sessionDataComposite_ = mlpatterns.CellComposite({ ...
-                mlpipeline.SessionData('studyData', this, varargin{:})});
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
@@ -190,6 +186,14 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle
     
     methods (Access = protected)
         function this = StudyDataSingleton(varargin)
+            %% STUDYDATASINGLETON 
+            %  @param [1] that is a mlpattern.CellComposite:  this replaces internal this.sessionDataComposite_ and returns.
+            %  @param [1...N] that is a mlpipeline.SessionData:  
+            %  this adds everything to this.sessionDataCompoaite_ and returns.
+            %  @param [1...N] that is a valid param for mlpipeline.StudyDataSingletonHandle.assignSessionDataCompositeFromPaths:
+            %  this adds to this.sessionDataComposite_ according to assignSessionDataCompositeFromPaths.
+            %  @returns this.
+            
             this.sessionDataComposite_ = mlpatterns.CellComposite;
             for v = 1:length(varargin)
                 if (isa(varargin{v}, 'mlpatterns.CellComposite'))
@@ -199,10 +203,14 @@ classdef StudyDataSingleton < mlpipeline.StudyDataSingletonHandle
                 if (isa(varargin{v}, 'mlpipeline.SessionData'))
                     this.sessionDataComposite_ = this.sessionDataComposite_.add(varargin{v});
                 end
+            end            
+            if (isempty(this.sessionDataComposite_))
+                this = this.assignSessionDataCompositeFromPaths(varargin{:});
+            end            
+            if (isempty(this.sessionDataComposite_))
+                this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
             end
-            this = this.assignSessionDataCompositeFromPaths(varargin{:});
-            this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
-                   this.register;
+            this.register;
         end
     end
     

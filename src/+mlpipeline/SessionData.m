@@ -23,7 +23,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         tag
     end
     
-    methods %% GET
+    methods %% GET/SET
         function g    = get.freesurfersDir(this)
             g = this.studyData_.freesurfersDir;
         end        
