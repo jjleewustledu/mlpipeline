@@ -21,6 +21,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         snumber
         vnumber
         tag
+        tracer
     end
     
     methods %% GET/SET
@@ -59,6 +60,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.subjectsDir(this)
             g = this.studyData_.subjectsDir;
         end
+        function this = set.subjectsDir(this, s)
+            assert(isdir(s));
+            this.studyData_.subjectsDir = s;
+        end
         function g    = get.snumber(this)
             g = this.snumber_;
         end
@@ -79,6 +84,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function this = set.tag(this, t)
             assert(ischar(t));
             this.tag_ = t;
+        end
+        function g    = get.tracer(this)
+            g = this.tracer_;
         end
     end
     
@@ -246,7 +254,16 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = asl(this, varargin)
             obj = this.mrObject('pcasl', varargin{:});
         end
-        function obj = atlas(~, obj)
+        function obj = atlas(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'desc', 'TRIO_Y_NDC', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = this.studyData_.imagingType(ip.Results.typ, ...
+                fullfile(getenv('REFDIR'), ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
         end
         function obj = boldResting(this, varargin)
             obj = this.mrObject('ep2d_bold_150', varargin{:});
@@ -284,10 +301,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             obj = this.mprage(varargin{:});
         end        
         function obj = t2(this, varargin)
-            obj = this.mrObject('', varargin{:});
-            
-            obj = this.studyData_.imagingType(typ, ...
-                fullfile(this.fourdfpLocation, ['t2' this.filetypeExt]));
+            obj = this.mrObject('t2', varargin{:});
         end
         function obj = tof(~, obj)
         end
