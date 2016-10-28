@@ -134,7 +134,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             %         'nac'         is logical
             %         'rnumber'     is numeric
             %         'sessionPath' is a path to the session data
-            %         'studyData'   is a mlpipeline.StudyDataSingleton
+            %         'studyData'   is a mlpipeline.StudyData
             %         'snumber'     is numeric
             %         'tracer'      is char
             %         'vnumber'     is numeric
@@ -144,9 +144,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'nac', true,        @islogical);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'sessionPath', pwd, @isdir);
-            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataSingletonHandle'));
+            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
             addParameter(ip, 'snumber', 1,       @isnumeric);
-            addParameter(ip, 'tracer', '',       @ischar);
+            addParameter(ip, 'tracer', 'FDG',    @ischar);
             addParameter(ip, 'vnumber', 1,       @isnumeric);
             addParameter(ip, 'tag', '',          @ischar);
             parse(ip, varargin{:});

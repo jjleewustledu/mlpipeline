@@ -1,5 +1,5 @@
-classdef StudyDataSingleton < mlpipeline.StudyDataHandle
-	%% STUDYDATASINGLETON  
+classdef StudyData < mlpipeline.StudyDataHandle
+	%% STUDYDATA  
 
 	%  $Revision$
  	%  was created 21-Jan-2016 15:29:29
@@ -27,7 +27,7 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
             %  See also mlfourd.ImagingContext
             
             if (ischar(obj) && isdir(obj))
-                im = mlpipeline.StudyDataSingleton.locationType(typ, obj);
+                im = mlpipeline.StudyData.locationType(typ, obj);
                 return
             end
             obj = mlfourd.ImagingContext(obj);
@@ -68,17 +68,17 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
                     im = [obj.fqfileprefix '.v.hdr'];
                 case  'v.mhdr'
                     im = [obj.fqfileprefix '.v.mhdr'];
-                case  '4dfp.hdr'
+                case {'4dfp.hdr' '.4dfp.hdr'}
                     im = [obj.fqfileprefix '.4dfp.hdr'];
-                case  '4dfp.ifh'
+                case {'4dfp.ifh' '.4dfp.ifh'}
                     im = [obj.fqfileprefix '.4dfp.ifh'];
-                case  '4dfp.img'
+                case {'4dfp.img' '.4dfp.img'}
                     im = [obj.fqfileprefix '.4dfp.img'];
-                case  '4dfp.img.rec'
+                case {'4dfp.img.rec' '.4dfp.img.rec'}
                     im = [obj.fqfileprefix '.4dfp.img.rec'];
                 otherwise
                     error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.imagingType.obj->%s not recognized', obj);
+                          'StudyData.imagingType.obj->%s not recognized', obj);
             end
         end
         function tf  = isImagingType(t)
@@ -101,7 +101,7 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
                     loc = loc0;
                 otherwise
                     error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.locationType.loc0->%s not recognized', loc0);
+                          'StudyData.locationType.loc0->%s not recognized', loc0);
             end
         end
         function d   = RawDataDir
@@ -142,10 +142,8 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
                     loc = this.subjectsDir;
                 otherwise
                     error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.loggingLocation.ip.Results.type->%s not recognized', ip.Results.type);
+                          'StudyData.loggingLocation.ip.Results.type->%s not recognized', ip.Results.type);
             end
-        end
-        function        register(~)
         end
         function this = replaceSessionData(this, varargin)
         end
@@ -187,8 +185,8 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
     end
     
     methods (Access = protected)
-        function this = StudyDataSingleton(varargin)
-            %% STUDYDATASINGLETON 
+        function this = StudyData(varargin)
+            %% STUDYDATA 
             %  @param [1] that is a mlpattern.CellComposite:  this replaces internal this.sessionDataComposite_ and returns.
             %  @param [1...N] that is a mlpipeline.SessionData:  
             %  this adds everything to this.sessionDataCompoaite_ and returns.
@@ -212,7 +210,6 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
             if (isempty(this.sessionDataComposite_))
                 this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
             end
-            this.register;
         end
     end
     
