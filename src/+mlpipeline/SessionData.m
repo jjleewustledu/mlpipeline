@@ -88,6 +88,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.tracer(this)
             g = this.tracer_;
         end
+        function this = set.tracer(this, t)
+            assert(ischar(t));
+            this.tracer_ = t;
+        end
     end
     
     methods (Static)
