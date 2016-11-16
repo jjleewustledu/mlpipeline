@@ -14,6 +14,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         subjectsDir
         sessionPath
         sessionFolder
+        studyData
         
         nacSuffix
         pnumber
@@ -56,6 +57,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function this = set.sessionPath(this, s)
             assert(isdir(s));
             this.sessionPath_ = s;
+        end
+        function g    = get.studyData(this)
+            g = this.studyData_;
         end
         function g    = get.subjectsDir(this)
             g = this.studyData_.subjectsDir;
@@ -347,22 +351,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = umap(~, obj)
         end       
-    end 
-
-    %% PROTECTED
     
-    properties (Access = protected)
-        nac_
-        rnumber_
-        sessionPath_
-        studyData_
-        snumber_
-        tracer_
-        vnumber_
-        tag_
-    end
-    
-    methods (Access = protected)
+        % previously protected
+        
         function obj = fqfilenameObject(this, varargin)
             ip = inputParser;
             addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
@@ -406,6 +397,20 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
                          sprintf('%s%i%s%s%s', ip.Results.tracer, this.snumber, ip.Results.suffix, this.nacSuffix, this.filetypeExt)));
         end
     end
+
+    %% PROTECTED
+    
+    properties (Access = protected)
+        nac_
+        rnumber_
+        sessionPath_
+        studyData_
+        snumber_
+        tracer_
+        vnumber_
+        tag_
+    end
+    
     
     methods (Static, Access = protected)
         function ic = cropImaging(ic, varargin)
