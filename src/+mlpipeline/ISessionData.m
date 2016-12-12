@@ -16,7 +16,7 @@ classdef ISessionData
         sessionPath
         sessionFolder
         
-        nacSuffix
+        attenuationCorrected
         pnumber
         rnumber
         snumber
