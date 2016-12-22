@@ -292,8 +292,13 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = mpr(this, varargin)
             obj = this.mprage(varargin{:});
-        end        
+        end    
         function obj = mprage(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'suffix', '', @ischar);
+            parse(ip, varargin{:});
+            
             obj = this.mrObject('mpr', varargin{:});
         end
         function obj = orig(this, varargin)
@@ -376,6 +381,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = mrObject(this, varargin)
             ip = inputParser;
+            ip.KeepUnmatched = true;
             addRequired( ip, 'desc', @ischar);
             addParameter(ip, 'suffix', '', @ischar);
             addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
