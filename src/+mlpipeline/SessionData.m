@@ -75,13 +75,6 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             assert(isnumeric(s));
             this.snumber_ = s;
         end
-        function g    = get.vnumber(this)
-            g = this.vnumber_;
-        end
-        function this = set.vnumber(this, v)
-            assert(isnumeric(v));
-            this.vnumber_ = v;
-        end
         function g    = get.tag(this)
             g = this.tag_;
         end
@@ -95,6 +88,13 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function this = set.tracer(this, t)
             assert(ischar(t));
             this.tracer_ = t;
+        end
+        function g    = get.vnumber(this)
+            g = this.vnumber_;
+        end
+        function this = set.vnumber(this, v)
+            assert(isnumeric(v));
+            this.vnumber_ = v;
         end
     end
     
@@ -144,9 +144,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             %         'sessionPath' is a path to the session data
             %         'studyData'   is a mlpipeline.StudyData
             %         'snumber'     is numeric
+            %         'tag'         is appended to the fileprefix
             %         'tracer'      is char
             %         'vnumber'     is numeric
-            %         'tag'         is appended to the fileprefix
 
             ip = inputParser;
             addParameter(ip, 'ac', false,        @islogical);
@@ -154,9 +154,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'sessionPath', pwd, @isdir);
             addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
             addParameter(ip, 'snumber', 1,       @isnumeric);
+            addParameter(ip, 'tag', '',          @ischar);
             addParameter(ip, 'tracer', 'FDG',    @ischar);
             addParameter(ip, 'vnumber', 1,       @isnumeric);
-            addParameter(ip, 'tag', '',          @ischar);
             parse(ip, varargin{:});
             
             this.attenuationCorrected_ = ip.Results.ac;
@@ -164,9 +164,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             this.sessionPath_          = ip.Results.sessionPath;
             this.studyData_            = ip.Results.studyData;
             this.snumber_              = ip.Results.snumber;
+            this.tag                   = ip.Results.tag;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;
-            this.tag                   = ip.Results.tag;
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
