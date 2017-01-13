@@ -17,16 +17,16 @@ classdef ISessionData
         sessionFolder
         
         attenuationCorrected
+        builder % ISessionData may require access to an associated builder
         pnumber
         rnumber
         snumber
         vnumber
-        tag
     end
 
     methods (Static, Abstract)
-        fn = fslchfiletype(fn, ~)
-        fn = mri_convert(fn, ~)
+        fn    = fslchfiletype(fn, ~)
+        fn    = mri_convert(fn, ~)
         [s,r] = nifti_4dfp_4(~)
         [s,r] = nifti_4dfp_n(~)
         [s,r] = nifti_4dfp_ng(~)

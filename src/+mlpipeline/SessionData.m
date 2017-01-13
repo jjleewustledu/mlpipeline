@@ -12,41 +12,29 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
 	properties (Dependent)
         freesurfersDir
         subjectsDir
-        sessionPath
         sessionFolder
+        sessionPath
         studyData
         
         attenuationCorrected
+        builder
         pnumber
         rnumber
         snumber
-        vnumber
-        tag
         tracer
+        vnumber
     end
     
     methods %% GET/SET
-        function g    = get.attenuationCorrected(this)
-            g = this.attenuationCorrected_;
-        end
-        function this = set.attenuationCorrected(this, s)
-            assert(islogical(s));
-            this.attenuationCorrected_ = s;
-        end
         function g    = get.freesurfersDir(this)
             g = this.studyData_.freesurfersDir;
         end
-        function g    = get.pnumber(this)
-            warning('off', 'mfiles:regexpNotFound');
-            g = str2pnum(this.sessionLocation('typ', 'folder'));
-            warning('on', 'mfiles:regexpNotFound');
+        function g    = get.subjectsDir(this)
+            g = this.studyData_.subjectsDir;
         end
-        function g    = get.rnumber(this)
-            g = this.rnumber_;
-        end
-        function this = set.rnumber(this, r)
-            assert(isnumeric(r));
-            this.rnumber_ = r;
+        function this = set.subjectsDir(this, s)
+            assert(isdir(s));
+            this.studyData_.subjectsDir = s;
         end
         function g    = get.sessionFolder(this)
             [~,g] = myfileparts(this.sessionPath_);
@@ -61,12 +49,33 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.studyData(this)
             g = this.studyData_;
         end
-        function g    = get.subjectsDir(this)
-            g = this.studyData_.subjectsDir;
+        
+        function g    = get.attenuationCorrected(this)
+            g = this.attenuationCorrected_;
         end
-        function this = set.subjectsDir(this, s)
-            assert(isdir(s));
-            this.studyData_.subjectsDir = s;
+        function this = set.attenuationCorrected(this, s)
+            assert(islogical(s));
+            this.attenuationCorrected_ = s;
+        end
+        function this = set.builder(this, s)
+            assert(isa(s, 'mlfourdfp.IT4ResolveBuilder'));
+            this.builder_ = s;
+        end
+        function g    = get.pnumber(this)
+            if (~isempty(this.pnumber_))
+                g = this.pnumber_;
+                return
+            end
+            warning('off', 'mfiles:regexpNotFound');
+            g = str2pnum(this.sessionLocation('typ', 'folder'));
+            warning('on', 'mfiles:regexpNotFound');
+        end
+        function g    = get.rnumber(this)
+            g = this.rnumber_;
+        end
+        function this = set.rnumber(this, r)
+            assert(isnumeric(r));
+            this.rnumber_ = r;
         end
         function g    = get.snumber(this)
             g = this.snumber_;
@@ -74,13 +83,6 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function this = set.snumber(this, s)
             assert(isnumeric(s));
             this.snumber_ = s;
-        end
-        function g    = get.tag(this)
-            g = this.tag_;
-        end
-        function this = set.tag(this, t)
-            assert(ischar(t));
-            this.tag_ = t;
         end
         function g    = get.tracer(this)
             g = this.tracer_;
@@ -140,34 +142,35 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
  			%% SESSIONDATA
  			%  @param [param-name, param-value[, ...]]
             %         'ac'          is logical
+            %         'pnumber'     is char
             %         'rnumber'     is numeric
             %         'sessionPath' is a path to the session data
-            %         'studyData'   is a mlpipeline.StudyData
             %         'snumber'     is numeric
-            %         'tag'         is appended to the fileprefix
+            %         'studyData'   is a mlpipeline.StudyData
             %         'tracer'      is char
             %         'vnumber'     is numeric
 
             ip = inputParser;
             addParameter(ip, 'ac', false,        @islogical);
+            addParameter(ip, 'pnumber', '',      @ischar);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'sessionPath', pwd, @isdir);
-            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
             addParameter(ip, 'snumber', 1,       @isnumeric);
-            addParameter(ip, 'tag', '',          @ischar);
+            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
             addParameter(ip, 'tracer', 'FDG',    @ischar);
             addParameter(ip, 'vnumber', 1,       @isnumeric);
             parse(ip, varargin{:});
             
             this.attenuationCorrected_ = ip.Results.ac;
+            this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
             this.sessionPath_          = ip.Results.sessionPath;
             this.studyData_            = ip.Results.studyData;
             this.snumber_              = ip.Results.snumber;
-            this.tag                   = ip.Results.tag;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;
         end
+        
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
             %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext.
@@ -213,12 +216,23 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             error('mlpipeline:unsupportedTypeclass', ...
                   'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
         end
+        function loc  = fourdfpLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
+        end
+        function loc  = fslLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = locationType(ip.Results.typ, ...
+                fullfile(this.vLocation, 'fsl', ''));
+        end
         function loc  = sessionLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            loc = this.studyData_.locationType(ip.Results.typ, this.sessionPath_);
+            loc = locationType(ip.Results.typ, this.sessionPath_);
         end
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
@@ -226,31 +240,20 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         
         %% IMRData
         
-        function loc = fourdfpLocation(this, varargin)
-            loc = this.vLocation(varargin{:});
-        end
         function loc = freesurferLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            loc = this.studyData_.locationType(ip.Results.typ, ...
+            loc = locationType(ip.Results.typ, ...
                 fullfile(this.freesurfersDir, this.sessionLocation('typ', 'folder'), ''));
-        end
-        function loc = fslLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'typ', 'path', @ischar);
-            parse(ip, varargin{:});
-            
-            loc = this.studyData_.locationType(ip.Results.typ, ...
-                fullfile(this.vLocation, 'fsl', ''));
         end
         function loc = mriLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            loc = this.studyData_.locationType(ip.Results.typ, ...
+            loc = locationType(ip.Results.typ, ...
                 fullfile(this.freesurferLocation, 'mri', ''));
         end
         
@@ -269,7 +272,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
             parse(ip, varargin{:});
             
-            obj = this.studyData_.imagingType(ip.Results.typ, ...
+            obj = imagingType(ip.Results.typ, ...
                 fullfile(getenv('REFDIR'), ...
                          sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
         end
@@ -357,16 +360,14 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = umap(~, obj)
         end       
     
-        % previously protected
-        
-        function obj = fqfilenameObject(this, varargin)
+        function obj = fqfilenameObject(~, varargin)
             ip = inputParser;
             addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
             addParameter(ip, 'suffix', '', @ischar);
             addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
             parse(ip, varargin{:});
             
-            obj = this.studyData_.imagingType(ip.Results.typ, ip.Results.fqfn);
+            obj = imagingType(ip.Results.typ, ip.Results.fqfn);
         end
         function obj = freesurferObject(this, varargin)
             ip = inputParser;
@@ -375,7 +376,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
             parse(ip, varargin{:});
             
-            obj = this.studyData_.imagingType(ip.Results.typ, ...
+            obj = imagingType(ip.Results.typ, ...
                 fullfile(this.mriLocation, ...
                          sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
         end
@@ -387,7 +388,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
             parse(ip, varargin{:});
             
-            obj = this.studyData_.imagingType(ip.Results.typ, ...
+            obj = imagingType(ip.Results.typ, ...
                 fullfile(this.fslLocation, ...
                          sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
         end 
@@ -405,7 +406,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
                 fqfn = fullfile(this.petLocation, ...
                        sprintf('%s%iv%ir%i%s', ip.Results.tracer, this.snumber, this.vnumber, this.rnumber, this.filetypeExt));
             end
-            obj = this.studyData_.imagingType(ip.Results.typ, fqfn);
+            obj = imagingType(ip.Results.typ, fqfn);
         end
     end
 
@@ -413,13 +414,14 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
     
     properties (Access = protected)
         attenuationCorrected_
+        builder_
+        pnumber_
         rnumber_
         sessionPath_
         studyData_
         snumber_
         tracer_
         vnumber_
-        tag_
     end    
     
     methods (Static, Access = protected)

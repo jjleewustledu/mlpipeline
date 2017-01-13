@@ -17,93 +17,6 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
         function d   = freesurfersDir
             d = this.subjectsDir;
         end
-        function im  = imagingType(typ, obj)
-            %% IMAGINGTYPE returns imaging data cast as a requested representative type detailed below.
-            %  @param typ is the requested representation:  'filename', 'fn', fqfilename', 'fqfn', 'fileprefix', 'fp',
-            %  'fqfileprefix', 'fqfp', 'folder', 'path', 'ext', 'imagingContext', 
-            %  '4dfp.hdr', '4dfp.ifh', '4dfp.img', '4dfp.img.rec', 'v', 'v.hdr', 'v.mhdr'. 
-            %  @param obj is the representation of imaging data provided by the client.  
-            %  @returns im is the imaging data obj cast as the requested representation.
-            %  See also mlfourd.ImagingContext
-            
-            if (ischar(obj) && isdir(obj))
-                im = mlpipeline.StudyDataSingleton.locationType(typ, obj);
-                return
-            end
-            obj = mlfourd.ImagingContext(obj);
-            switch (typ)
-                case  'ext'
-                    [~,~,im] = myfileparts(obj.filename);
-                case {'filename' 'fn'}
-                    im = obj.filename;
-                case {'fqfilename' 'fqfn'}
-                    im = obj.fqfilename;
-                case {'fileprefix' 'fp'}
-                    im = obj.fileprefix;
-                case {'fqfileprefix' 'fqfp' 'fdfp'}
-                    im = obj.fqfileprefix;
-                case  'folder'
-                    [~,im] = fileparts(obj.filepath);
-                case {'imagingContext' 'mlfourd.ImagingContext'}
-                    im = mlfourd.ImagingContext(obj);
-                case  'mgh'
-                    im = [obj.fqfileprefix '.mgh'];
-                case  'mgz'
-                    im = [obj.fqfileprefix '.mgz'];
-                case  'mhdr'                    
-                    im = [obj.fqfileprefix '.mhdr'];
-                case {'mrImagingContext', 'mlmr.MRImagingContext'}
-                    im = mlmr.MRImagingContext(obj);                    
-                case  'nii'
-                    im = [obj.fqfileprefix '.nii'];
-                case  'nii.gz'
-                    im = [obj.fqfileprefix '.nii.gz'];
-                case  'path'
-                    im = obj.filepath;
-                case {'petImagingContext', 'mlpet.PETImagingContext'}
-                    im = mlpet.PETImagingContext(obj);  
-                case  'v'
-                    im = [obj.fqfileprefix '.v'];
-                case  'v.hdr'
-                    im = [obj.fqfileprefix '.v.hdr'];
-                case  'v.mhdr'
-                    im = [obj.fqfileprefix '.v.mhdr'];
-                case  '4dfp.hdr'
-                    im = [obj.fqfileprefix '.4dfp.hdr'];
-                case  '4dfp.ifh'
-                    im = [obj.fqfileprefix '.4dfp.ifh'];
-                case  '4dfp.img'
-                    im = [obj.fqfileprefix '.4dfp.img'];
-                case  '4dfp.img.rec'
-                    im = [obj.fqfileprefix '.4dfp.img.rec'];
-                otherwise
-                    error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.imagingType.obj->%s not recognized', obj);
-            end
-        end
-        function tf  = isImagingType(t)
-            tf = lstrcmp(t, mlpipeline.StudyDataHandle.IMAGING_TYPES);
-        end
-        function tf  = isLocationType(t)
-            tf = lstrcmp(t, mlpipeline.StudyDataHandle.LOCATION_TYPES);
-        end
-        function loc = locationType(typ, loc0)
-            %% LOCATIONTYPE returns location data cast as a requested representative type detailed below.
-            %  @param typ is the requested representation:  'folder', 'path'.
-            %  @param loc0 is the representation of location data provided by the client.  
-            %  @returns loc is the location data loc0 cast as the requested representation.
-            
-            %assert(isdir(loc0));
-            switch (typ)
-                case 'folder'
-                    [~,loc] = fileparts(loc0);
-                case 'path'
-                    loc = loc0;
-                otherwise
-                    error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.locationType.loc0->%s not recognized', loc0);
-            end
-        end
         function d   = RawDataDir
             d = this.rawdataDir;
         end
@@ -132,7 +45,7 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
         end
         function loc  = loggingLocation(this, varargin)
             ip = inputParser;
-            addParameter(ip, 'type', 'path', @(x) this.isLocationType(x));
+            addParameter(ip, 'type', 'path', @isLocationType);
             parse(ip, varargin{:});
             
             switch (ip.Results.type)

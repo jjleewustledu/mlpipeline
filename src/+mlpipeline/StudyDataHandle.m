@@ -8,12 +8,6 @@ classdef StudyDataHandle < handle
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.341360 (R2016a) for MACI64.
  	
-    properties (Constant)
-        LOCATION_TYPES = {'folder' 'path'}
-        IMAGING_TYPES  = { ...
-            'filename' 'fn' 'fqfilename' 'fqfn' 'fileprefix' 'fp' 'fqfileprefix' 'fqfp' ...
-            'folder' 'path' 'ext' 'imagingContext'}
-    end
 
 	properties (Abstract)
         comments
@@ -21,10 +15,6 @@ classdef StudyDataHandle < handle
     
     methods (Static, Abstract)
         d   = freesurfersDir
-        im  = imagingType(typ, obj)
-        tf  = isImagingType(t)
-        tf  = isLocationType(t)
-        loc = locationType(typ, loc0)
         d   = RawDataDir
         d   = rawdataDir
         d   = subjectsDir
