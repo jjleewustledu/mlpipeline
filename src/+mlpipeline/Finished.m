@@ -2,6 +2,7 @@ classdef Finished
 	%% FINISHED provides tools to mark finished milestones in a long processing stream:
     %  it touches hidden files, checks for existence of those files.   Finished behaves as a 
     %  visitor to mlpipeline.IDataBuilder classes.
+    %  See also:  mlfourdfp_unittest.Test_T4ResolveBuilder.test_finished
 
 	%  $Revision$
  	%  was created 10-Jan-2017 22:18:15
@@ -11,41 +12,53 @@ classdef Finished
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.
  	
 
-    methods (Static)        
-        function tf = completed(bldr) % isfinished
-            %% COMPLETED
-            %  @parm bldr is an mlpipeline.IDataBuilder.
-            %  @returns logical
-            
-            assert(isa(bldr, 'mlpipeline.IDataBuilder'));
-            this = mlpipeline.Finished('builder', bldr);
-            tf = lexist(this.completedTouchFile, 'file');
+    properties (Dependent)
+        tag
+    end
+    
+    methods %% GET
+        function g = get.tag(this)
+            g = this.tag_;
         end
     end
     
 	methods 		  
  		function this = Finished(varargin)
  			%% FINISHED
- 			%  Usage:  this = Finished(builder[,path])
-            %  @param named builder is an mlpipeline.IDataBuilder.
+ 			%  Usage:  this = Finished(builder[,'path' , 'Log', 'tag', 'fdg'])
+            %  @param builder is an mlpipeline.IDataBuilder.
             %  @param named path is a filesystem path.
+            %  @param named tag is a string.
 
             ip = inputParser;
-            addParameter(ip, 'builder', [], @(x) isa(mlpipeline.IDataBuilder));
+            addRequired(ip, 'builder', @(x) isa(x, 'mlpipeline.IDataBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
+            addParameter(ip, 'tag', 'unknown_context_of', @ischar);
             parse(ip, varargin{:});
             
             this.builder_ = ip.Results.builder;
             this.path_ = ip.Results.path;
+            this.tag_ = ip.Results.tag;
         end        
         
-        function fqfn = completedTouchFile(this, tag) % finishedMarkerFile
-            assert(ischar(tag));
-            fqfn = fullfile(this.path_, ...
-                sprintf('.%s_%s_isFinished.touch', lower(tag), class(this.builder_)));
+        function fqfn = finishedMarkerFilename(this, varargin)
+            %% FINISHEDMARKERFILENAME
+            %  @param named path is a filesystem path.
+            %  @param named tag is a string.
+            
+            ip = inputParser;
+            addParameter(ip, 'path', this.path_, @isdir);
+            addParameter(ip, 'tag', this.tag_, @ischar);
+            parse(ip, varargin{:});
+            
+            fqfn = fullfile(ip.Results.path, ...
+                sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
         end
-        function  touchCompleted(this) % touchFinishedMarker
-            mlbash(['touch ' this.completedTouchFile]);
+        function        touchFinishedMarker(this, varargin)
+            mlbash(['touch ' this.finishedMarkerFilename(varargin{:})]);
+        end
+        function tf   = isfinished(this, varargin) % KLUDGE
+            tf = lexist(this.finishedMarkerFilename, 'file');
         end
     end 
     
@@ -54,6 +67,7 @@ classdef Finished
     properties (Access = protected)
         builder_
         path_
+        tag_
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
