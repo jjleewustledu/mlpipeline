@@ -13,6 +13,7 @@ classdef ISessionData
         filetypeExt
         freesurfersDir
         subjectsDir
+        subjectsFolder
         sessionPath
         sessionFolder
         

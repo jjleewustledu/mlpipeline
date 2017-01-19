@@ -12,6 +12,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
 	properties (Dependent)
         freesurfersDir
         subjectsDir
+        subjectsFolder
         sessionFolder
         sessionPath
         studyData
@@ -32,12 +33,20 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.subjectsDir(this)
             g = this.studyData_.subjectsDir;
         end
-        function this = set.subjectsDir(this, s)
-            assert(isdir(s));
-            this.studyData_.subjectsDir = s;
+        function g    = get.subjectsFolder(this)
+            [~,g] = myfileparts(this.subjectsDir);
+        end
+        function this = set.subjectsFolder(this, s)
+            assert(isdir(fullfile(myfileparts(this.studyData.subjectsDir), s, '')));
+            this.studyData_.subjectsFolder = s;
         end
         function g    = get.sessionFolder(this)
-            [~,g] = myfileparts(this.sessionPath_);
+            [~,g] = myfileparts(this.sessionPath);
+        end
+        function this = set.sessionFolder(this, s)
+            fqs = fullfile(myfileparts(this.sessionFolder), s, '');
+            assert(isdir(fqs));
+            this.sessionPath_ = fqs;
         end
         function g    = get.sessionPath(this)
             g = this.sessionPath_;
@@ -49,6 +58,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.studyData(this)
             g = this.studyData_;
         end
+        function this = set.studyData(this, s)
+            assert(isa(s, 'mlpipeline.StudyData'));
+            this.studyData_ = s;
+        end
         
         function g    = get.attenuationCorrected(this)
             g = this.attenuationCorrected_;
@@ -57,8 +70,11 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             assert(islogical(s));
             this.attenuationCorrected_ = s;
         end
+        function g    = get.builder(this)
+            g = this.builder_;
+        end
         function this = set.builder(this, s)
-            assert(isa(s, 'mlfourdfp.IT4ResolveBuilder'));
+            assert(isa(s, 'mlpipeline.IDataBuilder'));
             this.builder_ = s;
         end
         function g    = get.pnumber(this)
@@ -69,6 +85,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             warning('off', 'mfiles:regexpNotFound');
             g = str2pnum(this.sessionLocation('typ', 'folder'));
             warning('on', 'mfiles:regexpNotFound');
+        end
+        function this = set.pnumber(this, s)
+            assert(ischar(s));
+            this.pnumber_ = s;
         end
         function g    = get.rnumber(this)
             g = this.rnumber_;
