@@ -13,18 +13,6 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
         comments
     end
 
-    methods (Static)
-        function d   = freesurfersDir
-            d = this.subjectsDir;
-        end
-        function d   = RawDataDir
-            d = this.rawdataDir;
-        end
-        function d   = rawdataDir
-            d = this.subjectsDir;
-        end
-    end
-    
 	methods
         function iter = createIteratorForSessionData(this)
             iter = this.sessionDataComposite_.createIterator;
@@ -38,6 +26,9 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
             parse(ip, varargin{:});
             
             diary(fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
+        end
+        function d    = freesurfersDir(this)
+            d = this.subjectsDir;
         end
         function tf   = isChpcHostname(~)
             [~,hn] = mlbash('hostname');
@@ -57,6 +48,9 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
                     error('mlpipeline:insufficientSwitchCases', ...
                           'StudyDataSingleton.loggingLocation.ip.Results.type->%s not recognized', ip.Results.type);
             end
+        end
+        function d    = rawdataDir(this)
+            d = this.subjectsDir;
         end
         function        register(~)
         end

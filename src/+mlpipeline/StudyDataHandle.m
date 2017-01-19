@@ -13,26 +13,20 @@ classdef StudyDataHandle < handle
         comments
     end
     
-    methods (Static, Abstract)
-        d   = freesurfersDir
-        d   = RawDataDir
-        d   = rawdataDir
-        d   = subjectsDir
-    end
-    
     methods (Abstract)
         iter = createIteratorForSessionData(this)
-               diaryOff(~)
-               diaryOn(this, ~)
-        loc  = loggingLocation(this, ~)
-        this = replaceSessionData(this, ~)
-        loc  = saveWorkspace(this, ~)
-        sess = sessionData(~)
-        f    = subjectsDirFqdns(this)        
+               diaryOff(this)
+               diaryOn(this)
+        d    = freesurfersDir(this)
+        loc  = loggingLocation(this)
+        d    = rawdataDir(this)
+        this = replaceSessionData(this)
+        loc  = saveWorkspace(this)
+        sess = sessionData(this)
     end
     
     methods (Abstract, Access = protected)
-        this = assignSessionDataCompositeFromPaths(this, ~)
+        this = assignSessionDataCompositeFromPaths(this)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
