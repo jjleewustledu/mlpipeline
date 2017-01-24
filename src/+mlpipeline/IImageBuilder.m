@@ -10,17 +10,13 @@ classdef IImageBuilder < mlpipeline.IDataBuilder
  	
 
 	properties (Abstract)
-        firstCrop
-        frames 
-        inverseCrop        
         referenceImage
         referenceWeight
         sourceImage
         sourceWeight
  	end
 
-	methods 
-		  
+	methods (Abstract)		  
  	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

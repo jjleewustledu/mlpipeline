@@ -63,7 +63,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyEqual(this.testObj.fqfilename, this.test_fqfn)
         end
         function test_get(this)
-            this.verifyEqual(this.testNoStamp.get(157), 'testing log element 2');
+            this.verifyEqual(this.testNoStamp.get(3), 'testing log element 2');
         end
         function test_isempty(this)
             this.verifyFalse(this.testObj.isempty);
@@ -72,16 +72,16 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyFalse(obj.isempty);
         end
         function test_length(this)
-            this.verifyEqual(this.testObj.length, 157);
+            this.verifyEqual(this.testObj.length, 3);
         end
         function test_locationsOf(this)
-            this.verifyEqual(this.testNoStamp.locationsOf('testing log element 1'), 156);
+            this.verifyEqual(this.testNoStamp.locationsOf('testing log element 1'), 2);
         end
         function test_save(this) 
             this.testObj.save;
             this.verifyTrue(lexist(this.testObj.fqfilename, 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
-            this.verifyEqual(c{1}(1:23), 'rec p7377ho1_frames.img');
+            this.verifyEqual(c{1}(end-19:end), 'p7377ho1.img.rec.log');
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
         function test_saveas(this)
@@ -89,7 +89,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.testObj.saveas(FQFP);            
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
-            this.verifyEqual(c{1}(1:23), 'rec p7377ho1_frames.img');
+            this.verifyEqual(c{1}(end-19:end), 'p7377ho1.img.rec.log');
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
  	end
@@ -108,7 +108,8 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.testObj.add('testing log element 1');
             this.testObj.add('testing log element 2');
             this.testObj.fqfilename = this.test_fqfn;
-            this.testNoStamp = mlpipeline.Logger(fullfile(this.workPath, 'p7377ho1.img.rec'), 'includeTimeStamp', false);
+            this.testNoStamp = mlpipeline.Logger(fullfile(this.workPath, 'p7377ho1.img.rec'));
+            this.testNoStamp.includeTimeStamp = false;
             this.testNoStamp.add('testing log element 1');
             this.testNoStamp.add('testing log element 2');
             this.testNoStamp.fqfilename = this.test_fqfn;

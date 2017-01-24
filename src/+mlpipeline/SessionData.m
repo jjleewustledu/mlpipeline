@@ -185,8 +185,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
             this.sessionPath_          = ip.Results.sessionPath;
-            this.studyData_            = ip.Results.studyData;
             this.snumber_              = ip.Results.snumber;
+            this.studyData_            = ip.Results.studyData;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;
         end
@@ -253,6 +253,44 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, this.sessionPath_);
+        end
+        function this = update(this, varargin)
+ 			%% UPDATE
+ 			%  @param [param-name, param-value[, ...]]
+            %         'ac'             is logical
+            %         'pnumber'        is char
+            %         'rnumber'        is numeric
+            %         'sessionFolder'  is char
+            %         'sessionPath'    is a path to the session data
+            %         'snumber'        is numeric
+            %         'subjectsDir'    is a path to the subjects dir
+            %         'subjectsFolder' is char
+            %         'tracer'         is char
+            %         'vnumber'        is numeric
+
+            ip = inputParser;
+            sessd_ = this.sessionData;          
+            addParameter(ip, 'ac',             sessd_.attenuationCorrected, @islogical);
+            addParameter(ip, 'pnumber',        sessd_.pnumber,              @ischar);
+            addParameter(ip, 'rnumber',        sessd_.rnumber,              @isnumeric);
+            addParameter(ip, 'sessionFolder',  sessd_.sessionFolder,        @ischar);
+            addParameter(ip, 'sessionPath',    sessd_.sessionPath,          @isdir);
+            addParameter(ip, 'snumber',        sessd_.snumber,              @isnumeric);
+            addParameter(ip, 'subjectsDir',    sessd_.subjectsDir,          @isdir);
+            addParameter(ip, 'subjectsFolder', sessd_.subjectsFolder,       @ischar);
+            addParameter(ip, 'tracer',         sessd_.tracer,               @ischar);
+            addParameter(ip, 'vnumber',        sessd_.vnumber,              @isnumeric);
+            parse(ip, varargin{:});
+                            
+            sessd_.attenuationCorrected = ip.Results.ac;
+            sessd_.rnumber              = ip.Results.rnumber;
+            sessd_.sessionFolder        = ip.Results.sessionFolder;
+            sessd_.sessionPath          = ip.Results.sessionPath;
+            sessd_.snumber              = ip.Results.snumber;
+            sessd_.subjectsDir          = ip.Results.subjectsDir;
+            sessd_.subjectsFolder       = ip.Results.subjectsFolder;
+            sessd_.tracer               = ip.Results.tracer;
+            sessd_.vnumber              = ip.Results.vnumber;   
         end
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
