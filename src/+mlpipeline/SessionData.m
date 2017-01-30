@@ -382,6 +382,29 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = wmparc(this, varargin)
             obj = this.freesurferObject('wmparc', varargin{:});
         end
+        function obj = freesurferObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(this.mriLocation, ...
+                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
+        end
+        function obj = mrObject(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(this.fslLocation, ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
+        end 
                 
         %% IPETData
         
@@ -427,29 +450,6 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             
             obj = imagingType(ip.Results.typ, ip.Results.fqfn);
         end
-        function obj = freesurferObject(this, varargin)
-            ip = inputParser;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(this.mriLocation, ...
-                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
-        end
-        function obj = mrObject(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(this.fslLocation, ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
-        end 
         function obj = petObject(this, varargin)
             ip = inputParser;
             addRequired( ip, 'tracer', @ischar);
