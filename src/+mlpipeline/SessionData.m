@@ -19,6 +19,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         
         attenuationCorrected
         builder
+        isotope
         pnumber
         rnumber
         snumber
@@ -76,6 +77,25 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function this = set.builder(this, s)
             assert(isa(s, 'mlpipeline.IDataBuilder'));
             this.builder_ = s;
+        end
+        function g    = get.isotope(this)
+            tr = lower(this.sessionData.tracer);
+            
+            % N.B. order of testing by lstrfind
+            if (lstrfind(tr, {'ho' 'oo' 'oc' 'co'}))
+                g = '15O';
+                return
+            end
+            if (lstrfind(tr, 'fdg'))
+                g = '18F';
+                return
+            end 
+            if (lstrfind(tr, 'g'))
+                g = '11C';
+                return
+            end            
+            error('mlpipeline:indeterminatePropertyValue', ...
+                'SessionData.isotope could not recognize tracer %s', this.sessionData.tracer);
         end
         function g    = get.pnumber(this)
             if (~isempty(this.pnumber_))
@@ -418,6 +438,12 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             loc = this.vLocation(varargin{:});
         end
         
+        function obj = cbf(this, varargin)
+            obj = this.petObject('cbf', varargin{:});
+        end
+        function obj = cbv(this, varargin)
+            obj = this.petObject('cbv', varargin{:});
+        end
         function obj = ct(~, obj)
         end
         function obj = fdg(this, varargin)
@@ -431,6 +457,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = oc(this, varargin)
             obj = this.petObject('oc', varargin{:});
+        end
+        function obj = oef(this, varargin)
+            obj = this.petObject('oef', varargin{:});
         end
         function obj = oo(this, varargin)
             obj = this.petObject('oo', varargin{:});
