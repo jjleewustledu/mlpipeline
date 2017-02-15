@@ -79,7 +79,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             this.builder_ = s;
         end
         function g    = get.isotope(this)
-            tr = lower(this.sessionData.tracer);
+            tr = lower(this.tracer);
             
             % N.B. order of testing by lstrfind
             if (lstrfind(tr, {'ho' 'oo' 'oc' 'co'}))
@@ -439,10 +439,16 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         
         function obj = cbf(this, varargin)
+            this.tracer = 'HO';
             obj = this.petObject('cbf', varargin{:});
         end
         function obj = cbv(this, varargin)
+            this.tracer = 'OC';
             obj = this.petObject('cbv', varargin{:});
+        end
+        function obj = cmro2(this, varargin)
+            this.tracer = 'OO';
+            obj = this.petObject('cmro2', varargin{:});
         end
         function obj = ct(~, obj)
         end
@@ -485,13 +491,17 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'suffix', '', @ischar);
             addParameter(ip, 'typ', 'mlpet.PETImagingContext', @ischar);
             parse(ip, varargin{:});
+            suff = ip.Results.suffix;
+            if (~isempty(suff) && ~strcmp(suff(1),'_'))
+                suff = ['_' suff];
+            end
             
             if (lstrfind(lower(ip.Results.tracer), 'fdg'))
                 fqfn = fullfile(this.petLocation, ...
-                       sprintf('%sv%ir%i%s', ip.Results.tracer, this.vnumber, this.rnumber, this.filetypeExt));
+                       sprintf('%sv%ir%i%s%s', ip.Results.tracer, this.vnumber, this.rnumber, suff, this.filetypeExt));
             else
                 fqfn = fullfile(this.petLocation, ...
-                       sprintf('%s%iv%ir%i%s', ip.Results.tracer, this.snumber, this.vnumber, this.rnumber, this.filetypeExt));
+                       sprintf('%s%iv%ir%i%s%s', ip.Results.tracer, this.snumber, this.vnumber, this.rnumber, suff, this.filetypeExt));
             end
             obj = imagingType(ip.Results.typ, fqfn);
         end
