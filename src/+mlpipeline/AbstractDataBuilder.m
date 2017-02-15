@@ -20,7 +20,7 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         studyData
  	end
 
-	methods %% GET		  
+	methods %% GET
         function g = get.logger(this)
             g = this.logger_;
         end  
