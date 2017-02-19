@@ -340,6 +340,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = aparcA2009sAseg(this, varargin)
             obj = this.freesurferObject('aparc.a2009s+aseg', varargin{:});
         end
+        function obj = aparcAseg(this, varargin)
+            obj = this.freesurferObject('aparc+aseg', varargin{:});
+        end
         function obj = asl(this, varargin)
             obj = this.mrObject('pcasl', varargin{:});
         end
@@ -362,6 +365,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = brain(this, varargin)
             obj = this.freesurferObject('brain', varargin{:});
+        end
+        function obj = brainmask(this, varargin)
+            obj = this.freesurferObject('brainmask', varargin{:});
         end
         function obj = dwi(~, obj)
         end
