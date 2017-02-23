@@ -6,7 +6,7 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
  	%  by jjlee,
  	%  last modified $LastChangedDate$
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
- 	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.
+ 	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 
 	properties 		
