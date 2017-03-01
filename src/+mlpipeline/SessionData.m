@@ -21,6 +21,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         builder
         isotope
         pnumber
+        resolveTag
         rnumber
         snumber
         tracer
@@ -110,6 +111,22 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             assert(ischar(s));
             this.pnumber_ = s;
         end
+        function g    = get.resolveTag(this)
+            if (~isempty(this.resolveTag_))
+                g = this.resolveTag_;
+                return
+            end
+            
+            if (strcmp('FDG', this.tracer))
+                g = ['op_' lower(this.tracer)];
+            else
+                g = sprintf('op_%s%i', lower(this.tracer), this.snumber);  
+            end
+        end
+        function this = set.resolveTag(this, s)
+            assert(ischar(s));
+            this.resolveTag_ = s;
+        end
         function g    = get.rnumber(this)
             g = this.rnumber_;
         end
@@ -193,6 +210,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             ip = inputParser;
             addParameter(ip, 'ac', false,        @islogical);
             addParameter(ip, 'pnumber', '',      @ischar);
+            addParameter(ip, 'resolveTag', '',   @ischar);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'sessionPath', pwd, @isdir);
             addParameter(ip, 'snumber', 1,       @isnumeric);
@@ -203,6 +221,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             
             this.attenuationCorrected_ = ip.Results.ac;
             this.pnumber_              = ip.Results.pnumber;
+            this.resolveTag_           = ip.Results.resolveTag;
             this.rnumber_              = ip.Results.rnumber;
             this.sessionPath_          = ip.Results.sessionPath;
             this.snumber_              = ip.Results.snumber;
@@ -459,21 +478,26 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = ct(~, obj)
         end
         function obj = fdg(this, varargin)
+            this.tracer = 'FDG';
             obj = this.petObject('fdg', varargin{:});
         end
         function obj = gluc(this, varargin)
             obj = this.petObject('gluc', varargin{:});
         end 
         function obj = ho(this, varargin)
+            this.tracer = 'HO';
             obj = this.petObject('ho', varargin{:});
         end
         function obj = oc(this, varargin)
+            this.tracer = 'OC';
             obj = this.petObject('oc', varargin{:});
         end
         function obj = oef(this, varargin)
+            this.tracer = 'OO';
             obj = this.petObject('oef', varargin{:});
         end
         function obj = oo(this, varargin)
+            this.tracer = 'OO';
             obj = this.petObject('oo', varargin{:});
         end
         function obj = tr(this, varargin)
@@ -519,6 +543,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         attenuationCorrected_
         builder_
         pnumber_
+        resolveTag_
         rnumber_
         sessionPath_
         studyData_
