@@ -101,10 +101,6 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             %  @return saves this AbstractLogger to this.fqfilename.  
             %  @throws mlpipeline.IOError:noclobberPreventedSaving
             
-            if (lexist(this.fqfilename))                
-                this.cellArrayList_.add( ...
-                    mlsystem.FilesystemRegistry.textfileToCell(this.fqfilename));
-            end          
             if (~isempty(this.footer))
                 this.cellArrayList_.add(this.footer);
             end

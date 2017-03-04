@@ -427,6 +427,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = wmparc(this, varargin)
             obj = this.freesurferObject('wmparc', varargin{:});
         end
+        
         function obj = freesurferObject(this, varargin)
             ip = inputParser;
             addRequired( ip, 'desc', @ischar);
