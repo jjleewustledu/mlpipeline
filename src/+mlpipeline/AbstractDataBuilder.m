@@ -10,7 +10,7 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
  	
 
 	properties 		
- 		keepForensics
+ 		keepForensics = true
     end
     
     properties (Dependent)

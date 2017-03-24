@@ -92,12 +92,13 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         
         %% mlio.AbstractHandleIO
         
-        function save(this)
+        function save(this, varargin)
             %% SAVE supports extensions 
             %  mlfourd.JimmyShenInterface.SUPPORTED_EXT and mlsurfer.SurferRegistry.SUPPORTED_EXT,
             %  defaulting to this.FILETYPE_EXT if needed. 
             %  If this.noclobber == true,  it will never overwrite files.
             %  If this.noclobber == false, it may overwrite files. 
+            %  @param perm are string file permission passed to fopen.  See also:  fopen.
             %  @return saves this AbstractLogger to this.fqfilename.  
             %  @throws mlpipeline.IOError:noclobberPreventedSaving
             
@@ -106,7 +107,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             end
             this = this.ensureExtension;
             mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
-                this.cellArrayList_, this.fqfilename);
+                this.cellArrayList_, this.fqfilename, varargin{:});
         end
         
         %% mlpatterns.List
