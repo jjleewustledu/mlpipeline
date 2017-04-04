@@ -35,7 +35,7 @@ classdef Test_Logger < matlab.unittest.TestCase
         function test_ctor(this)
             this.verifyEqual(this.testObj.callerid, 'mlpipeline_Logger');
             this.verifyEqual(this.testObj.contents(end-20:end), 'testing log element 2');
-            this.verifyEqual(this.testObj.hostname(1:10), 'innominate');
+            this.verifyEqual(this.testObj.hostname(1:10), 'ophthalmic');
             this.verifyEqual(this.testObj.id, 'jjlee');
             this.verifyEqual(this.testObj.filename, 'Test_Logger.log');
         end
