@@ -9,7 +9,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
     
-    properties        
+    properties
         parcellation
     end
     
@@ -21,6 +21,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         sessionPath
         studyData
         
+        absScatterCorrected
         attenuationCorrected
         builder
         isotope
@@ -69,6 +70,13 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             this.studyData_ = s;
         end
         
+        function g    = get.absScatterCorrected(this)
+            g = this.absScatterCorrected_;
+        end
+        function this = set.absScatterCorrected(this, s)
+            assert(islogical(s));
+            this.absScatterCorrected_ = s;
+        end
         function g    = get.attenuationCorrected(this)
             g = this.attenuationCorrected_;
         end
@@ -212,6 +220,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             %         'vnumber'     is numeric
 
             ip = inputParser;
+            addParameter(ip, 'abs', false,       @islogical);
             addParameter(ip, 'ac', false,        @islogical);
             addParameter(ip, 'pnumber', '',      @ischar);
             addParameter(ip, 'resolveTag', '',   @ischar);
@@ -223,6 +232,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'vnumber', 1,       @isnumeric);
             parse(ip, varargin{:});
             
+            this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
             this.pnumber_              = ip.Results.pnumber;
             this.resolveTag_           = ip.Results.resolveTag;
@@ -313,6 +323,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
 
             ip = inputParser;
             sessd_ = this.sessionData;          
+            addParameter(ip, 'abs',            sessd_.absScatterCorrected,  @islogical);
             addParameter(ip, 'ac',             sessd_.attenuationCorrected, @islogical);
             addParameter(ip, 'pnumber',        sessd_.pnumber,              @ischar);
             addParameter(ip, 'rnumber',        sessd_.rnumber,              @isnumeric);
@@ -325,6 +336,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'vnumber',        sessd_.vnumber,              @isnumeric);
             parse(ip, varargin{:});
                             
+            sessd_.absScatterCorrected  = ip.Results.abs;
             sessd_.attenuationCorrected = ip.Results.ac;
             sessd_.rnumber              = ip.Results.rnumber;
             sessd_.sessionFolder        = ip.Results.sessionFolder;
@@ -545,6 +557,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
     %% PROTECTED
     
     properties (Access = protected)
+        absScatterCorrected_
         attenuationCorrected_
         builder_
         pnumber_
