@@ -17,6 +17,7 @@ classdef ISessionData
         sessionPath
         sessionFolder
         
+        absScatterCorrected
         attenuationCorrected
         builder % ISessionData may require access to an associated builder
         pnumber
