@@ -28,7 +28,10 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         id % user id
     end
     
-    methods %% GET
+    methods 
+        
+        %% GET
+        
         function g = get.callerid(this)
             g = this.callerid_;
         end
@@ -44,51 +47,6 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         function g = get.id(this)
             g = this.id_;
         end
-    end
-    
-    methods
-        function this = AbstractLogger(varargin)
-            %% ABSTRACTLOGGER provides copy-construction for its handle.
-            %  @param [fileprefix] is a fileprefix consistent with the filesystem.  
-            %  Pre-existing files will be read.  Non-existing files will be created on save.
-            %  @param [callback] is a reference from the client that requests logging.
-            %  @param [Logger_instance] will construct a deep copy.
-            %  @return this is a class instance with IO functionality and logging functionality 
-            %  prescribed by abstract data type mlpatterns.List.
-            %  @throws 
-
-            if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractLogger')) 
-                this.includeTimeStamp = varargin{1}.includeTimeStamp;
-                
-                this.filepath_           = varargin{1}.filepath_;
-                this.fileprefix_         = varargin{1}.fileprefix_;
-                this.filesuffix_         = varargin{1}.filesuffix_;
-                this.filesystemRegistry_ = varargin{1}.filesystemRegistry_;
-                
-                this.callerid_      = varargin{1}.callerid_;
-                this.cellArrayList_ = mlpatterns.CellArrayList(varargin{1}.cellArrayList_); % copy-ctor
-                this.creationDate_  = varargin{1}.creationDate_;
-                this.hostname_      = varargin{1}.hostname_;
-                this.id_            = varargin{1}.id_;
-                return
-            end % for copy-ctor      
-            
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addOptional(ip, 'fileprefix',       this.defaultFqfileprefix, @ischar);
-            addOptional(ip, 'callback',         this,                   @isobject);
-            parse(ip, varargin{:});
-            
-            this.fqfileprefix = ip.Results.fileprefix;
-            this.filesuffix = this.FILETYPE_EXT;
-            this.callerid_  = strrep(class(ip.Results.callback), '.', '_');   
-            this.creationDate_  = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
-            [~,this.hostname_]  = mlbash('hostname'); this.hostname_ = strtrim(this.hostname_);
-            [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);
-            
-            this.cellArrayList_ = mlpatterns.CellArrayList;
-            this.cellArrayList_.add(this.header);              
-        end 
         
         %% mlio.AbstractHandleIO
         
@@ -144,6 +102,50 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         function elts    = remove(~, ~)
             elts = [];
         end
+        
+        %%
+        
+        function this = AbstractLogger(varargin)
+            %% ABSTRACTLOGGER provides copy-construction for its handle.
+            %  @param [fileprefix] is a fileprefix consistent with the filesystem.  
+            %  Pre-existing files will be read.  Non-existing files will be created on save.
+            %  @param [callback] is a reference from the client that requests logging.
+            %  @param [Logger_instance] will construct a deep copy.
+            %  @return this is a class instance with IO functionality and logging functionality 
+            %  prescribed by abstract data type mlpatterns.List.
+
+            if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractLogger')) 
+                this.includeTimeStamp = varargin{1}.includeTimeStamp;
+                
+                this.filepath_           = varargin{1}.filepath_;
+                this.fileprefix_         = varargin{1}.fileprefix_;
+                this.filesuffix_         = varargin{1}.filesuffix_;
+                this.filesystemRegistry_ = varargin{1}.filesystemRegistry_;
+                
+                this.callerid_      = varargin{1}.callerid_;
+                this.cellArrayList_ = mlpatterns.CellArrayList(varargin{1}.cellArrayList_); % copy-ctor
+                this.creationDate_  = varargin{1}.creationDate_;
+                this.hostname_      = varargin{1}.hostname_;
+                this.id_            = varargin{1}.id_;
+                return
+            end % for copy-ctor      
+            
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addOptional(ip, 'fileprefix',       this.defaultFqfileprefix, @ischar);
+            addOptional(ip, 'callback',         this,                   @isobject);
+            parse(ip, varargin{:});
+            
+            this.fqfileprefix = ip.Results.fileprefix;
+            this.filesuffix = this.FILETYPE_EXT;
+            this.callerid_  = strrep(class(ip.Results.callback), '.', '_');   
+            this.creationDate_  = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
+            [~,this.hostname_]  = mlbash('hostname'); this.hostname_ = strtrim(this.hostname_);
+            [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);
+            
+            this.cellArrayList_ = mlpatterns.CellArrayList;
+            this.cellArrayList_.add(this.header);              
+        end         
     end
     
     %% PROTECTED

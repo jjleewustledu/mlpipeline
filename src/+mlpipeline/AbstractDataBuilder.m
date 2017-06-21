@@ -20,7 +20,10 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         studyData
  	end
 
-	methods %% GET
+	methods 
+        
+        %% GET
+        
         function g = get.logger(this)
             g = this.logger_;
         end  
@@ -33,15 +36,24 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         function g = get.studyData(this)
             g = this.sessionData.studyData;
         end
-    end 
-    
-    methods 
-        function this = AbstractDataBuilder(varargin)            
+        
+        %%
+        
+        function this = AbstractDataBuilder(varargin)
+            %% ABSTRACTDATABUILDER
+            %  @params named 'logger' is an mlpipeline.AbstractLogger.
+            %  @params named 'product' is the initial state of the product to build.
+            %  @params named 'sessionData' is an mlpipeline.ISessionData.
+            
  			ip = inputParser;
             ip.KeepUnmatched = true;
+            addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.AbstractLogger'));
+            addParameter(ip, 'product', []);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             parse(ip, varargin{:});
             
+            this.logger_      = ip.Results.logger;
+            this.product_     = ip.Results.product;
             this.sessionData_ = ip.Results.sessionData;
         end
     end
