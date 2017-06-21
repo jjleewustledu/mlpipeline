@@ -9,17 +9,13 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
     
-    properties
-        parcellation
-    end
-    
 	properties (Dependent)
         freesurfersDir
-        subjectsDir
-        subjectsFolder
         sessionFolder
         sessionPath
         studyData
+        subjectsDir
+        subjectsFolder
         
         absScatterCorrected
         attenuationCorrected
@@ -33,7 +29,47 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         vnumber
     end
     
-    methods %% GET/SET
+    methods (Static)
+        function fn    = fslchfiletype(fn, varargin)
+            ip = inputParser;
+            addRequired(ip, 'fn', @(x) lexist(x, 'file'));
+            addOptional(ip, 'type', 'NIFTI_GZ', @ischar);
+            parse(ip, fn, varargin{:});
+            
+            fprintf('mlpipeline.SessionData.fslchfiletype is working on %s\n', ip.Results.fn);
+            mlpipeline.PipelineVisitor.cmd('fslchfiletype', 'NIFTI_GZ', ip.Results.fn);
+            [p,f] = myfileparts(fn);
+            fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
+        end
+        function fn    = mri_convert(fn, varargin)
+            import mlpipeline.*;
+            ip = inputParser;
+            addRequired(ip, 'fn',                                 @(x) lexist(x, 'file'));
+            addOptional(ip, 'fn2', SessionData.niigzFilename(fn), @ischar);
+            parse(ip, fn, varargin{:});            
+            
+            fprintf('mlpipeline.SessionData.mri_convert is working on %s\n', ip.Results.fn);
+            mlpipeline.PipelineVisitor.cmd('mri_convert', ip.Results.fn, ip.Results.fn2);
+            fn = ip.Results.fn2;
+        end
+        function [s,r] = nifti_4dfp_4(varargin)
+            vtor = mlfourdfp.FourdfpVisitor;
+            [s,r] = vtor.nifti_4dfp_4(varargin{:});
+        end
+        function [s,r] = nifti_4dfp_n(varargin)
+            vtor = mlfourdfp.FourdfpVisitor;
+            [s,r] = vtor.nifti_4dfp_n(varargin{:});
+        end
+        function [s,r] = nifti_4dfp_ng(varargin)
+            vtor = mlfourdfp.FourdfpVisitor;
+            [s,r] = vtor.nifti_4dfp_ng(varargin{:});
+        end
+    end
+    
+    methods 
+        
+        %% GET/SET
+        
         function g    = get.freesurfersDir(this)
             g = this.studyData_.freesurfersDir;
         end
@@ -167,82 +203,137 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             assert(isnumeric(v));
             this.vnumber_ = v;
         end
-    end
-    
-    methods (Static)
-        function fn    = fslchfiletype(fn, varargin)
+        
+        %% IMRData
+                
+        function obj = adc(~, obj)
+        end
+        function obj = aparcA2009sAseg(this, varargin)
+            obj = this.freesurferObject('aparc.a2009s+aseg', varargin{:});
+        end
+        function obj = aparcAseg(this, varargin)
+            obj = this.freesurferObject('aparc+aseg', varargin{:});
+        end
+        function obj = aparcAsegBinarized(this, varargin)
+            fqfn = fullfile(this.vLocation, sprintf('aparcAsegBinarized_%s.4dfp.ifh', this.resolveTag));
+            obj  = this.fqfilenameObject(fqfn, varargin{:});
+        end
+        function obj = asl(this, varargin)
+            obj = this.mrObject('pcasl', varargin{:});
+        end
+        function obj = atlas(this, varargin)
             ip = inputParser;
-            addRequired(ip, 'fn', @(x) lexist(x, 'file'));
-            addOptional(ip, 'type', 'NIFTI_GZ', @ischar);
-            parse(ip, fn, varargin{:});
-            
-            fprintf('mlpipeline.SessionData.fslchfiletype is working on %s\n', ip.Results.fn);
-            mlpipeline.PipelineVisitor.cmd('fslchfiletype', 'NIFTI_GZ', ip.Results.fn);
-            [p,f] = myfileparts(fn);
-            fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
-        end
-        function fn    = mri_convert(fn, varargin)
-            import mlpipeline.*;
-            ip = inputParser;
-            addRequired(ip, 'fn',                                 @(x) lexist(x, 'file'));
-            addOptional(ip, 'fn2', SessionData.niigzFilename(fn), @ischar);
-            parse(ip, fn, varargin{:});            
-            
-            fprintf('mlpipeline.SessionData.mri_convert is working on %s\n', ip.Results.fn);
-            mlpipeline.PipelineVisitor.cmd('mri_convert', ip.Results.fn, ip.Results.fn2);
-            fn = ip.Results.fn2;
-        end
-        function [s,r] = nifti_4dfp_4(varargin)
-            vtor = mlfourdfp.FourdfpVisitor;
-            [s,r] = vtor.nifti_4dfp_4(varargin{:});
-        end
-        function [s,r] = nifti_4dfp_n(varargin)
-            vtor = mlfourdfp.FourdfpVisitor;
-            [s,r] = vtor.nifti_4dfp_n(varargin{:});
-        end
-        function [s,r] = nifti_4dfp_ng(varargin)
-            vtor = mlfourdfp.FourdfpVisitor;
-            [s,r] = vtor.nifti_4dfp_ng(varargin{:});
-        end
-    end
-    
-	methods
- 		function this = SessionData(varargin)
- 			%% SESSIONDATA
- 			%  @param [param-name, param-value[, ...]]
-            %         'ac'          is logical
-            %         'pnumber'     is char
-            %         'rnumber'     is numeric
-            %         'sessionPath' is a path to the session data
-            %         'snumber'     is numeric
-            %         'studyData'   is a mlpipeline.StudyData
-            %         'tracer'      is char
-            %         'vnumber'     is numeric
-
-            ip = inputParser;
-            addParameter(ip, 'abs', false,       @islogical);
-            addParameter(ip, 'ac', false,        @islogical);
-            addParameter(ip, 'pnumber', '',      @ischar);
-            addParameter(ip, 'resolveTag', '',   @ischar);
-            addParameter(ip, 'rnumber', 1,       @isnumeric);
-            addParameter(ip, 'sessionPath', pwd, @isdir);
-            addParameter(ip, 'snumber', 1,       @isnumeric);
-            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
-            addParameter(ip, 'tracer', 'FDG',    @ischar);
-            addParameter(ip, 'vnumber', 1,       @isnumeric);
+            addParameter(ip, 'desc', 'TRIO_Y_NDC', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
             parse(ip, varargin{:});
             
-            this.absScatterCorrected_  = ip.Results.abs;
-            this.attenuationCorrected_ = ip.Results.ac;
-            this.pnumber_              = ip.Results.pnumber;
-            this.resolveTag_           = ip.Results.resolveTag;
-            this.rnumber_              = ip.Results.rnumber;
-            this.sessionPath_          = ip.Results.sessionPath;
-            this.snumber_              = ip.Results.snumber;
-            this.studyData_            = ip.Results.studyData;
-            this.tracer_               = ip.Results.tracer;
-            this.vnumber_              = ip.Results.vnumber;
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(getenv('REFDIR'), ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
         end
+        function obj = boldResting(this, varargin)
+            obj = this.mrObject('ep2d_bold_150', varargin{:});
+        end
+        function obj = boldTask(this, varargin)
+            obj = this.mrObject('ep2d_bold_154', varargin{:});
+        end
+        function obj = brain(this, varargin)
+            obj = this.freesurferObject('brain', varargin{:});
+        end
+        function obj = brainmask(this, varargin)
+            obj = this.freesurferObject('brainmask', varargin{:});
+        end
+        function obj = brainmaskBinarizeBlended(this, varargin)
+            fqfn = fullfile(this.vLocation, sprintf('brainmaskBinarizeBlended_%s.4dfp.ifh', this.resolveTag));
+            obj  = this.fqfilenameObject(fqfn, varargin{:});
+        end
+        function obj = dwi(~, obj)
+        end
+        function obj = fieldmap(this, varargin)
+            obj = this.mrObject('FieldMapping', varargin{:});
+        end
+        function obj = localizer(this, varargin)
+            obj = this.mrObject('localizer', varargin{:});
+        end
+        function obj = mpr(this, varargin)
+            obj = this.mprage(varargin{:});
+        end    
+        function obj = mprage(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'suffix', '', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = this.mrObject('mpr', varargin{:});
+        end
+        function obj = orig(this, varargin)
+            obj = this.freesurferObject('orig', varargin{:});
+        end        
+        function obj = perf(this, varargin)
+            obj = this.mrObject('ep2d_perf', varargin{:});
+        end
+        function obj = T1(this, varargin)
+            obj = this.freesurferObject('T1', varargin{:});
+        end
+        function obj = t1(this, varargin)
+            obj = this.mprage(varargin{:});
+        end        
+        function obj = t2(this, varargin)
+            obj = this.mrObject('t2', varargin{:});
+        end
+        function obj = tof(~, obj)
+        end
+        function obj = wmparc(this, varargin)
+            obj = this.freesurferObject('wmparc', varargin{:});
+        end
+                        
+        %% IPETData
+        
+        function obj = cbf(this, varargin)
+            this.tracer = 'HO';
+            obj = this.petObject('cbf', varargin{:});
+        end
+        function obj = cbv(this, varargin)
+            this.tracer = 'OC';
+            obj = this.petObject('cbv', varargin{:});
+        end
+        function obj = cmro2(this, varargin)
+            this.tracer = 'OO';
+            obj = this.petObject('cmro2', varargin{:});
+        end
+        function obj = ct(~, obj)
+        end
+        function obj = fdg(this, varargin)
+            this.tracer = 'FDG';
+            obj = this.petObject('fdg', varargin{:});
+        end
+        function obj = gluc(this, varargin)
+            obj = this.petObject('gluc', varargin{:});
+        end 
+        function obj = ho(this, varargin)
+            this.tracer = 'HO';
+            obj = this.petObject('ho', varargin{:});
+        end
+        function obj = oc(this, varargin)
+            this.tracer = 'OC';
+            obj = this.petObject('oc', varargin{:});
+        end
+        function obj = oef(this, varargin)
+            this.tracer = 'OO';
+            obj = this.petObject('oef', varargin{:});
+        end
+        function obj = oo(this, varargin)
+            this.tracer = 'OO';
+            obj = this.petObject('oo', varargin{:});
+        end
+        function obj = tr(this, varargin)
+            obj = this.petObject('tr', varargin{:});
+        end
+        function obj = umap(~, obj)
+        end       
+    
+        %% idiomatic 
         
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -292,6 +383,34 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function loc  = fourdfpLocation(this, varargin)
             loc = this.vLocation(varargin{:});
         end
+        function obj  = fqfilenameObject(~, varargin)
+            ip = inputParser;
+            addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ip.Results.fqfn);
+        end
+        function loc  = freesurferLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = locationType(ip.Results.typ, ...
+                fullfile(this.freesurfersDir, this.sessionLocation('typ', 'folder'), ''));
+        end
+        function obj  = freesurferObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(this.mriLocation, ...
+                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
+        end
         function loc  = fslLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -300,6 +419,55 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             loc = locationType(ip.Results.typ, ...
                 fullfile(this.vLocation, 'fsl', ''));
         end
+        function loc  = hdrinfoLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
+        end
+        function loc  = mriLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = locationType(ip.Results.typ, ...
+                fullfile(this.freesurferLocation, 'mri', ''));
+        end
+        function obj  = mrObject(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(this.fslLocation, ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
+        end 
+        function loc  = petLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
+        end
+        function obj  = petObject(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'tracer', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'mlpet.PETImagingContext', @ischar);
+            parse(ip, varargin{:});
+            suff = ip.Results.suffix;
+            if (~isempty(suff) && ~strcmp(suff(1),'_'))
+                suff = ['_' suff];
+            end
+            
+            if (lstrfind(lower(ip.Results.tracer), 'fdg'))
+                fqfn = fullfile(this.petLocation, ...
+                       sprintf('%sv%ir%i%s%s', ip.Results.tracer, this.vnumber, this.rnumber, suff, this.filetypeExt));
+            else
+                fqfn = fullfile(this.petLocation, ...
+                       sprintf('%s%iv%ir%i%s%s', ip.Results.tracer, this.snumber, this.vnumber, this.rnumber, suff, this.filetypeExt));
+            end
+            obj = imagingType(ip.Results.typ, fqfn);
+        end     
+        function loc  = scanLocation(this, varargin)
+            loc = this.vLocation(varargin{:});
+        end  
         function loc  = sessionLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -349,208 +517,43 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
-        end
-        
-        %% IMRData
-        
-        function loc = freesurferLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'typ', 'path', @ischar);
-            parse(ip, varargin{:});
-            
-            loc = locationType(ip.Results.typ, ...
-                fullfile(this.freesurfersDir, this.sessionLocation('typ', 'folder'), ''));
-        end
-        function loc = mriLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'typ', 'path', @ischar);
-            parse(ip, varargin{:});
-            
-            loc = locationType(ip.Results.typ, ...
-                fullfile(this.freesurferLocation, 'mri', ''));
-        end
-        
-        function obj = adc(~, obj)
-        end
-        function obj = aparcA2009sAseg(this, varargin)
-            obj = this.freesurferObject('aparc.a2009s+aseg', varargin{:});
-        end
-        function obj = aparcAseg(this, varargin)
-            obj = this.freesurferObject('aparc+aseg', varargin{:});
-        end
-        function obj = asl(this, varargin)
-            obj = this.mrObject('pcasl', varargin{:});
-        end
-        function obj = atlas(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'desc', 'TRIO_Y_NDC', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(getenv('REFDIR'), ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
-        end
-        function obj = boldResting(this, varargin)
-            obj = this.mrObject('ep2d_bold_150', varargin{:});
-        end
-        function obj = boldTask(this, varargin)
-            obj = this.mrObject('ep2d_bold_154', varargin{:});
-        end
-        function obj = brain(this, varargin)
-            obj = this.freesurferObject('brain', varargin{:});
-        end
-        function obj = brainmask(this, varargin)
-            obj = this.freesurferObject('brainmask', varargin{:});
-        end
-        function obj = dwi(~, obj)
-        end
-        function obj = fieldmap(this, varargin)
-            obj = this.mrObject('FieldMapping', varargin{:});
-        end
-        function obj = localizer(this, varargin)
-            obj = this.mrObject('localizer', varargin{:});
-        end
-        function obj = mpr(this, varargin)
-            obj = this.mprage(varargin{:});
-        end    
-        function obj = mprage(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addParameter(ip, 'suffix', '', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = this.mrObject('mpr', varargin{:});
-        end
-        function obj = orig(this, varargin)
-            obj = this.freesurferObject('orig', varargin{:});
-        end        
-        function obj = perf(this, varargin)
-            obj = this.mrObject('ep2d_perf', varargin{:});
-        end
-        function obj = T1(this, varargin)
-            obj = this.freesurferObject('T1', varargin{:});
-        end
-        function obj = t1(this, varargin)
-            obj = this.mprage(varargin{:});
-        end        
-        function obj = t2(this, varargin)
-            obj = this.mrObject('t2', varargin{:});
-        end
-        function obj = tof(~, obj)
-        end
-        function obj = wmparc(this, varargin)
-            obj = this.freesurferObject('wmparc', varargin{:});
-        end
-        
-        function obj = freesurferObject(this, varargin)
-            ip = inputParser;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(this.mriLocation, ...
-                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
-        end
-        function obj = mrObject(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(this.fslLocation, ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
         end 
-                
-        %% IPETData
         
-        function loc = hdrinfoLocation(this, varargin)
-            loc = this.vLocation(varargin{:});
-        end
-        function loc = petLocation(this, varargin)
-            loc = this.vLocation(varargin{:});
-        end
-        function loc = scanLocation(this, varargin)
-            loc = this.vLocation(varargin{:});
-        end
-        
-        function obj = cbf(this, varargin)
-            this.tracer = 'HO';
-            obj = this.petObject('cbf', varargin{:});
-        end
-        function obj = cbv(this, varargin)
-            this.tracer = 'OC';
-            obj = this.petObject('cbv', varargin{:});
-        end
-        function obj = cmro2(this, varargin)
-            this.tracer = 'OO';
-            obj = this.petObject('cmro2', varargin{:});
-        end
-        function obj = ct(~, obj)
-        end
-        function obj = fdg(this, varargin)
-            this.tracer = 'FDG';
-            obj = this.petObject('fdg', varargin{:});
-        end
-        function obj = gluc(this, varargin)
-            obj = this.petObject('gluc', varargin{:});
-        end 
-        function obj = ho(this, varargin)
-            this.tracer = 'HO';
-            obj = this.petObject('ho', varargin{:});
-        end
-        function obj = oc(this, varargin)
-            this.tracer = 'OC';
-            obj = this.petObject('oc', varargin{:});
-        end
-        function obj = oef(this, varargin)
-            this.tracer = 'OO';
-            obj = this.petObject('oef', varargin{:});
-        end
-        function obj = oo(this, varargin)
-            this.tracer = 'OO';
-            obj = this.petObject('oo', varargin{:});
-        end
-        function obj = tr(this, varargin)
-            obj = this.petObject('tr', varargin{:});
-        end
-        function obj = umap(~, obj)
-        end       
-    
-        function obj = fqfilenameObject(~, varargin)
+ 		function this = SessionData(varargin)
+ 			%% SESSIONDATA
+ 			%  @param [param-name, param-value[, ...]]
+            %         'ac'          is logical
+            %         'pnumber'     is char
+            %         'rnumber'     is numeric
+            %         'sessionPath' is a path to the session data
+            %         'snumber'     is numeric
+            %         'studyData'   is a mlpipeline.StudyData
+            %         'tracer'      is char
+            %         'vnumber'     is numeric
+
             ip = inputParser;
-            addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
+            addParameter(ip, 'abs', false,       @islogical);
+            addParameter(ip, 'ac', false,        @islogical);
+            addParameter(ip, 'pnumber', '',      @ischar);
+            addParameter(ip, 'resolveTag', '',   @ischar);
+            addParameter(ip, 'rnumber', 1,       @isnumeric);
+            addParameter(ip, 'sessionPath', pwd, @isdir);
+            addParameter(ip, 'snumber', 1,       @isnumeric);
+            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
+            addParameter(ip, 'tracer', 'FDG',    @ischar);
+            addParameter(ip, 'vnumber', 1,       @isnumeric);
             parse(ip, varargin{:});
             
-            obj = imagingType(ip.Results.typ, ip.Results.fqfn);
-        end
-        function obj = petObject(this, varargin)
-            ip = inputParser;
-            addRequired( ip, 'tracer', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlpet.PETImagingContext', @ischar);
-            parse(ip, varargin{:});
-            suff = ip.Results.suffix;
-            if (~isempty(suff) && ~strcmp(suff(1),'_'))
-                suff = ['_' suff];
-            end
-            
-            if (lstrfind(lower(ip.Results.tracer), 'fdg'))
-                fqfn = fullfile(this.petLocation, ...
-                       sprintf('%sv%ir%i%s%s', ip.Results.tracer, this.vnumber, this.rnumber, suff, this.filetypeExt));
-            else
-                fqfn = fullfile(this.petLocation, ...
-                       sprintf('%s%iv%ir%i%s%s', ip.Results.tracer, this.snumber, this.vnumber, this.rnumber, suff, this.filetypeExt));
-            end
-            obj = imagingType(ip.Results.typ, fqfn);
+            this.absScatterCorrected_  = ip.Results.abs;
+            this.attenuationCorrected_ = ip.Results.ac;
+            this.pnumber_              = ip.Results.pnumber;
+            this.resolveTag_           = ip.Results.resolveTag;
+            this.rnumber_              = ip.Results.rnumber;
+            this.sessionPath_          = ip.Results.sessionPath;
+            this.snumber_              = ip.Results.snumber;
+            this.studyData_            = ip.Results.studyData;
+            this.tracer_               = ip.Results.tracer;
+            this.vnumber_              = ip.Results.vnumber;
         end
     end
 
@@ -649,6 +652,12 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f '.nii.gz']);
         end
+    end
+    
+    %% DEPRECATED, HIDDEN
+    
+    properties (Hidden)
+        parcellation
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

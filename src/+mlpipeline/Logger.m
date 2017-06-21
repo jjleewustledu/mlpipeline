@@ -18,7 +18,15 @@ classdef Logger < mlpipeline.AbstractLogger
     end
     
     methods
-        function this = Logger(varargin)
+        function this = Logger(varargin) 
+            %% LOGGER provides copy-construction for its handle.
+            %  @param [fileprefix] is a fileprefix consistent with the filesystem.  
+            %  Pre-existing files will be read.  Non-existing files will be created on save.
+            %  @param [callback] is a reference from the client that requests logging.
+            %  @param [Logger_instance] will construct a deep copy.
+            %  @return this is a class instance with IO functionality and logging functionality 
+            %  prescribed by abstract data type mlpatterns.List.
+            
             this = this@mlpipeline.AbstractLogger(varargin{:});                    
         end 
         function c = clone(this)
