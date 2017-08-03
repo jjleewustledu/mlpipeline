@@ -24,21 +24,35 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         
         %% GET
         
-        function g = get.logger(this)
+        function g    = get.logger(this)
             g = this.logger_;
         end  
-        function g = get.product(this)
+        function g    = get.product(this)
             g = this.product_;
         end
-        function g = get.sessionData(this)
+        function g    = get.sessionData(this)
             g = this.sessionData_;
         end
-        function g = get.studyData(this)
+        function g    = get.studyData(this)
             g = this.sessionData.studyData;
+        end        
+        function this = set.sessionData(this, s)
+            assert(isa(s, 'mlpipeline.SessionData'));
+            this.sessionData_ = s;
         end
         
         %%
         
+        function tf   = isequal(this, obj)
+            tf = this.isequaln(obj);
+        end
+        function tf   = isequaln(this, obj)
+            if (isempty(obj)); tf = false; return; end
+            tf = this.classesequal(obj);
+            if (tf)
+                tf = this.sessionData.isequal(obj.sessionData);
+            end
+        end 
         function this = AbstractDataBuilder(varargin)
             %% ABSTRACTDATABUILDER
             %  @params named 'logger' is an mlpipeline.AbstractLogger.
@@ -64,6 +78,22 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         logger_
         product_
         sessionData_
+    end
+    
+    %% PRIVATE
+    
+    methods (Access = private)        
+        function [tf,msg] = classesequal(this, c)
+            tf  = true; 
+            msg = '';
+            if (~isa(c, class(this)))
+                tf  = false;
+                msg = sprintf('class(this)-> %s but class(compared)->%s', class(this), class(c));
+            end
+            if (~tf)
+                warning('mlpipeline:isequal:mismatchedClass', msg);
+            end
+        end
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

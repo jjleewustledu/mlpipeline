@@ -22,8 +22,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         builder
         isotope
         pnumber
-        resolveTag
         rnumber
+        region
         snumber
         tracer
         vnumber
@@ -159,28 +159,19 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             assert(ischar(s));
             this.pnumber_ = s;
         end
-        function g    = get.resolveTag(this)
-            if (~isempty(this.resolveTag_))
-                g = this.resolveTag_;
-                return
-            end
-            
-            if (strcmp('FDG', this.tracer))
-                g = ['op_' lower(this.tracer)];
-            else
-                g = sprintf('op_%s%i', lower(this.tracer), this.snumber);  
-            end
-        end
-        function this = set.resolveTag(this, s)
-            assert(ischar(s));
-            this.resolveTag_ = s;
-        end
         function g    = get.rnumber(this)
             g = this.rnumber_;
         end
         function this = set.rnumber(this, r)
             assert(isnumeric(r));
             this.rnumber_ = r;
+        end
+        function g    = get.region(this)
+            g = this.region_;
+        end
+        function this = set.region(this, s)
+            assert(isa(s, 'mlfourd.ImagingContext'));
+            this.region_ = s;
         end
         function g    = get.snumber(this)
             g = this.snumber_;
@@ -214,10 +205,6 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = aparcAseg(this, varargin)
             obj = this.freesurferObject('aparc+aseg', varargin{:});
         end
-        function obj = aparcAsegBinarized(this, varargin)
-            fqfn = fullfile(this.vLocation, sprintf('aparcAsegBinarized_%s.4dfp.ifh', this.resolveTag));
-            obj  = this.fqfilenameObject(fqfn, varargin{:});
-        end
         function obj = asl(this, varargin)
             obj = this.mrObject('pcasl', varargin{:});
         end
@@ -243,10 +230,6 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function obj = brainmask(this, varargin)
             obj = this.freesurferObject('brainmask', varargin{:});
-        end
-        function obj = brainmaskBinarizeBlended(this, varargin)
-            fqfn = fullfile(this.vLocation, sprintf('brainmaskBinarizeBlended_%s.4dfp.ifh', this.resolveTag));
-            obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
         function obj = dwi(~, obj)
         end
@@ -333,7 +316,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = umap(~, obj)
         end       
     
-        %% idiomatic 
+        %%  
         
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -421,7 +404,17 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function loc  = hdrinfoLocation(this, varargin)
             loc = this.vLocation(varargin{:});
+        end        
+        function tf   = isequal(this, obj)
+            tf = this.isequaln(obj);
         end
+        function tf   = isequaln(this, obj)
+            if (isempty(obj)); tf = false; return; end
+            tf = this.classesequal(obj);
+            if (tf)
+                tf = this.fieldsequaln(obj);
+            end
+        end 
         function loc  = mriLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -464,8 +457,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
                        sprintf('%s%iv%ir%i%s%s', ip.Results.tracer, this.snumber, this.vnumber, this.rnumber, suff, this.filetypeExt));
             end
             obj = imagingType(ip.Results.typ, fqfn);
-        end     
-        function loc  = scanLocation(this, varargin)
+        end   
+        function loc  = regionLocation(this, varargin)
             loc = this.vLocation(varargin{:});
         end  
         function loc  = sessionLocation(this, varargin)
@@ -522,36 +515,45 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
  		function this = SessionData(varargin)
  			%% SESSIONDATA
  			%  @param [param-name, param-value[, ...]]
-            %         'ac'          is logical
-            %         'pnumber'     is char
-            %         'rnumber'     is numeric
-            %         'sessionPath' is a path to the session data
-            %         'snumber'     is numeric
-            %         'studyData'   is a mlpipeline.StudyData
-            %         'tracer'      is char
-            %         'vnumber'     is numeric
+            %         'abs'          is logical
+            %         'ac'           is logical
+            %         'intervention' is char
+            %         'pnumber'      is char
+            %         'rnumber'      is numeric
+            %         'sessionPath'  is a path to the session data
+            %         'snumber'      is numeric
+            %         'studyData'    is a mlpipeline.StudyData
+            %         'subjectsDirManual' is dir
+            %         'subjectsFolder'    is char
+            %         'tracer'       is char
+            %         'vnumber'      is numeric
 
             ip = inputParser;
+            ip.KeepUnmatched = true;
             addParameter(ip, 'abs', false,       @islogical);
             addParameter(ip, 'ac', false,        @islogical);
+            addParameter(ip, 'intervention',     @(x) ischar(x) || isnumeric(x));
             addParameter(ip, 'pnumber', '',      @ischar);
-            addParameter(ip, 'resolveTag', '',   @ischar);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'sessionPath', pwd, @isdir);
             addParameter(ip, 'snumber', 1,       @isnumeric);
             addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
+            addParameter(ip, 'subjectsDirManual', '', @(x) isdir(x) || isempty(x));
+            addParameter(ip, 'subjectsFolder', mlraichle.RaichleRegistry.instance.subjectsFolder, @ischar);
             addParameter(ip, 'tracer', 'FDG',    @ischar);
             addParameter(ip, 'vnumber', 1,       @isnumeric);
             parse(ip, varargin{:});
             
             this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
+            this.intervention_         = ip.Results.intervention;
             this.pnumber_              = ip.Results.pnumber;
-            this.resolveTag_           = ip.Results.resolveTag;
             this.rnumber_              = ip.Results.rnumber;
             this.sessionPath_          = ip.Results.sessionPath;
             this.snumber_              = ip.Results.snumber;
             this.studyData_            = ip.Results.studyData;
+            this.studyData_.subjectsFolder = ip.Results.subjectsFolder;
+            this.studyData_.subjectsDirManual = ip.Results.subjectsDirManual;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;
         end
@@ -563,9 +565,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         absScatterCorrected_
         attenuationCorrected_
         builder_
+        intervention_
         pnumber_
-        resolveTag_
         rnumber_
+        region_
         sessionPath_
         studyData_
         snumber_
@@ -651,6 +654,44 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function fn = niigzFilename(fn)
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f '.nii.gz']);
+        end
+    end
+    
+    %% PRIVATE
+    
+    methods (Static, Access = private)
+        function [tf,msg] = checkFields(obj1, obj2)
+            tf = true; 
+            msg = '';
+            flds = fieldnames(obj1);
+            for f = 1:length(flds)
+                try
+                    if (~isequaln(obj1.(flds{f}), obj2.(flds{f})))
+                        tf = false;
+                        msg = sprintf('SessionData.checkFields:  mismatch at field %s.', flds{f});
+                        return
+                    end
+                catch ME %#ok<NASGU>
+                    sprintf('SessionData.checkFields:  ignoring %s', flds{f});
+                end
+            end
+        end 
+    end
+    
+    methods (Access = private)
+        function [tf,msg] = classesequal(this, c)
+            tf  = true; 
+            msg = '';
+            if (~isa(c, class(this)))
+                tf  = false;
+                msg = sprintf('class(this)-> %s but class(compared)->%s', class(this), class(c));
+            end
+            if (~tf)
+                warning('mlpipeline:isequal:mismatchedClass', msg);
+            end
+        end        
+        function [tf,msg] = fieldsequaln(this, obj)
+            [tf,msg] = mlpipeline.SessionData.checkFields(this, obj);
         end
     end
     
