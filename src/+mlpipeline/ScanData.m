@@ -71,7 +71,9 @@ classdef ScanData < mlpipeline.IScanData
     %% PROTECTED
     
     properties (Access = protected)
+        aifCal_
         aifData_
+        scannerCal_
         scannerData_
         sessionData_
         xlsxObj_
