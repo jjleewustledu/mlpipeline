@@ -55,9 +55,9 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         end 
         function this = AbstractDataBuilder(varargin)
             %% ABSTRACTDATABUILDER
-            %  @params named 'logger' is an mlpipeline.AbstractLogger.
-            %  @params named 'product' is the initial state of the product to build.
-            %  @params named 'sessionData' is an mlpipeline.ISessionData.
+            %  @param named 'logger' is an mlpipeline.AbstractLogger.
+            %  @param named 'product' is the initial state of the product to build.
+            %  @param named 'sessionData' is an mlpipeline.ISessionData.
             
  			ip = inputParser;
             ip.KeepUnmatched = true;
