@@ -13,10 +13,14 @@ classdef Finished
  	
 
     properties (Dependent)
+        path
         tag
     end
     
     methods %% GET
+        function g = get.path(this)
+            g = this.path_;
+        end
         function g = get.tag(this)
             g = this.tag_;
         end
@@ -31,7 +35,7 @@ classdef Finished
             %  @param named tag is a string.
 
             ip = inputParser;
-            addRequired(ip, 'builder', @(x) isa(x, 'mlpipeline.IDataBuilder'));
+            addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IDataBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
             parse(ip, varargin{:});
@@ -41,6 +45,9 @@ classdef Finished
             this.tag_ = ip.Results.tag;
         end        
         
+        function        deleteFinishedMarker(this, varargin)
+            deleteExisting(this.finishedMarkerFilename(varargin{:}));
+        end
         function fqfn = finishedMarkerFilename(this, varargin)
             %% FINISHEDMARKERFILENAME
             %  @param named path is a filesystem path.
@@ -54,11 +61,11 @@ classdef Finished
             fqfn = fullfile(ip.Results.path, ...
                 sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
         end
-        function        touchFinishedMarker(this, varargin)
-            mlbash(['touch ' this.finishedMarkerFilename(varargin{:})]);
-        end
         function tf   = isfinished(this, varargin) % KLUDGE
             tf = lexist(this.finishedMarkerFilename, 'file');
+        end
+        function        touchFinishedMarker(this, varargin)
+            mlbash(['touch ' this.finishedMarkerFilename(varargin{:})]);
         end
     end 
     

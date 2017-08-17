@@ -695,7 +695,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
     end
     
-    %% DEPRECATED, HIDDEN
+    %% HIDDEN
+    %  @deprecated
     
     properties (Hidden)
         parcellation
