@@ -1,5 +1,6 @@
 classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
 	%% SESSIONDATA  
+    %  @param builder is an mlpipeline.IDataBuilder.
 
 	%  $Revision$
  	%  was created 21-Jan-2016 22:20:41
@@ -318,6 +319,19 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
     
         %%  
         
+        function obj  = ctObject(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'fqfp', @ischar);
+            parse(ip, varargin{:});
+            
+            fqfn = fullfile(this.sessionLocation, ...
+                            sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt));
+            this.ensureCTFqfilename(fqfn);
+            obj = imagingType(ip.Results.typ, fqfn);
+        end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
             %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext.
@@ -367,6 +381,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             loc = this.vLocation(varargin{:});
         end
         function obj  = fqfilenameObject(~, varargin)
+            %  @param named typ has default 'mlfourd.ImagingContext'
+            
             ip = inputParser;
             addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
             addParameter(ip, 'suffix', '', @ischar);
@@ -374,6 +390,16 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             parse(ip, varargin{:});
             
             obj = imagingType(ip.Results.typ, ip.Results.fqfn);
+        end
+        function obj  = fqfileprefixObject(~, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addRequired( ip, 'fqfp', @ischar);
+            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'typ', 'fqfp', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ip.Results.fqfp);
         end
         function loc  = freesurferLocation(this, varargin)
             ip = inputParser;
@@ -404,7 +430,45 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function loc  = hdrinfoLocation(this, varargin)
             loc = this.vLocation(varargin{:});
-        end        
+        end   
+        function [ipr,schar,this] = iprLocation(this, varargin)
+            %% IPRLOCATION
+            %  @param named tracer is a string identifier.
+            %  @param named snumber is the scan number; is numeric.
+            %  @param named typ is string identifier:  folder path, fn, fqfn, ...  
+            %  See also:  imagingType.
+            %  @param named frame is numeric.
+            %  @param named rnumber is the revision number; is numeric.
+            %  @returns ipr, the struct ip.Results obtained by parse.            
+            %  @returns schr, the s-number as a string.
+            
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'ac', this.attenuationCorrected, @islogical);
+            addParameter(ip, 'tracer', this.tracer, @ischar);
+            addParameter(ip, 'frame', nan, @isnumeric);
+            addParameter(ip, 'rnumber', this.rnumber, @isnumeric);
+            addParameter(ip, 'snumber', this.snumber, @isnumeric);
+            addParameter(ip, 'vnumber', this.vnumber, @isnumeric);
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});            
+            ipr = ip.Results;
+            this.attenuationCorrected = ip.Results.ac;
+            this.tracer  = ip.Results.tracer; 
+            this.rnumber = ip.Results.rnumber;
+            this.snumber = ip.Results.snumber;
+            this.vnumber = ip.Results.vnumber;            
+            if (~lstrfind(upper(ipr.tracer), 'OC') && ...
+                ~lstrfind(upper(ipr.tracer), 'OO') && ...
+                ~lstrfind(upper(ipr.tracer), 'HO'))
+                ipr.snumber = nan;
+            end
+            if (isnan(ipr.snumber))
+                schar = '';
+            else
+                schar = num2str(ip.Results.snumber);
+            end
+        end     
         function tf   = isequal(this, obj)
             tf = this.isequaln(obj);
         end
@@ -460,7 +524,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end   
         function loc  = regionLocation(this, varargin)
             loc = this.vLocation(varargin{:});
-        end  
+        end   
+        function a    = seriesDicomAsterisk(this, varargin)
+            a = this.studyData.seriesDicomAsterisk(varargin{:});
+        end
         function loc  = sessionLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -574,7 +641,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         snumber_
         tracer_
         vnumber_
-    end    
+    end
     
     methods (Static, Access = protected)
         function ic = cropImaging(ic, varargin)
@@ -654,6 +721,12 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function fn = niigzFilename(fn)
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f '.nii.gz']);
+        end
+    end
+    
+    methods (Access = protected)        
+        function ensureCTFqfilename(~, fqfn) %#ok<INUSD>
+            %assert(lexist(fqfn, 'file'));
         end
     end
     

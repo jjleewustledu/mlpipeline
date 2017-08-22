@@ -1,4 +1,4 @@
-classdef AbstractDataBuilder < mlpipeline.IDataBuilder
+classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuilder
 	%% ABSTRACTDATABUILDER  
 
 	%  $Revision$
@@ -9,7 +9,8 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 
-	properties 		
+	properties 	
+        finished	
  		keepForensics = true
     end
     
@@ -22,20 +23,21 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
 
 	methods 
         
-        %% GET
+        %% GET/SET
         
-        function g    = get.logger(this)
+        function g = get.logger(this)
             g = this.logger_;
         end  
-        function g    = get.product(this)
+        function g = get.product(this)
             g = this.product_;
         end
-        function g    = get.sessionData(this)
+        function g = get.sessionData(this)
             g = this.sessionData_;
         end
-        function g    = get.studyData(this)
+        function g = get.studyData(this)
             g = this.sessionData.studyData;
-        end        
+        end
+        
         function this = set.sessionData(this, s)
             assert(isa(s, 'mlpipeline.SessionData'));
             this.sessionData_ = s;
@@ -44,20 +46,73 @@ classdef AbstractDataBuilder < mlpipeline.IDataBuilder
         %%
         
         function tf   = isequal(this, obj)
+            %  @param obj any object
+            %  @return tf := operational equivalence of this and obj.
+            
             tf = this.isequaln(obj);
         end
         function tf   = isequaln(this, obj)
+            %  @param obj any object
+            %  @return tf := operational equivalence of this and obj.
+            
             if (isempty(obj)); tf = false; return; end
             tf = this.classesequal(obj);
             if (tf)
                 tf = this.sessionData.isequal(obj.sessionData);
             end
+        end   
+        function tf   = isfinished(this, varargin)
+            if (isempty(this.finished))
+                tf = false; 
+                return
+            end
+            tf = this.finished.isfinished;
+        end
+        function tag  = resolveTagFrame(this, varargin)
+            tag = this.sessionData.resolveTagFrame(varargin{:});
+        end
+        function obj  = tracerEpoch(this, varargin)
+            obj = this.sessionData.tracerEpoch(varargin{:});
+        end
+        function obj  = tracerLocation(this, varargin)
+            obj = this.sessionData.tracerLocation(varargin{:});
+        end
+        function obj  = tracerResolved(this, varargin)
+            obj = this.sessionData.tracerResolved(varargin{:});
+        end
+        function obj  = tracerResolvedSumt(this, varargin)
+            obj = this.sessionData.tracerResolvedSumt(varargin{:});
         end 
+        function obj  = tracerRevision(this, varargin)
+            obj = this.sessionData.tracerRevision(varargin{:});
+        end
+        function obj  = tracerRevisionSumt(this, varargin)
+            obj = this.sessionData.tracerRevisionSumt(varargin{:});
+        end
+        function obj  = T1(this, varargin)
+            obj = this.sessionData.T1(varargin{:});
+        end
+        function obj  = t2(this, varargin)
+            obj = this.sessionData.t2(varargin{:});
+        end
+        function obj  = tof(this, varargin)
+            obj = this.sessionData.tof(varargin{:});
+        end
+        function fqfp = umap(this, varargin)
+            fqfp = this.sessionData.umap(varargin{:});
+        end 
+        function fqfp = umapSynth(this, varargin)
+            fqfp = this.sessionData.umapSynth(varargin{:});
+        end 
+        function obj  = vLocation(this, varargin)
+            obj = this.sessionData.vLocation(varargin{:});
+        end
+        
         function this = AbstractDataBuilder(varargin)
             %% ABSTRACTDATABUILDER
             %  @param named 'logger' is an mlpipeline.AbstractLogger.
-            %  @param named 'product' is the initial state of the product to build.
-            %  @param named 'sessionData' is an mlpipeline.ISessionData.
+            %  @param named 'product' is the initial state of the product to build; default := [].
+            %  @param named 'sessionData' is an mlpipeline.ISessionData; default := [].
             
  			ip = inputParser;
             ip.KeepUnmatched = true;
