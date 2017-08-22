@@ -10,6 +10,7 @@ classdef IImageBuilder < mlpipeline.IDataBuilder
  	
 
 	properties (Abstract)
+        buildVisitor
         referenceImage
         referenceWeight
         sourceImage

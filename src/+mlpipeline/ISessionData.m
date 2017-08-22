@@ -20,7 +20,6 @@ classdef ISessionData
         
         absScatterCorrected
         attenuationCorrected
-        builder % ISessionData may require access to an associated builder
         rnumber
         snumber
         vnumber
