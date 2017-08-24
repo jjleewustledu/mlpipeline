@@ -9,12 +9,12 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 
-	properties 	
-        finished	
+	properties 		
  		keepForensics = true
     end
     
     properties (Dependent)
+        finished
         logger
         product        
         sessionData
@@ -25,6 +25,9 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %% GET/SET
         
+        function g = get.finished(this)
+            g = this.finished_;
+        end
         function g = get.logger(this)
             g = this.logger_;
         end  
@@ -104,6 +107,15 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         function fqfp = umapSynth(this, varargin)
             fqfp = this.sessionData.umapSynth(varargin{:});
         end 
+        function this = updateFinished(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'tag', ...
+                sprintf('updateFinished_%s', lower(this.sessionData.sessionFolder)), ...
+                @ischar);
+            parse(ip, varargin{:});
+            
+            this.finished_ = mlpipeline.Finished(this, 'path', this.logger.filepath, 'tag', ip.Results.tag);
+        end
         function obj  = vLocation(this, varargin)
             obj = this.sessionData.vLocation(varargin{:});
         end
@@ -130,6 +142,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
     %% PROTECTED
     
     properties (Access = protected)
+        finished_
         logger_
         product_
         sessionData_
