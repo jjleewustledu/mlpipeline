@@ -53,8 +53,16 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         
         %%
 		  
-        function tag  = resolveTagFrame(this, f)
-            tag = sprintf('%s_frame%i', this.resolveTag, f);
+        function tag  = resolveTagFrame(this, varargin)
+            ip = inputParser;
+            addRequired( ip, 'f', @isnumeric);
+            addParameter(ip, 'reset', true, @islogical);
+            parse(ip, varargin{:});
+            
+            if (ip.Results.reset)
+                this.resolveTag = '';
+            end
+            tag = sprintf('%s_frame%i', this.resolveTag, ip.Results.f);
         end        
         function obj  = tracerEpoch(this, varargin)
             %% TRACEREPOCH is tracerRevision without the rnumber label.
