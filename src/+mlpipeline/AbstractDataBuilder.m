@@ -112,9 +112,11 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             addParameter(ip, 'tag', ...
                 sprintf('updateFinished_%s', lower(this.sessionData.sessionFolder)), ...
                 @ischar);
+            addParameter(ip, 'tag2', '', @ischar);
             parse(ip, varargin{:});
             
-            this.finished_ = mlpipeline.Finished(this, 'path', this.logger.filepath, 'tag', ip.Results.tag);
+            this.finished_ = mlpipeline.Finished(this, ...
+                'path', this.logger.filepath, 'tag', sprintf('%s%s', ip.Results.tag, ip.Results.tag2));
         end
         function obj  = vLocation(this, varargin)
             obj = this.sessionData.vLocation(varargin{:});
