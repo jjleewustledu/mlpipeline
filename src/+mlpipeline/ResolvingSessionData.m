@@ -8,7 +8,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
  	
 	properties
         epoch
-        indexOfReference
+        %indexOfReference % incipient bug
         resolveTagPrefix = 'op_'
     end
        
