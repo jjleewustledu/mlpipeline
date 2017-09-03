@@ -10,6 +10,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
     
+    properties
+        allowDirNotYetExisting = false
+    end
+    
 	properties (Dependent)
         freesurfersDir
         sessionFolder
@@ -77,27 +81,30 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function g    = get.subjectsDir(this)
             g = this.studyData_.subjectsDir;
         end
+        function this = set.subjectsDir(this, s)
+            this.assertIsdir(s);
+            this.studyData_.subjectsDir = s;
+        end
         function g    = get.subjectsFolder(this)
-            [~,g] = myfileparts(this.subjectsDir);
+            g = this.studyData_.subjectsFolder;
         end
         function this = set.subjectsFolder(this, s)
-            assert(isdir(fullfile(myfileparts(this.studyData.subjectsDir), s, '')));
             this.studyData_.subjectsFolder = s;
+           this.assertIsdir(this.subjectsDir);
         end
         function g    = get.sessionFolder(this)
-            [~,g] = myfileparts(this.sessionPath);
+            g = this.sessionFolder_;
         end
         function this = set.sessionFolder(this, s)
-            fqs = fullfile(myfileparts(this.sessionFolder), s, '');
-            assert(isdir(fqs));
-            this.sessionPath_ = fqs;
+            this.sessionFolder_ = s;            
+            this.assertIsdir(this.subjectsDir);
         end
         function g    = get.sessionPath(this)
-            g = this.sessionPath_;
+            g = fullfile(this.subjectsDir, this.sessionFolder_);
         end
         function this = set.sessionPath(this, s)
-            assert(isdir(s));
-            this.sessionPath_ = s;
+            this.assertIsdir(s);
+            [this.subjectsDir,this.sessionFolder] = fileparts(s);
         end
         function g    = get.studyData(this)
             g = this.studyData_;
@@ -384,6 +391,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             %  @param named typ has default 'mlfourd.ImagingContext'
             
             ip = inputParser;
+            ip.KeepUnmatched = true;
             addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
             addParameter(ip, 'suffix', '', @ischar);
             addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
@@ -533,47 +541,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            loc = locationType(ip.Results.typ, this.sessionPath_);
-        end
-        function this = update(this, varargin)
- 			%% UPDATE
- 			%  @param [param-name, param-value[, ...]]
-            %         'ac'             is logical
-            %         'pnumber'        is char
-            %         'rnumber'        is numeric
-            %         'sessionFolder'  is char
-            %         'sessionPath'    is a path to the session data
-            %         'snumber'        is numeric
-            %         'subjectsDir'    is a path to the subjects dir
-            %         'subjectsFolder' is char
-            %         'tracer'         is char
-            %         'vnumber'        is numeric
-
-            ip = inputParser;
-            sessd_ = this.sessionData;          
-            addParameter(ip, 'abs',            sessd_.absScatterCorrected,  @islogical);
-            addParameter(ip, 'ac',             sessd_.attenuationCorrected, @islogical);
-            addParameter(ip, 'pnumber',        sessd_.pnumber,              @ischar);
-            addParameter(ip, 'rnumber',        sessd_.rnumber,              @isnumeric);
-            addParameter(ip, 'sessionFolder',  sessd_.sessionFolder,        @ischar);
-            addParameter(ip, 'sessionPath',    sessd_.sessionPath,          @isdir);
-            addParameter(ip, 'snumber',        sessd_.snumber,              @isnumeric);
-            addParameter(ip, 'subjectsDir',    sessd_.subjectsDir,          @isdir);
-            addParameter(ip, 'subjectsFolder', sessd_.subjectsFolder,       @ischar);
-            addParameter(ip, 'tracer',         sessd_.tracer,               @ischar);
-            addParameter(ip, 'vnumber',        sessd_.vnumber,              @isnumeric);
-            parse(ip, varargin{:});
-                            
-            sessd_.absScatterCorrected  = ip.Results.abs;
-            sessd_.attenuationCorrected = ip.Results.ac;
-            sessd_.rnumber              = ip.Results.rnumber;
-            sessd_.sessionFolder        = ip.Results.sessionFolder;
-            sessd_.sessionPath          = ip.Results.sessionPath;
-            sessd_.snumber              = ip.Results.snumber;
-            sessd_.subjectsDir          = ip.Results.subjectsDir;
-            sessd_.subjectsFolder       = ip.Results.subjectsFolder;
-            sessd_.tracer               = ip.Results.tracer;
-            sessd_.vnumber              = ip.Results.vnumber;   
+            loc = locationType(ip.Results.typ, this.sessionPath);
         end
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
@@ -590,8 +558,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             %         'sessionPath'  is a path to the session data
             %         'snumber'      is numeric
             %         'studyData'    is a mlpipeline.StudyData
-            %         'subjectsDirManual' is dir
-            %         'subjectsFolder'    is char
+            %         'subjectsDir'  is dir
             %         'tracer'       is char
             %         'vnumber'      is numeric
 
@@ -604,23 +571,24 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'sessionPath', pwd, @isdir);
             addParameter(ip, 'snumber', 1,       @isnumeric);
-            addParameter(ip, 'studyData', [],    @(x) isa(x, 'mlpipeline.StudyDataHandle'));
-            addParameter(ip, 'subjectsDirManual', '', @(x) isdir(x) || isempty(x));
-            addParameter(ip, 'subjectsFolder', mlraichle.RaichleRegistry.instance.subjectsFolder, @ischar);
+            addParameter(ip, 'studyData',        @(x) isa(x, 'mlpipeline.StudyDataHandle'));
+            addParameter(ip, 'subjectsDir', '',  @(x) isdir(x) || isempty(x));
             addParameter(ip, 'tracer', 'FDG',    @ischar);
             addParameter(ip, 'vnumber', 1,       @isnumeric);
             parse(ip, varargin{:});
+            
+            this.studyData_ = ip.Results.studyData;
+            if (~isempty(ip.Results.subjectsDir))
+                this.studyData_.subjectsDir = ip.Results.subjectsDir;
+            end
             
             this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
             this.intervention_         = ip.Results.intervention;
             this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
-            this.sessionPath_          = ip.Results.sessionPath;
+            [this.studyData_.subjectsDir,this.sessionFolder] = fileparts(ip.Results.sessionPath);
             this.snumber_              = ip.Results.snumber;
-            this.studyData_            = ip.Results.studyData;
-            this.studyData_.subjectsFolder = ip.Results.subjectsFolder;
-            this.studyData_.subjectsDirManual = ip.Results.subjectsDirManual;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;
         end
@@ -636,7 +604,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         pnumber_
         rnumber_
         region_
-        sessionPath_
+        sessionFolder_
         studyData_
         snumber_
         tracer_
@@ -752,6 +720,12 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
     end
     
     methods (Access = private)
+        function assertIsdir(this, d)
+            if (this.allowDirNotYetExisting)
+                return
+            end
+            assert(isdir(d));
+        end
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
             msg = '';

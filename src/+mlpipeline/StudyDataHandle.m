@@ -1,5 +1,5 @@
-classdef StudyDataHandle < handle
-	%% StudyDataHandle defines the interface for mlpipeline.StudyData, mlpipeline.StudyDataSingleton
+classdef (Abstract) StudyDataHandle < handle
+	%% StudyDataHandle defines the interface for mlpipeline.StudyData, mlpipeline.StudyDataSingleton.
 
 	%  $Revision$
  	%  was created 08-Jun-2016 17:02:09

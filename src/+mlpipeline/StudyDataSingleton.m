@@ -14,6 +14,8 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
     end
 
 	methods
+        
+        %% concrete implementation of abstract StudyDataHandle
         function iter = createIteratorForSessionData(this)
             iter = this.sessionDataComposite_.createIterator;
         end
@@ -29,10 +31,6 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
         end
         function d    = freesurfersDir(this)
             d = this.subjectsDir;
-        end
-        function tf   = isChpcHostname(~)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
         end
         function loc  = loggingLocation(this, varargin)
             ip = inputParser;
@@ -51,8 +49,6 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
         end
         function d    = rawdataDir(this)
             d = this.subjectsDir;
-        end
-        function        register(~)
         end
         function this = replaceSessionData(this, varargin)
         end
@@ -84,6 +80,15 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
                 return
             end
             sess = mlpipeline.SessionData('studyData', this, varargin{:});
+        end
+        
+        %%
+        
+        function tf   = isChpcHostname(~)
+            [~,hn] = mlbash('hostname');
+            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
+        end
+        function        register(~)
         end
     end
     
