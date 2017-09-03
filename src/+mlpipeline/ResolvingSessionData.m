@@ -74,7 +74,12 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
         function obj  = umap(this, tag, varargin)
-            fqfn = fullfile(this.tracerRevision('typ','filepath'), sprintf('umapSynth_%s%s', tag, this.filetypeExt));
+            if (isempty(tag))
+                fn = 'umapSynth';
+            else 
+                fn = sprintf('umapSynth_%s%s', tag, this.filetypeExt);
+            end
+            fqfn = fullfile(this.tracerRevision('typ','filepath'), fn);
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end 
         

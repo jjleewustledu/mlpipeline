@@ -14,6 +14,9 @@ classdef StudyData < mlpipeline.StudyDataHandle
     end
 
 	methods
+        
+        %% concrete implementations of abstract mlpipeline.StudyDataHandle
+        
         function iter = createIteratorForSessionData(this)
             iter = this.sessionDataComposite_.createIterator;
         end
@@ -30,10 +33,6 @@ classdef StudyData < mlpipeline.StudyDataHandle
         function d    = freesurfersDir(this)
             d = this.subjectsDir;
         end
-        function tf   = isChpcHostname(~)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
-        end
         function loc  = loggingLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'type', 'path', @isLocationType);
@@ -45,8 +44,8 @@ classdef StudyData < mlpipeline.StudyDataHandle
                 case 'path'
                     loc = this.subjectsDir;
                 otherwise
-                    error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyData.loggingLocation.ip.Results.type->%s not recognized', ip.Results.type);
+                    error('mlpipeline:unsupportedSwitchCase', ...
+                          'StudyData.loggingLocation.ip.Results.type->%s', ip.Results.type);
             end
         end
         function d    = rawdataDir(this)
@@ -91,7 +90,11 @@ classdef StudyData < mlpipeline.StudyDataHandle
         sessionDataComposite_
     end
     
-    methods (Access = protected)
+    methods (Access = protected)        
+        function tf   = isChpcHostname(~)
+            [~,hn] = mlbash('hostname');
+            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
+        end        
         function this = StudyData(varargin)
             %% STUDYDATA 
             %  @param [1] that is a mlpattern.CellComposite:  this replaces internal this.sessionDataComposite_ and returns.
