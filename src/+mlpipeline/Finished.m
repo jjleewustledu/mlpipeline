@@ -11,6 +11,9 @@ classdef Finished
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlfourdfp/src/+mlfourdfp.
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.
  	
+    properties
+        neverTouch = false
+    end
 
     properties (Dependent)
         path
@@ -65,6 +68,9 @@ classdef Finished
             tf = lexist(this.finishedMarkerFilename, 'file');
         end
         function        touchFinishedMarker(this, varargin)
+            if (this.neverTouch)
+                return
+            end
             mlbash(['touch ' this.finishedMarkerFilename(varargin{:})]);
         end
     end 

@@ -1,5 +1,5 @@
 classdef RootDataBuilder < matlab.mixin.Heterogeneous
-	%% ROOTDATABUILDER  
+	%% ROOTDATABUILDER enables composites of DataBuilder classes.
 
 	%  $Revision$
  	%  was created 18-Aug-2017 16:02:54 by jjlee,

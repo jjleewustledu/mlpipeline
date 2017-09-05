@@ -11,6 +11,7 @@ classdef (Abstract) StudyDataHandle < handle
 
 	properties (Abstract)
         comments
+        subjectsDir
     end
     
     methods (Abstract)
