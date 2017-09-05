@@ -48,6 +48,14 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %%
         
+        function this = setNeverTouch(this, s)
+            assert(islogical(s));
+            this.finished_.neverTouch = s;
+        end
+        function g = getNeverTouch(this)
+            g = this.finished_.neverTouch;            
+        end
+        
         function tf   = isequal(this, obj)
             %  @param obj any object
             %  @return tf := operational equivalence of this and obj.
@@ -71,14 +79,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             end
             tf = this.finished.isfinished;
         end
-        function tag  = resolveTagFrame(this, varargin)
-            tag = this.sessionData.resolveTagFrame(varargin{:});
-        end
         function obj  = tracerEpoch(this, varargin)
             obj = this.sessionData.tracerEpoch(varargin{:});
-        end
-        function obj  = tracerLocation(this, varargin)
-            obj = this.sessionData.tracerLocation(varargin{:});
         end
         function obj  = tracerResolved(this, varargin)
             obj = this.sessionData.tracerResolved(varargin{:});
