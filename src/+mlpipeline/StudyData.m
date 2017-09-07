@@ -12,8 +12,31 @@ classdef StudyData < mlpipeline.StudyDataHandle
     properties
         comments
     end
+    
+    properties (Dependent)
+        subjectsDir
+        subjectsFolder
+    end
 
-	methods
+	methods        
+        
+        %% GET
+        
+        function g = get.subjectsDir(this)
+            g = this.subjectsDir_;
+        end
+        function g = get.subjectsFolder(this)
+            [~,g] = fileparts(this.subjectsDir);
+        end
+        
+        function this = set.subjectsDir(this, s)
+            assert(ischar(s));       
+            this.subjectsDir_ = s;
+        end
+        function this = set.subjectsFolder(this, s)
+            assert(ischar(s));
+            this.subjectsDir_ = fullfile(fileparts(this.subjectsDir_), s, '');
+        end
         
         %% concrete implementations of abstract mlpipeline.StudyDataHandle
         
@@ -88,9 +111,16 @@ classdef StudyData < mlpipeline.StudyDataHandle
     
     properties (Access = protected)
         sessionDataComposite_
+        subjectsDir_
     end
     
-    methods (Access = protected)        
+    methods (Access = protected)    
+        function that = copyElement(this)
+            that = mlpipeline.StudyData;
+            that.comments = this.comments;
+            that.sessionDataComposite_ = this.sessionDataComposite_;
+            that.subjectsDir_ = this.subjectsDir_;
+        end
         function tf   = isChpcHostname(~)
             [~,hn] = mlbash('hostname');
             tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
@@ -104,22 +134,22 @@ classdef StudyData < mlpipeline.StudyDataHandle
             %  this adds to this.sessionDataComposite_ according to assignSessionDataCompositeFromPaths.
             %  @returns this.
             
-            this.sessionDataComposite_ = mlpatterns.CellComposite;
-            for v = 1:length(varargin)
-                if (isa(varargin{v}, 'mlpatterns.CellComposite'))
-                    this.sessionDataComposite_ = varargin{v};
-                    return
-                end
-                if (isa(varargin{v}, 'mlpipeline.SessionData'))
-                    this.sessionDataComposite_ = this.sessionDataComposite_.add(varargin{v});
-                end
-            end            
-            if (isempty(this.sessionDataComposite_))
-                this = this.assignSessionDataCompositeFromPaths(varargin{:});
-            end            
-            if (isempty(this.sessionDataComposite_))
-                this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
-            end
+%            this.sessionDataComposite_ = mlpatterns.CellComposite;
+%             for v = 1:length(varargin)
+%                 if (isa(varargin{v}, 'mlpatterns.CellComposite'))
+%                     this.sessionDataComposite_ = varargin{v};
+%                     return
+%                 end
+%                 if (isa(varargin{v}, 'mlpipeline.SessionData'))
+%                     this.sessionDataComposite_ = this.sessionDataComposite_.add(varargin{v});
+%                 end
+%             end            
+%             if (isempty(this.sessionDataComposite_))
+%                 this = this.assignSessionDataCompositeFromPaths(varargin{:});
+%             end            
+%             if (isempty(this.sessionDataComposite_))
+%                 this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
+%             end
         end
     end
     
