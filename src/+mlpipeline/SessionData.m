@@ -11,7 +11,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
  	
     
     properties
-        allowDirNotYetExisting = false
+        allowDirNotYetExisting = true
     end
     
 	properties (Dependent)
@@ -83,21 +83,25 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function this = set.subjectsDir(this, s)
             this.assertIsdir(s);
-            this.studyData_.subjectsDir = s;
+            newStudyData_ = this.studyData_;
+            newStudyData_.subjectsDir = s;
+            this.studyData_ = newStudyData_;
         end
         function g    = get.subjectsFolder(this)
             g = this.studyData_.subjectsFolder;
         end
         function this = set.subjectsFolder(this, s)
-            this.studyData_.subjectsFolder = s;
-           this.assertIsdir(this.subjectsDir);
+            newStudyData_ = this.studyData_;
+            newStudyData_.subjectsFolder = s;
+            this.studyData_ = newStudyData_;
+            this.assertIsdir(this.subjectsDir);
         end
         function g    = get.sessionFolder(this)
             g = this.sessionFolder_;
         end
         function this = set.sessionFolder(this, s)
             this.sessionFolder_ = s;            
-            this.assertIsdir(this.subjectsDir);
+            this.assertIsdir(this.sessionPath);
         end
         function g    = get.sessionPath(this)
             g = fullfile(this.subjectsDir, this.sessionFolder_);
@@ -569,7 +573,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'intervention',     @(x) ischar(x) || isnumeric(x));
             addParameter(ip, 'pnumber', '',      @ischar);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
-            addParameter(ip, 'sessionPath', pwd, @isdir);
+            addParameter(ip, 'sessionPath', pwd, @ischar);
             addParameter(ip, 'snumber', 1,       @isnumeric);
             addParameter(ip, 'studyData',        @(x) isa(x, 'mlpipeline.StudyDataHandle'));
             addParameter(ip, 'subjectsDir', '',  @(x) isdir(x) || isempty(x));
@@ -692,7 +696,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
     end
     
-    methods (Access = protected)        
+    methods (Access = protected)    
         function ensureCTFqfilename(~, fqfn) %#ok<INUSD>
             %assert(lexist(fqfn, 'file'));
         end

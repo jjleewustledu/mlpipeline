@@ -1,4 +1,4 @@
-classdef (Abstract) StudyDataHandle < handle
+classdef (Abstract) StudyDataHandle % < matlab.mixin.Copyable
 	%% StudyDataHandle defines the interface for mlpipeline.StudyData, mlpipeline.StudyDataSingleton.
 
 	%  $Revision$
@@ -24,10 +24,6 @@ classdef (Abstract) StudyDataHandle < handle
         this = replaceSessionData(this)
         loc  = saveWorkspace(this)
         sess = sessionData(this)
-    end
-    
-    methods (Abstract, Access = protected)
-        this = assignSessionDataCompositeFromPaths(this)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
