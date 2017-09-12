@@ -25,6 +25,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         absScatterCorrected
         attenuationCorrected
         builder
+        frame
         isotope
         pnumber
         rnumber
@@ -47,6 +48,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
         end
         function fn    = mri_convert(fn, varargin)
+            %% MRI_CONVERT
+            %  @param fn is the source possessing a filename extension recognized by mri_convert
+            %  @param fn is the destination, also recognized by mri_convert.  Optional.  Default is [fileprefix(fn) '.nii.gz'] 
+            
             import mlpipeline.*;
             ip = inputParser;
             addRequired(ip, 'fn',                                 @(x) lexist(x, 'file'));
@@ -138,6 +143,13 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function this = set.builder(this, s)
             assert(isa(s, 'mlpipeline.IDataBuilder'));
             this.builder_ = s;
+        end
+        function g    = get.frame(this)
+            g = this.frame_;
+        end
+        function this = set.frame(this, s)
+            assert(isnumeric(s));
+            this.frame_ = s;
         end
         function g    = get.isotope(this)
             tr = lower(this.tracer);
@@ -445,20 +457,21 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end   
         function [ipr,schar,this] = iprLocation(this, varargin)
             %% IPRLOCATION
+            %  @param named ac is the attenuation correction; is logical
             %  @param named tracer is a string identifier.
+            %  @param named frame is a frame identifier; is numeric.
+            %  @param named rnumber is the revision number; is numeric.
             %  @param named snumber is the scan number; is numeric.
             %  @param named typ is string identifier:  folder path, fn, fqfn, ...  
             %  See also:  imagingType.
-            %  @param named frame is numeric.
-            %  @param named rnumber is the revision number; is numeric.
             %  @returns ipr, the struct ip.Results obtained by parse.            
             %  @returns schr, the s-number as a string.
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'ac', this.attenuationCorrected, @islogical);
-            addParameter(ip, 'tracer', this.tracer, @ischar);
-            addParameter(ip, 'frame', nan, @isnumeric);
+            addParameter(ip, 'ac',      this.attenuationCorrected, @islogical);
+            addParameter(ip, 'tracer',  this.tracer, @ischar);
+            addParameter(ip, 'frame',   this.frame, @isnumeric);
             addParameter(ip, 'rnumber', this.rnumber, @isnumeric);
             addParameter(ip, 'snumber', this.snumber, @isnumeric);
             addParameter(ip, 'vnumber', this.vnumber, @isnumeric);
@@ -469,7 +482,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             this.tracer  = ip.Results.tracer; 
             this.rnumber = ip.Results.rnumber;
             this.snumber = ip.Results.snumber;
-            this.vnumber = ip.Results.vnumber;            
+            this.vnumber = ip.Results.vnumber; 
+            this.frame   = ip.Results.frame;
             if (~lstrfind(upper(ipr.tracer), 'OC') && ...
                 ~lstrfind(upper(ipr.tracer), 'OO') && ...
                 ~lstrfind(upper(ipr.tracer), 'HO'))
@@ -571,6 +585,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'abs', false,       @islogical);
             addParameter(ip, 'ac', false,        @islogical);
             addParameter(ip, 'intervention',     @(x) ischar(x) || isnumeric(x));
+            addParameter(ip, 'frame', nan,       @isnumeric);
             addParameter(ip, 'pnumber', '',      @ischar);
             addParameter(ip, 'rnumber', 1,       @isnumeric);
             addParameter(ip, 'sessionPath', pwd, @ischar);
@@ -588,6 +603,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             
             this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
+            this.frame_                = ip.Results.frame;
             this.intervention_         = ip.Results.intervention;
             this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
@@ -604,6 +620,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         absScatterCorrected_
         attenuationCorrected_
         builder_
+        frame_
         intervention_
         pnumber_
         rnumber_
