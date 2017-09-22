@@ -412,8 +412,8 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'suffix', '', @ischar);
             addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
             parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ip.Results.fqfn);
+            [pth,fp,ext] = fileparts(ip.Results.fqfn);
+            obj = imagingType(ip.Results.typ, fullfile(pth, [fp ip.Results.suffix ext]));
         end
         function obj  = fqfileprefixObject(~, varargin)
             ip = inputParser;
@@ -423,7 +423,7 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             addParameter(ip, 'typ', 'fqfp', @ischar);
             parse(ip, varargin{:});
             
-            obj = imagingType(ip.Results.typ, ip.Results.fqfp);
+            obj = imagingType(ip.Results.typ, [ip.Results.fqfp ip.Results.suffix]);
         end
         function loc  = freesurferLocation(this, varargin)
             ip = inputParser;

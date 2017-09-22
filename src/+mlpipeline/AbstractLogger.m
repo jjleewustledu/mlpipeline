@@ -144,7 +144,9 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);
             
             this.cellArrayList_ = mlpatterns.CellArrayList;
-            this.cellArrayList_.add(this.header);              
+            if (~isempty(this.header))
+                this.cellArrayList_.add(this.header);
+            end
         end         
     end
     
