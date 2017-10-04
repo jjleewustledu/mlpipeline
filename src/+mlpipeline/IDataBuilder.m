@@ -15,6 +15,8 @@ classdef (Abstract) IDataBuilder
  	
 
 	properties (Abstract)
+        buildVisitor
+        finished
  		keepForensics
         logger
         product        

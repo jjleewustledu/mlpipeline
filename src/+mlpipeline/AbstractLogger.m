@@ -133,7 +133,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             ip = inputParser;
             ip.KeepUnmatched = true;
             addOptional(ip, 'fileprefix',       this.defaultFqfileprefix, @ischar);
-            addOptional(ip, 'callback',         this,                   @isobject);
+            addOptional(ip, 'callback',         this,                     @(x) ~isempty(class(x)));
             parse(ip, varargin{:});
             
             this.fqfileprefix = ip.Results.fileprefix;
