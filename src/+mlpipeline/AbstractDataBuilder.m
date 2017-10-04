@@ -10,10 +10,11 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
  	
 
 	properties 		
- 		keepForensics = true
+ 		keepForensics
     end
     
     properties (Dependent)
+        buildVisitor
         finished
         logger
         product        
@@ -25,6 +26,9 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %% GET/SET
         
+        function g = get.buildVisitor(this)
+            g = this.buildVisitor_;
+        end
         function g = get.finished(this)
             g = this.finished_;
         end
@@ -41,6 +45,10 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             g = this.sessionData.studyData;
         end
         
+        function this = set.buildVisitor(this, v)
+            assert(~isempty(v));
+            this.buildVisitor_ = v;
+        end
         function this = set.sessionData(this, s)
             assert(isa(s, 'mlpipeline.SessionData'));
             this.sessionData_ = s;
@@ -48,12 +56,12 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %%
         
+        function g    = getNeverTouch(this)
+            g = this.finished_.neverTouch;            
+        end
         function this = setNeverTouch(this, s)
             assert(islogical(s));
             this.finished_.neverTouch = s;
-        end
-        function g = getNeverTouch(this)
-            g = this.finished_.neverTouch;            
         end
         
         function tf   = isequal(this, obj)
@@ -78,37 +86,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
                 return
             end
             tf = this.finished.isfinished;
-        end
-        function obj  = tracerEpoch(this, varargin)
-            obj = this.sessionData.tracerEpoch(varargin{:});
-        end
-        function obj  = tracerResolved(this, varargin)
-            obj = this.sessionData.tracerResolved(varargin{:});
-        end
-        function obj  = tracerResolvedSumt(this, varargin)
-            obj = this.sessionData.tracerResolvedSumt(varargin{:});
-        end 
-        function obj  = tracerRevision(this, varargin)
-            obj = this.sessionData.tracerRevision(varargin{:});
-        end
-        function obj  = tracerRevisionSumt(this, varargin)
-            obj = this.sessionData.tracerRevisionSumt(varargin{:});
-        end
-        function obj  = T1(this, varargin)
-            obj = this.sessionData.T1(varargin{:});
-        end
-        function obj  = t2(this, varargin)
-            obj = this.sessionData.t2(varargin{:});
-        end
-        function obj  = tof(this, varargin)
-            obj = this.sessionData.tof(varargin{:});
-        end
-        function fqfp = umap(this, varargin)
-            fqfp = this.sessionData.umap(varargin{:});
-        end 
-        function fqfp = umapSynth(this, varargin)
-            fqfp = this.sessionData.umapSynth(varargin{:});
-        end 
+        end                
         function this = updateFinished(this, varargin)
             ip = inputParser;
             addParameter(ip, 'tag', ...
@@ -120,41 +98,57 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.finished_ = mlpipeline.Finished(this, ...
                 'path', this.logger.filepath, 'tag', sprintf('%s%s', ip.Results.tag, ip.Results.tag2));
         end
-        function obj  = vLocation(this, varargin)
-            obj = this.sessionData.vLocation(varargin{:});
-        end
         
         function this = AbstractDataBuilder(varargin)
             %% ABSTRACTDATABUILDER
-            %  @param named 'logger' is an mlpipeline.AbstractLogger.
-            %  @param named 'product' is the initial state of the product to build; default := [].
-            %  @param named 'sessionData' is an mlpipeline.ISessionData; default := [].
+            %  @param named logger is an mlpipeline.AbstractLogger.
+            %  @param named product is the initial state of the product to build; default := [].
+            %  @param named sessionData is an mlpipeline.ISessionData; default := [].
+            %  @param named buildVisitor ...
             
  			ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.AbstractLogger'));
             addParameter(ip, 'product', []);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
+            addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
+            addParameter(ip, 'keepForensics', false, @islogical);
             parse(ip, varargin{:});
             
-            this.logger_      = ip.Results.logger;
-            this.product_     = ip.Results.product;
-            this.sessionData_ = ip.Results.sessionData;
+            %% invoke copy-ctor
+            
+            if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractDataBuilder'))
+                aCopy = varargin{1};
+                this.logger_ = aCopy.logger;
+                this.product_ = aCopy.product_;
+                this.sessionData_ = aCopy.sessionData_;
+                this.buildVisitor_ = aCopy.buildVisitor_;
+                this.keepForensics = aCopy.keepForensics;
+                this.finished_ = aCopy.finished;
+                return
+            end
+            
+            %% manage parameters             
+            
+            this.logger_       = ip.Results.logger;
+            this.product_      = ip.Results.product;
+            this.sessionData_  = ip.Results.sessionData;
+            this.buildVisitor_ = ip.Results.buildVisitor;
+            this.keepForensics = ip.Results.keepForensics;
         end
     end
     
     %% PROTECTED
     
     properties (Access = protected)
+        buildVisitor_
         finished_
         logger_
         product_
         sessionData_
     end
     
-    %% PRIVATE
-    
-    methods (Access = private)        
+    methods (Access = protected)        
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
             msg = '';
