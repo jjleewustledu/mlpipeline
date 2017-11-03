@@ -283,6 +283,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function obj = T1(this, varargin)
             obj = this.freesurferObject('T1', varargin{:});
         end
+        function obj = T1001(this, varargin)
+            obj = this.freesurferObject('T1', varargin{:});
+        end
         function obj = t1(this, varargin)
             obj = this.mprage(varargin{:});
         end        
