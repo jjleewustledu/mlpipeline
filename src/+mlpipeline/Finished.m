@@ -12,7 +12,8 @@ classdef Finished
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.
  	
     properties
-        neverTouch = false
+        neverTouch
+        ignoreTouchfile
     end
 
     properties (Dependent)
@@ -41,11 +42,15 @@ classdef Finished
             addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IDataBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
+            addParameter(ip, 'neverTouch', false, @islogical);
+            addParameter(ip, 'ignoreTouchfile', false, @islogical);
             parse(ip, varargin{:});
             
             this.builder_ = ip.Results.builder;
             this.path_ = ip.Results.path;
             this.tag_ = ip.Results.tag;
+            this.neverTouch = ip.Results.neverTouch;
+            this.ignoreTouchfile = ip.Results.ignoreTouchfile;
         end        
         
         function        deleteFinishedMarker(this, varargin)
@@ -65,7 +70,7 @@ classdef Finished
                 sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
         end
         function tf   = isfinished(this, varargin) % KLUDGE
-            tf = lexist(this.finishedMarkerFilename, 'file');
+            tf = lexist(this.finishedMarkerFilename, 'file') && ~this.ignoreTouchfile;
         end
         function        touchFinishedMarker(this, varargin)
             if (this.neverTouch)
