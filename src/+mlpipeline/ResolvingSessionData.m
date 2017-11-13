@@ -10,6 +10,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         epoch
         %indexOfReference % incipient bug
         resolveTagPrefix = 'op_'
+        supEpoch
     end
        
     properties (Dependent)
@@ -88,8 +89,10 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             ip = inputParser;
             ip.KeepUnmatched = true;           
             addParameter(ip, 'resolveTag', '',   @ischar);
+            addParameter(ip, 'supEpoch', 3, @isnumeric);
             parse(ip, varargin{:});             
             this.resolveTag_ = ip.Results.resolveTag;            
+            this.supEpoch = ip.Results.supEpoch;
  		end
     end 
     
