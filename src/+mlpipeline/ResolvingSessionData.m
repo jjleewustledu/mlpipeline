@@ -11,6 +11,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         %indexOfReference % incipient bug
         resolveTagPrefix = 'op_'
         supEpoch
+        supEpochNAC
     end
        
     properties (Dependent)
@@ -75,10 +76,15 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
         function obj  = umap(this, tag, varargin)
-            if (isempty(tag))
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addOptional(ip, 'tag', '', @ischar);
+            parse(ip, tag, varargin{:});
+            
+            if (isempty(ip.Results.tag))
                 fn = 'umapSynth';
             else 
-                fn = sprintf('umapSynth_%s%s', tag, this.filetypeExt);
+                fn = sprintf('umapSynth_%s%s', ip.Results.tag, this.filetypeExt);
             end
             fqfn = fullfile(this.tracerRevision('typ','filepath'), fn);
             obj  = this.fqfilenameObject(fqfn, varargin{:});
@@ -90,9 +96,11 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             ip.KeepUnmatched = true;           
             addParameter(ip, 'resolveTag', '',   @ischar);
             addParameter(ip, 'supEpoch', 3, @isnumeric);
+            addParameter(ip, 'supEpochNAC', 9, @isnumeric);
             parse(ip, varargin{:});             
             this.resolveTag_ = ip.Results.resolveTag;            
-            this.supEpoch = ip.Results.supEpoch;
+            this.supEpoch = ip.Results.supEpoch;          
+            this.supEpochNAC = ip.Results.supEpochNAC;
  		end
     end 
     
