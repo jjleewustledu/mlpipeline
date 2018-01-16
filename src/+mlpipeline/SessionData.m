@@ -103,6 +103,9 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         end
         function g    = get.sessionFolder(this)
             g = this.sessionFolder_;
+            if (isempty(g))
+                warning('mlpipeline:emptyParameter', 'mlpipeline.SessionData.get.sessionFolder.this.sessionFolder_');
+            end
         end
         function this = set.sessionFolder(this, s)
             this.sessionFolder_ = s;            

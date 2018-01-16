@@ -1,4 +1,4 @@
-classdef StudyDataSingleton < mlpipeline.StudyDataHandle
+classdef StudyDataSingleton % < mlpipeline.StudyDataHandle
 	%% STUDYDATASINGLETON  
 
 	%  $Revision$
