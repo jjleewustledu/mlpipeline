@@ -1,4 +1,4 @@
-classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
+classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
 	%% SESSIONDATA  
     %  @param builder is an mlpipeline.IDataBuilder.
 
@@ -36,31 +36,15 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
     end
     
     methods (Static)
-        function fn    = fslchfiletype(fn, varargin)
-            ip = inputParser;
-            addRequired(ip, 'fn', @(x) lexist(x, 'file'));
-            addOptional(ip, 'type', 'NIFTI_GZ', @ischar);
-            parse(ip, fn, varargin{:});
-            
-            fprintf('mlpipeline.SessionData.fslchfiletype is working on %s\n', ip.Results.fn);
-            mlpipeline.PipelineVisitor.cmd('fslchfiletype', 'NIFTI_GZ', ip.Results.fn);
-            [p,f] = myfileparts(fn);
-            fn = fullfile(p, [f mlfourd.INIfTI.FILETYPE_EXT]);
+        function fn    = fslchfiletype(varargin)
+            fn = mlfsl.FslVisitor.fslchfiletype(varargin{:});
         end
-        function fn    = mri_convert(fn, varargin)
+        function fn    = mri_convert(varargin)
             %% MRI_CONVERT
             %  @param fn is the source possessing a filename extension recognized by mri_convert
             %  @param fn is the destination, also recognized by mri_convert.  Optional.  Default is [fileprefix(fn) '.nii.gz'] 
             
-            import mlpipeline.*;
-            ip = inputParser;
-            addRequired(ip, 'fn',                                 @(x) lexist(x, 'file'));
-            addOptional(ip, 'fn2', SessionData.niigzFilename(fn), @ischar);
-            parse(ip, fn, varargin{:});            
-            
-            fprintf('mlpipeline.SessionData.mri_convert is working on %s\n', ip.Results.fn);
-            mlpipeline.PipelineVisitor.cmd('mri_convert', ip.Results.fn, ip.Results.fn2);
-            fn = ip.Results.fn2;
+            fn = mlsurfer.SurferVisitor.mri_convert(varargin{:});
         end
         function [s,r] = nifti_4dfp_4(varargin)
             vtor = mlfourdfp.FourdfpVisitor;
@@ -73,6 +57,10 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
         function [s,r] = nifti_4dfp_ng(varargin)
             vtor = mlfourdfp.FourdfpVisitor;
             [s,r] = vtor.nifti_4dfp_ng(varargin{:});
+        end
+        function fn = niigzFilename(fn)
+            [p,f] = myfileparts(fn);
+            fn = fullfile(p, [f '.nii.gz']);
         end
     end
     
@@ -567,6 +555,27 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             
             loc = locationType(ip.Results.typ, this.sessionPath);
         end
+        function loc  = tracerLocation(~, varargin)
+            loc = this.petLocation(varargin{:});
+        end
+        function loc  = tracerResolved(~, varargin)
+            loc = '';
+        end
+        function loc  = tracerResolvedFinal(~, varargin)
+            loc = '';
+        end
+        function loc  = tracerResolvedFinalSumt(~, varargin)
+            loc = '';
+        end
+        function loc  = tracerResolvedSumt(~, varargin)
+            loc = '';
+        end
+        function loc  = tracerRevision(~, varargin)
+            loc = '';
+        end
+        function loc  = tracerRevisionSumt(~, varargin)
+            loc = '';
+        end
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
         end 
@@ -713,10 +722,6 @@ classdef SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
             f = '';
             return
         end        
-        function fn = niigzFilename(fn)
-            [p,f] = myfileparts(fn);
-            fn = fullfile(p, [f '.nii.gz']);
-        end
     end
     
     methods (Access = protected)    
