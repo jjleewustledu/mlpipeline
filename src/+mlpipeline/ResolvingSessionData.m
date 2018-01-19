@@ -19,11 +19,6 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         resolveTag
     end
 
-    methods (Abstract)
-        obj = tracerLocation(this, varargin)
-        obj = tracerRevision(this, varargin)
-    end
-
 	methods 
         
         %% GET/SET

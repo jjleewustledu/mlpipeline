@@ -95,9 +95,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         end        
         function this = updateFinished(this, varargin)
             ip = inputParser;
-            addParameter(ip, 'tag', ...
-                sprintf('%s_%s', lower(this.sessionData.tracerRevision('typ','fp')), class(this)), ...
-                @ischar);
+            addParameter(ip, 'tag', sprintf('%s_%s', lower(this.sessionData.tracerRevision('typ','fp')), class(this)), @ischar);
             addParameter(ip, 'tag2', '', @ischar);
             parse(ip, varargin{:});
             
@@ -121,7 +119,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
                 return
             end
             if (~isa(prod, 'mlfourd.ImagingContext'))
-                prod = mlfourd.ImagingContext(prod);
+                this.product_ = mlfourd.ImagingContext(prod);
+                return
             end
             this.product_ = prod;
         end
@@ -144,23 +143,10 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             addParameter(ip, 'ignoreTouchfile', false, @islogical);
             parse(ip, varargin{:});
             
-            %% invoke copy-ctor
-            
-            if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractDataBuilder'))
-                aCopy = varargin{1};
-                this.logger_ = aCopy.logger;
-                this.product_ = aCopy.product_;
-                this.sessionData_ = aCopy.sessionData_;
-                this.buildVisitor_ = aCopy.buildVisitor_;
-                this.keepForensics = aCopy.keepForensics;
-                this.neverTouch = aCopy.neverTouch;
-                this.ignoreTouchfile = aCopy.ignoreTouchfile;
-                this.finished_ = aCopy.finished;
+            if (this.receivedCtor(varargin{:}))
+                this = this.copyCtor(varargin{:});
                 return
             end
-            
-            %% manage parameters
-            
             this.logger_         = ip.Results.logger;
             this.product_        = ip.Results.product;
             this.sessionData_    = ip.Results.sessionData;
@@ -168,6 +154,21 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.keepForensics   = ip.Results.keepForensics;
             this.neverTouch      = ip.Results.neverTouch;
             this.ignoreTouchfile = ip.Results.ignoreTouchfile;            
+        end
+        function tf   = receivedCtor(~, varargin)
+            tf = (1 == length(varargin)) && ...
+                 isa(varargin{1}, 'mlpipeline.AbstractDataBuilder');
+        end
+        function this = copyCtor(this, varargin)
+            aCopy = varargin{1};
+            this.logger_ = aCopy.logger;
+            this.product_ = aCopy.product_;
+            this.sessionData_ = aCopy.sessionData_;
+            this.buildVisitor_ = aCopy.buildVisitor_;
+            this.keepForensics = aCopy.keepForensics;
+            this.neverTouch = aCopy.neverTouch;
+            this.ignoreTouchfile = aCopy.ignoreTouchfile;
+            this.finished_ = aCopy.finished;
         end
     end
     
