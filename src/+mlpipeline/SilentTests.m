@@ -13,7 +13,7 @@ classdef SilentTests
  	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad)
 
 	properties
-        basePath     = fullfile(getenv('HOME'), 'Local', 'src', 'mlcvl', '' );
+        basePath     = fullfile(getenv('HOME'), 'MATLAB-Drive', '' );
         packageNames = { 'mlfourd' 'mlfsl' 'mlsurfer' };
  	end
 

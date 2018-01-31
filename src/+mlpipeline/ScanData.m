@@ -26,13 +26,13 @@ classdef ScanData < mlpipeline.IScanData
             g = this.aifData_;
         end
         function g = get.clocks(this)
-            g = this.xlsxObj_.clocks;
+            g = this.manualData_.clocks;
         end
         function g = get.dose(this)
-            g = this.xlsxObj_.dose;
+            g = this.manualData_.dose;
         end
         function g = get.doseAdminDatetime(this)
-            g = this.xlsxObj_.doseAdminDatetime;
+            g = this.manualData_.doseAdminDatetime;
         end
         function g = get.scannerData(this)
             g = this.scannerData_;
@@ -58,13 +58,13 @@ classdef ScanData < mlpipeline.IScanData
             addParameter(ip, 'aifData',     [], @(x) isa(x, 'mlpet.IAifData')          || isempty(x));
             addParameter(ip, 'scannerData', [], @(x) isa(x, 'mlpet.IScannerData')      || isempty(x));
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData') || isempty(x));
-            addParameter(ip, 'xlsxObj',     []);
+            addParameter(ip, 'manualData',  []);
             parse(ip, varargin{:});           
  			
             this.aifData_     = ip.Results.aifData;
             this.scannerData_ = ip.Results.scannerData;
             this.sessionData_ = ip.Results.sessionData;
-            this.xlsxObj_     = ip.Results.xlsxObj;
+            this.manualData_     = ip.Results.manualData;
  		end
     end 
     
@@ -76,7 +76,7 @@ classdef ScanData < mlpipeline.IScanData
         scannerCal_
         scannerData_
         sessionData_
-        xlsxObj_
+        manualData_
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

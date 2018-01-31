@@ -24,6 +24,11 @@ classdef (Abstract) StudyDataHandle % < matlab.mixin.Copyable
         this = replaceSessionData(this)
         loc  = saveWorkspace(this)
         sess = sessionData(this)
+        d    = subjectsDirFqdns(this)
+    end
+    
+    methods (Abstract, Access = protected)
+        assignSessionDataCompositeFromPaths(this)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

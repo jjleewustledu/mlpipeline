@@ -9,13 +9,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
-    
-    properties
-        allowDirNotYetExisting = true
-    end
-    
 	properties (Dependent)
         freesurfersDir
+        sessionDate
         sessionFolder
         sessionPath
         studyData
@@ -75,19 +71,20 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             g = this.studyData_.subjectsDir;
         end
         function this = set.subjectsDir(this, s)
-            this.assertIsdir(s);
+            assert(ischar(s));
             newStudyData_ = this.studyData_;
             newStudyData_.subjectsDir = s;
             this.studyData_ = newStudyData_;
         end
-        function g    = get.subjectsFolder(this)
-            g = this.studyData_.subjectsFolder;
+        function g    = get.sessionDate(this)
+            g = this.sessionDate_;
         end
-        function this = set.subjectsFolder(this, s)
-            newStudyData_ = this.studyData_;
-            newStudyData_.subjectsFolder = s;
-            this.studyData_ = newStudyData_;
-            this.assertIsdir(this.subjectsDir);
+        function this = set.sessionDate(this, s)
+            assert(isdatetime(s));
+            if (isempty(s.TimeZone))
+                s.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
+            end
+            this.sessionDate_ = s;
         end
         function g    = get.sessionFolder(this)
             g = this.sessionFolder_;
@@ -96,15 +93,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             end
         end
         function this = set.sessionFolder(this, s)
+            assert(ischar(s));
             this.sessionFolder_ = s;            
-            this.assertIsdir(this.sessionPath);
         end
         function g    = get.sessionPath(this)
             g = fullfile(this.subjectsDir, this.sessionFolder_);
         end
         function this = set.sessionPath(this, s)
-            this.assertIsdir(s);
-            [this.subjectsDir,this.sessionFolder] = fileparts(s);
+            [this.studyData_.subjectsDir,this.sessionFolder_] = fileparts(s);
         end
         function g    = get.studyData(this)
             g = this.studyData_;
@@ -394,6 +390,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             error('mlpipeline:unsupportedTypeclass', ...
                   'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
         end
+        function dt   = datetime(this)
+            dt = this.sessionDate_;
+        end
         function loc  = fourdfpLocation(this, varargin)
             loc = this.vLocation(varargin{:});
         end
@@ -576,6 +575,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function loc  = tracerRevisionSumt(~, varargin)
             loc = '';
         end
+        function obj  = umapPhantom(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'sessionFolder', 'CAL_PHANTOM2', @ischar);
+            parse(ip, varargin{:});
+            
+            fqfn = fullfile( ...
+                this.subjectsDir, upper(ip.Results.sessionFolder), ...
+                sprintf('umapSynth_b40%s', this.filetypeExt));
+            obj  = this.fqfilenameObject(fqfn, varargin{:});
+        end
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
         end 
@@ -586,8 +596,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             %         'abs'          is logical
             %         'ac'           is logical
             %         'intervention' is char
+            %         'frame'        is numeric
             %         'pnumber'      is char
             %         'rnumber'      is numeric
+            %         'sessionDate'  is datetime
             %         'sessionPath'  is a path to the session data
             %         'snumber'      is numeric
             %         'studyData'    is a mlpipeline.StudyData
@@ -597,23 +609,28 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
 
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'abs', false,       @islogical);
-            addParameter(ip, 'ac', false,        @islogical);
-            addParameter(ip, 'intervention',     @(x) ischar(x) || isnumeric(x));
-            addParameter(ip, 'frame', nan,       @isnumeric);
-            addParameter(ip, 'pnumber', '',      @ischar);
-            addParameter(ip, 'rnumber', 1,       @isnumeric);
-            addParameter(ip, 'sessionPath', pwd, @ischar);
-            addParameter(ip, 'snumber', 1,       @isnumeric);
-            addParameter(ip, 'studyData',        @(x) isa(x, 'mlpipeline.StudyDataHandle'));
-            addParameter(ip, 'subjectsDir', '',  @(x) isdir(x) || isempty(x));
-            addParameter(ip, 'tracer', 'FDG',    @ischar);
-            addParameter(ip, 'vnumber', 1,       @isnumeric);
+            addParameter(ip, 'abs', false,            @islogical);
+            addParameter(ip, 'ac', false,             @islogical);
+            addParameter(ip, 'intervention',          @(x) ischar(x) || isnumeric(x));
+            addParameter(ip, 'frame', nan,            @isnumeric);
+            addParameter(ip, 'pnumber', '',           @ischar);
+            addParameter(ip, 'rnumber', 1,            @isnumeric);
+            addParameter(ip, 'sessionDate', datetime, @isdatetime);
+            addParameter(ip, 'sessionPath', pwd,      @ischar);
+            addParameter(ip, 'snumber', 1,            @isnumeric);
+            addParameter(ip, 'studyData',             @(x) isa(x, 'mlpipeline.StudyDataHandle'));
+            addParameter(ip, 'subjectsDir', '',       @(x) isdir(x) || isempty(x));
+            addParameter(ip, 'tracer', 'FDG',         @ischar);
+            addParameter(ip, 'vnumber', 1,            @isnumeric);
             parse(ip, varargin{:});
             
             this.studyData_ = ip.Results.studyData;
             if (~isempty(ip.Results.subjectsDir))
                 this.studyData_.subjectsDir = ip.Results.subjectsDir;
+            end
+            this.sessionDate_ = ip.Results.sessionDate;
+            if (isempty(this.sessionDate_.TimeZone))
+                this.sessionDate_.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
             end
             
             this.absScatterCorrected_  = ip.Results.abs;
@@ -622,7 +639,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             this.intervention_         = ip.Results.intervention;
             this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
-            [this.studyData_.subjectsDir,this.sessionFolder] = fileparts(ip.Results.sessionPath);
+            [this.studyData_.subjectsDir,this.sessionFolder_] = ...
+                               fileparts(ip.Results.sessionPath);
             this.snumber_              = ip.Results.snumber;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;
@@ -640,6 +658,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         pnumber_
         rnumber_
         region_
+        sessionDate_
         sessionFolder_
         studyData_
         snumber_
@@ -752,12 +771,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
     end
     
     methods (Access = private)
-        function assertIsdir(this, d)
-            if (this.allowDirNotYetExisting)
-                return
-            end
-            assert(isdir(d));
-        end
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
             msg = '';
