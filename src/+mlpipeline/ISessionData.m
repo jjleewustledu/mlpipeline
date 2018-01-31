@@ -14,6 +14,7 @@ classdef ISessionData
         freesurfersDir
         sessionFolder
         sessionPath
+        %sessionDate
         subjectsDir
         subjectsFolder
         
