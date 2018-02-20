@@ -111,6 +111,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         end
         
         function g    = get.absScatterCorrected(this)
+            if (strcmpi(this.tracer, 'OC') || strcmp(this.tracer, 'OO'))
+                g = true;
+                return
+            end
             g = this.absScatterCorrected_;
         end
         function this = set.absScatterCorrected(this, s)
@@ -323,6 +327,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function obj = oo(this, varargin)
             this.tracer = 'OO';
             obj = this.petObject('oo', varargin{:});
+        end
+        function [dt0_,date_] = readDatetime0(~)
+            dt0_ = NaT;
+            date_ = NaT;
         end
         function obj = tr(this, varargin)
             obj = this.petObject('tr', varargin{:});
@@ -615,15 +623,15 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             addParameter(ip, 'frame', nan,            @isnumeric);
             addParameter(ip, 'pnumber', '',           @ischar);
             addParameter(ip, 'rnumber', 1,            @isnumeric);
-            addParameter(ip, 'sessionDate', datetime, @isdatetime);
-            addParameter(ip, 'sessionPath', pwd,      @ischar);
+            addParameter(ip, 'sessionDate', NaT,      @isdatetime);
+            addParameter(ip, 'sessionFolder', '',     @ischar);
+            addParameter(ip, 'sessionPath', '',       @ischar);
             addParameter(ip, 'snumber', 1,            @isnumeric);
             addParameter(ip, 'studyData',             @(x) isa(x, 'mlpipeline.StudyDataHandle'));
             addParameter(ip, 'subjectsDir', '',       @(x) isdir(x) || isempty(x));
             addParameter(ip, 'tracer', 'FDG',         @ischar);
             addParameter(ip, 'vnumber', 1,            @isnumeric);
-            parse(ip, varargin{:});
-            
+            parse(ip, varargin{:});            
             this.studyData_ = ip.Results.studyData;
             if (~isempty(ip.Results.subjectsDir))
                 this.studyData_.subjectsDir = ip.Results.subjectsDir;
@@ -632,18 +640,21 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             if (isempty(this.sessionDate_.TimeZone))
                 this.sessionDate_.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
             end
-            
+            if (~isempty(ip.Results.sessionFolder))
+                this.sessionFolder_ = ip.Results.sessionFolder;
+            end
+            if (~isempty(ip.Results.sessionPath))
+                [this.studyData_.subjectsDir,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
+            end                           
             this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
             this.frame_                = ip.Results.frame;
             this.intervention_         = ip.Results.intervention;
             this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
-            [this.studyData_.subjectsDir,this.sessionFolder_] = ...
-                               fileparts(ip.Results.sessionPath);
             this.snumber_              = ip.Results.snumber;
             this.tracer_               = ip.Results.tracer;
-            this.vnumber_              = ip.Results.vnumber;
+            this.vnumber_              = ip.Results.vnumber;            
         end
     end
 
