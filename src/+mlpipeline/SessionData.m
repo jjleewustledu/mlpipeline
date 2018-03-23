@@ -9,6 +9,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
+    properties 
+        alignMethod = 'align_2051'
+        compAlignMethod = 'align_multiSpectral'
+        modality
+    end
+    
 	properties (Dependent)
         freesurfersDir
         sessionDate
