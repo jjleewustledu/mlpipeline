@@ -182,7 +182,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         sessionData_
     end
     
-    methods (Access = protected)        
+    methods (Access = protected)
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
             msg = '';
