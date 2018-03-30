@@ -105,6 +105,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function obj  = fslLocation(this, varargin)
             obj = this.sessionData.fslLocation(varargin{:});
         end
+        function obj  = mpr(this, varargin)
+            obj = this.sessionData.mpr(varargin{:});
+        end
         function obj  = mriLocation(this, varargin)
             obj = this.sessionData.mriLocation(varargin{:});
         end
