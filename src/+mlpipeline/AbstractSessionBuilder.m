@@ -80,17 +80,18 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
             g = this.sessionData.rnumber;
         end
         function this = set.rnumber(this, s)
-            assert(isnumeric(s));
             this.sessionData_.rnumber = s;
         end
         function g  = get.snumber(this)
             g = this.sessionData.snumber;
         end
+        function this = set.snumber(this, s)
+            this.sessionData_.snumber = s;
+        end  
         function g  = get.tracer(this)
             g = this.sessionData.tracer;
         end
         function this = set.tracer(this, s)
-            assert(ischar(s));
             this.sessionData_.tracer = s;
         end  
         function g  = get.vnumber(this)
