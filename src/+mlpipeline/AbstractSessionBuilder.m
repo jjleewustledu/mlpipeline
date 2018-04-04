@@ -43,7 +43,7 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function [s,r] = nifti_4dfp_ng(varargin)
             [s,r] = mlpipeline.SessionData.nifti_4dfp_ng(varargin{:});
         end
-        function fn = niigzFilename(varargin)
+        function fn    = niigzFilename(varargin)
             fn = mlpipeline.SessionData.niigzFilename(varargin{:});
         end
     end
