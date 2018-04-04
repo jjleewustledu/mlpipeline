@@ -118,13 +118,15 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
                 this.product_ = [];
                 return
             end
-            if (~isa(prod, 'mlfourd.ImagingContext'))
-                prod = mlfourd.ImagingContext(prod);
+            if (iscell(prod))
+                this.product_ = prod;
+                return
             end
-            if (lstrfind(prod.filesuffix, '4dfp'))
-                prod.filesuffix = '.4dfp.ifh';
+            
+            this.product_ = mlfourd.ImagingContext(prod);
+            if (lstrfind(this.product_.filesuffix, '4dfp'))
+                this.product_.filesuffix = '.4dfp.ifh';
             end
-            this.product_ = prod;
         end
         
         function this = AbstractDataBuilder(varargin)
