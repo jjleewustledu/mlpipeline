@@ -10,8 +10,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
     properties 
-        alignMethod = 'align_2051'
-        compAlignMethod = 'align_multiSpectral'
+        frameAlignMethod = 'align_2051'
+        compAlignMethod  = 'align_multiSpectral'
         modality
     end
     
@@ -294,6 +294,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function obj = wmparc(this, varargin)
             obj = this.freesurferObject('wmparc', varargin{:});
         end
+        function obj = zeroZeroOne(this, varargin)
+            obj = this.freesurferObject('orig/001', varargin{:});
+        end
                         
         %% IPETData
         
@@ -444,7 +447,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             ip = inputParser;
             addRequired( ip, 'desc', @ischar);
             addParameter(ip, 'suffix', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
             parse(ip, varargin{:});
             
             obj = imagingType(ip.Results.typ, ...
