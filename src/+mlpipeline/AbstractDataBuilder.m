@@ -11,8 +11,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
 
 	properties 		
  		keepForensics
-        neverTouch
-        ignoreTouchfile
+        neverTouchFinishfile
+        ignoreFinishfile
     end
     
     properties (Dependent)
@@ -63,11 +63,11 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         %%
         
         function g    = getNeverTouch(this)
-            g = this.finished_.neverTouch;            
+            g = this.finished_.neverTouchFinishfile;            
         end
         function this = setNeverTouch(this, s)
             assert(islogical(s));
-            this.finished_.neverTouch = s;
+            this.finished_.neverTouchFinishfile = s;
         end
         
         function tf   = isequal(this, obj)
@@ -103,8 +103,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.finished_ = mlpipeline.Finished(this, ...
                 'path', this.logPath, ...
                 'tag', sprintf('%s%s', ip.Results.tag, ip.Results.tag2), ...
-                'neverTouch', this.neverTouch, ...
-                'ignoreTouchfile', this.ignoreTouchfile);
+                'neverTouchFinishfile', this.neverTouchFinishfile, ...
+                'ignoreFinishfile', this.ignoreFinishfile);
         end  
         function pth  = logPath(this)
             pth = fullfile(this.sessionData.tracerLocation, 'Log', '');
@@ -143,8 +143,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
             addParameter(ip, 'keepForensics', false, @islogical);
-            addParameter(ip, 'neverTouch', false, @islogical);
-            addParameter(ip, 'ignoreTouchfile', false, @islogical);
+            addParameter(ip, 'neverTouchFinishfile', false, @islogical);
+            addParameter(ip, 'ignoreFinishfile', false, @islogical);
             parse(ip, varargin{:});
             
             if (this.receivedCtor(varargin{:}))
@@ -156,8 +156,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.sessionData_    = ip.Results.sessionData;
             this.buildVisitor_   = ip.Results.buildVisitor;
             this.keepForensics   = ip.Results.keepForensics;
-            this.neverTouch      = ip.Results.neverTouch;
-            this.ignoreTouchfile = ip.Results.ignoreTouchfile;            
+            this.neverTouchFinishfile      = ip.Results.neverTouchFinishfile;
+            this.ignoreFinishfile = ip.Results.ignoreFinishfile;            
         end
         function tf   = receivedCtor(~, varargin)
             tf = (1 == length(varargin)) && ...
@@ -170,8 +170,8 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.sessionData_ = aCopy.sessionData_;
             this.buildVisitor_ = aCopy.buildVisitor_;
             this.keepForensics = aCopy.keepForensics;
-            this.neverTouch = aCopy.neverTouch;
-            this.ignoreTouchfile = aCopy.ignoreTouchfile;
+            this.neverTouchFinishfile = aCopy.neverTouchFinishfile;
+            this.ignoreFinishfile = aCopy.ignoreFinishfile;
             this.finished_ = aCopy.finished;
         end
     end
