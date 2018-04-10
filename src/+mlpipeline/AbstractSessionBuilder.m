@@ -115,6 +115,21 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function obj  = petLocation(this, varargin)
             obj = this.sessionData.petLocation(varargin{:});
         end
+        function this = prepareMprToAtlasT4(this)
+            %% PREPAREMPRTOATLAST4
+            %  @param this.sessionData.{mprage,atlas} are valid.
+            %  @return this.product_ := [mprage '_to_' atlas '_t4'], existing in the same folder as mprage.
+            
+            sessd      = this.sessionData;
+            mpr        = sessd.mprage('typ', 'fp');
+            mprToAtlT4 = [mpr '_to_' sessd.atlas('typ', 'fp') '_t4'];            
+            if (~lexist(fullfile(sessd.mprage('typ', 'path'), mprToAtlT4)))
+                pwd0 = pushd(sessd.mprage('typ', 'path'));
+                this.buildVisitor.msktgenMprage(mpr);
+                popd(pwd0);
+            end
+            this.product_ = mprToAtlT4;
+        end
         function obj  = sessionLocation(this, varargin)
             obj = this.sessionData.sessionLocation(varargin{:});
         end

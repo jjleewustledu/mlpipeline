@@ -134,22 +134,24 @@ classdef StudyData < mlpipeline.StudyDataHandle
             %  this adds to this.sessionDataComposite_ according to assignSessionDataCompositeFromPaths.
             %  @returns this.
             
-%            this.sessionDataComposite_ = mlpatterns.CellComposite;
-%             for v = 1:length(varargin)
-%                 if (isa(varargin{v}, 'mlpatterns.CellComposite'))
-%                     this.sessionDataComposite_ = varargin{v};
-%                     return
-%                 end
-%                 if (isa(varargin{v}, 'mlpipeline.SessionData'))
-%                     this.sessionDataComposite_ = this.sessionDataComposite_.add(varargin{v});
-%                 end
-%             end            
-%             if (isempty(this.sessionDataComposite_))
-%                 this = this.assignSessionDataCompositeFromPaths(varargin{:});
-%             end            
-%             if (isempty(this.sessionDataComposite_))
-%                 this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
-%             end
+            %% N.B.:  The following is difficult/complex to support.  Consider retracting all support.
+            %
+            % this.sessionDataComposite_ = mlpatterns.CellComposite;
+            % for v = 1:length(varargin)
+            %     if (isa(varargin{v}, 'mlpatterns.CellComposite'))
+            %         this.sessionDataComposite_ = varargin{v};
+            %         return
+            %     end
+            %     if (isa(varargin{v}, 'mlpipeline.SessionData'))
+            %         this.sessionDataComposite_ = this.sessionDataComposite_.add(varargin{v});
+            %     end
+            % end            
+            % if (isempty(this.sessionDataComposite_))
+            %     this = this.assignSessionDataCompositeFromPaths(varargin{:});
+            % end            
+            % if (isempty(this.sessionDataComposite_))
+            %     this = this.assignSessionDataCompositeFromPaths(this.subjectsDirFqdns{:});
+            % end
         end
     end
     
