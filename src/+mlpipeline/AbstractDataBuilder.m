@@ -9,7 +9,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 
-	properties 		
+	properties
  		keepForensics
         neverTouchFinishfile
         ignoreFinishfile
@@ -156,7 +156,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.sessionData_    = ip.Results.sessionData;
             this.buildVisitor_   = ip.Results.buildVisitor;
             this.keepForensics   = ip.Results.keepForensics;
-            this.neverTouchFinishfile      = ip.Results.neverTouchFinishfile;
+            this.neverTouchFinishfile = ip.Results.neverTouchFinishfile;
             this.ignoreFinishfile = ip.Results.ignoreFinishfile;            
         end
         function tf   = receivedCtor(~, varargin)
