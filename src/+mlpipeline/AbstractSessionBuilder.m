@@ -100,6 +100,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         
         %%
         
+        function fps  = ensureSafeFileprefix(this, varargin)
+            fps = this.buildVisitor.ensureSafeFileprefix(varargin{:});
+        end
         function obj  = freesurferLocation(this, varargin)
             obj = this.sessionData.freesurferLocation(varargin{:});
         end
