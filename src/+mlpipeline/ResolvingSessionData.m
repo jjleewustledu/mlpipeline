@@ -48,6 +48,11 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         
         %%
 		  
+        function obj  = ctMaskedOnT1001(this, varargin)
+            t1   = this.T1001('typ', 'fp');
+            fqfn = fullfile(this.vLocation, sprintf('ctMaskedOn%sr2_op_%s.4dfp.ifh', t1, t1));
+            obj  = this.fqfilenameObject(fqfn, varargin{2:end});
+        end
         function tag  = resolveTagFrame(this, varargin)
             ip = inputParser;
             addRequired( ip, 'f', @isnumeric);
