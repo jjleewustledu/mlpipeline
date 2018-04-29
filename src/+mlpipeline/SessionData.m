@@ -28,6 +28,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         attenuationCorrected
         builder
         frame
+        hasBreathingTube
         isotope
         pnumber
         rnumber
@@ -147,6 +148,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function this = set.frame(this, s)
             assert(isnumeric(s));
             this.frame_ = s;
+        end
+        function g    = get.hasBreathingTube(this)
+            if (strcmpi(this.tracer, 'OC') || strcmpi(this.tracer, 'OO'))
+                g = true;
+                return
+            end
+            g = false;
         end
         function g    = get.isotope(this)
             tr = lower(this.tracer);
@@ -312,7 +320,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             this.tracer = 'OO';
             obj = this.petObject('cmro2', varargin{:});
         end
-        function obj = ct(~, obj)
+        function obj = ct(this, varargin)
+            obj = this.ctObject('ct', varargin{:});
+        end
+        function obj = ctMasked(this, varargin)
+            obj = this.ctObject('ctMasked', varargin{:});
+        end
+        function obj = ctMask(this, varargin)
+            obj = this.ctObject('ctMask', varargin{:});
         end
         function obj = fdg(this, varargin)
             this.tracer = 'FDG';
@@ -346,6 +361,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         end
         function obj = umap(~, obj)
         end       
+        function obj = umapSynth(~, obj)
+        end       
     
         %%  
         
@@ -361,6 +378,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
                             sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt));
             this.ensureCTFqfilename(fqfn);
             obj = imagingType(ip.Results.typ, fqfn);
+        end
+        function dt   = datetime(this)
+            dt = this.sessionDate_;
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -406,9 +426,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             end            
             error('mlpipeline:unsupportedTypeclass', ...
                   'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
-        end
-        function dt   = datetime(this)
-            dt = this.sessionDate_;
         end
         function loc  = fourdfpLocation(this, varargin)
             loc = this.vLocation(varargin{:});
