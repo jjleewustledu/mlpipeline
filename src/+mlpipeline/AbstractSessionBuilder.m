@@ -133,6 +133,19 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
             end
             this.product_ = mprToAtlT4;
         end
+        function sessd = refreshTracerResolvedFinalSumt(this, sessd)
+            while (~lexist(sessd.tracerResolvedFinalSumt) && sessd.supEpoch > 0)
+                sessd.supEpoch = sessd.supEpoch - 1;
+            end
+            if (lexist(sessd.tracerResolvedFinalSumt))                
+                delete(                        [sessd.tracerResolvedFinalSumt('typ','fp') '.4dfp.*']);
+                this.buildVisitor.copyfile_4dfp(sessd.tracerResolvedFinalSumt('typ','fqfp'));
+                return
+            end
+            error('mlpipeline:pipelinePrerequisiteMissing', ...
+                '%s may be missing; consider running constructResolved(''tracer'', ''%s'') and retry', ...
+                sessd.tracerResolvedFinalSumt('typ','fqfp'), sessd.tracer);
+        end
         function obj  = sessionLocation(this, varargin)
             obj = this.sessionData.sessionLocation(varargin{:});
         end
