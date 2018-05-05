@@ -87,7 +87,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             end
         end   
         function tf   = isfinished(this, varargin)
-            if (isempty(this.finished))
+            if (isempty(this.finished) || this.ignoreFinishfile)
                 tf = false; 
                 return
             end
