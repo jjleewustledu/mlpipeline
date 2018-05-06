@@ -7,6 +7,10 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
  	%% It was developed on Matlab 9.3.0.713579 (R2017b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 
+    properties
+        census
+    end
+    
     properties (Dependent)
         filetypeExt
         freesurfersDir
@@ -164,6 +168,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function obj  = tracerResolvedFinalSumt(this, varargin)
             obj = this.sessionData.tracerResolvedFinalSumt(varargin{:});
         end
+        function obj  = tracerResolvedSubj(this, varargin)
+            obj = this.sessionData.tracerResolvedSubj(varargin{:});
+        end
         function obj  = tracerResolvedSumt(this, varargin)
             obj = this.sessionData.tracerResolvedSumt(varargin{:});
         end
@@ -194,6 +201,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function fqfp = umapSynth(this, varargin)
             fqfp = this.sessionData.umapSynth(varargin{:});
         end
+        function obj  = vallLocation(this, varargin)
+            obj = this.sessionData.vallLocation(varargin{:});
+        end
         function obj  = vLocation(this, varargin)
             obj = this.sessionData.vLocation(varargin{:});
         end
@@ -202,9 +212,16 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
  			%% ABSTRACTSESSIONBUILDER
 
  			this = this@mlpipeline.AbstractDataBuilder(varargin{:});
+            
+            ip = inputParser;
+            ip.KeepUnmatched = true;            
+            addParameter(ip, 'census', [], @(x) isa(x, 'mlpipeline.IStudyCensus') || isempty(x));
+            parse(ip, varargin{:});
+            
+            this.census = ip.Results.census;
  		end
- 	end 
-
+    end 
+    
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end
 
