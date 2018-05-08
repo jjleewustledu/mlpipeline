@@ -540,6 +540,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             loc = locationType(ip.Results.typ, ...
                 fullfile(this.freesurferLocation, 'mri', ''));
         end
+        function loc  = onAtlasLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = locationType(ip.Results.typ, ...
+                fullfile(this.subjectsDir, 'OnAtlas'));
+        end 
         function loc  = opAtlasLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
