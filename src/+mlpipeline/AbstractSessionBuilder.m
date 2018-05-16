@@ -7,11 +7,8 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
  	%% It was developed on Matlab 9.3.0.713579 (R2017b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 
-    properties
-        census
-    end
-    
     properties (Dependent)
+        census
         filetypeExt
         freesurfersDir
         sessionFolder
@@ -56,54 +53,149 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         
         %% GET
         
-        function g  = get.filetypeExt(this)
+        function g    = get.census(this)
+            g = this.census_;
+        end
+        function g    = get.filetypeExt(this)
             g = this.sessionData.filetypeExt;
         end
-        function g  = get.freesurfersDir(this)
+        function g    = get.freesurfersDir(this)
             g = this.sessionData.freesurfersDir;
         end
-        function g  = get.sessionFolder(this)
+        function g    = get.sessionFolder(this)
             g = this.sessionData.sessionFolder;
         end
-        function g  = get.sessionPath(this)
+        function g    = get.sessionPath(this)
             g = this.sessionData.sessionPath;
         end
-        function g  = get.subjectsDir(this)
+        function g    = get.subjectsDir(this)
             g = this.sessionData.subjectsDir;
         end
-        function g  = get.subjectsFolder(this)
+        function g    = get.subjectsFolder(this)
             g = this.sessionData.subjectsFolder;
         end
-        function g  = get.attenuationCorrected(this)
+        function g    = get.attenuationCorrected(this)
             g = this.sessionData.attenuationCorrected;
         end
-        function g  = get.pnumber(this)
+        function g    = get.pnumber(this)
             g = this.sessionData.pnumber;
         end
-        function g  = get.rnumber(this)
+        function g    = get.rnumber(this)
             g = this.sessionData.rnumber;
         end
         function this = set.rnumber(this, s)
             this.sessionData_.rnumber = s;
         end
-        function g  = get.snumber(this)
+        function g    = get.snumber(this)
             g = this.sessionData.snumber;
         end
         function this = set.snumber(this, s)
             this.sessionData_.snumber = s;
         end  
-        function g  = get.tracer(this)
+        function g    = get.tracer(this)
             g = this.sessionData.tracer;
         end
         function this = set.tracer(this, s)
             this.sessionData_.tracer = s;
         end  
-        function g  = get.vnumber(this)
+        function g    = get.vnumber(this)
             g = this.sessionData.vnumber;
         end
         
         %%
         
+        function a    = atlas(this, varargin) 
+            a = this.sessionData.atlas(varargin{:});
+        end
+        function [s,r] = ensure4dfp(this, varargin)
+            %% ENSURE4DFP
+            %  @param filename is any string descriptor found in an existing file on the filesystem;
+            %  ensureNifti will search for files with extensions .4dfp.ifh.
+            %  @returns s, the bash status; r, any bash messages.  ensure4dfp ensures files are .4dfp.ifh.            
+            
+            ip = inputParser;
+            addRequired(ip, 'filename', @ischar);
+            parse(ip, varargin{:});
+            
+            s = 0; r = '';
+            if (2 == exist(ip.Results.filename, 'file'))
+                if (lstrfind(ip.Results.filename, '.4dfp'))
+                    return
+                end
+                if (lstrfind(ip.Results.filename, '.mgz'))
+                    fp = myfileprefix(ip.Results.filename);
+                    [s,r] = mlbash(sprintf('mri_convert %s.mgz %s.nii', fp, fp)); %#ok<ASGLU>
+                    [s,r] = this.ensure4dfp([fp '.nii']);
+                    return
+                end
+                [s,r] = this.buildVisitor.nifti_4dfp_4(myfileprefix(ip.Results.filename));
+                assert(lexist(myfilename(ip.Results.filename, '.4dfp.ifh'), 'file'));
+                return
+            end
+            if (2 == exist([ip.Results.filename '.4dfp.ifh'], 'file'))
+                return
+            end
+            if (2 == exist([ip.Results.filename '.nii'], 'file'))
+                [s,r] = this.ensure4dfp([ip.Results.filename '.nii']);
+                return
+            end
+            if (2 == exist([ip.Results.filename '.nii.gz'], 'file'))
+                [s,r] = this.ensure4dfp([ip.Results.filename '.nii.gz']);
+                return
+            end      
+            if (2 == exist([ip.Results.filename '.mgz'], 'file'))
+                [s,r] = mlbash(sprintf('mri_convert %s.mgz %s.nii', ip.Results.filename, ip.Results.filename)); %#ok<ASGLU>
+                [s,r] = this.ensure4dfp([ip.Results.filename '.nii']);
+                return
+            end            
+            error('mlfourdfp:fileNotFound', ...
+                  'T4ResolveBuilder.ensureNifti could not find files of form %s', ip.Results.filename);     
+        end
+        function [s,r] = ensureNifti(this, varargin)
+            %% ENSURENIFTI
+            %  @param filename is any string descriptor found in an existing file on the filesystem;
+            %  ensureNifti will search for files with extensions .nii, .nii.gz or .4dfp.ifh.
+            %  @returns s, the bash status; r, any bash messages.  ensureNifti ensures files are .nii.gz.
+            
+            ip = inputParser;
+            addRequired(ip, 'filename', @ischar);
+            parse(ip, varargin{:});
+            
+            s = 0; r = '';
+            if (2 == exist(ip.Results.filename, 'file'))
+                if (lstrfind(ip.Results.filename, '.nii'))
+                    return
+                end
+                if (lstrfind(ip.Results.filename, '.mgz'))
+                    fp = myfileprefix(ip.Results.filename);
+                    [s,r] = mlbash(sprintf('mri_convert %s.mgz %s.nii.gz', fp, fp));
+                    return
+                end
+                [s,r] = this.buildVisitor.nifti_4dfp_ng(myfileprefix(ip.Results.filename));
+                assert(lexist(myfilename(ip.Results.filename), 'file'));
+                return
+            end
+            if (2 == exist([ip.Results.filename '.nii'], 'file'))
+                [s,r] = this.ensureNifti([ip.Results.filename '.nii']);
+                return
+            end
+            if (2 == exist([ip.Results.filename '.nii.gz'], 'file'))
+                return
+            end
+            if (2 == exist([ip.Results.filename '.mgz'], 'file'))
+                [s,r] = mlbash(sprintf('mri_convert %s.mgz %s.nii.gz', ip.Results.filename, ip.Results.filename));
+                return
+            end    
+            if (2 == exist([ip.Results.filename '.4dfp.ifh'], 'file'))
+                if (2 == exist([ip.Results.filename '.nii'], 'file'))
+                    return
+                end
+                [s,r] = this.ensureNifti([ip.Results.filename '.4dfp.ifh']);
+                return
+            end
+            error('mlfourdfp:fileNotFound', ...
+                  'T4ResolveBuilder.ensureNifti could not find files of form %s', ip.Results.filename);            
+        end
         function fps  = ensureSafeFileprefix(this, varargin)
             fps = this.buildVisitor.ensureSafeFileprefix(varargin{:});
         end
@@ -184,7 +276,7 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
             obj = this.sessionData.T1(varargin{:});
         end
         function obj  = T1001(this, varargin)
-            obj = this.sessionData.T1(varargin{:});
+            obj = this.sessionData.T1001(varargin{:});
         end
         function obj  = t1(this, varargin)
             obj = this.sessionData.T1(varargin{:});
@@ -211,16 +303,20 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
  		function this = AbstractSessionBuilder(varargin)
  			%% ABSTRACTSESSIONBUILDER
 
- 			this = this@mlpipeline.AbstractDataBuilder(varargin{:});
-            
+ 			this = this@mlpipeline.AbstractDataBuilder(varargin{:});            
             ip = inputParser;
             ip.KeepUnmatched = true;            
             addParameter(ip, 'census', [], @(x) isa(x, 'mlpipeline.IStudyCensus') || isempty(x));
-            parse(ip, varargin{:});
-            
-            this.census = ip.Results.census;
+            parse(ip, varargin{:});            
+            this.census_ = ip.Results.census;
  		end
     end 
+    
+    %% PRIVATE
+    
+    properties (Access = private)
+        census_
+    end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end
