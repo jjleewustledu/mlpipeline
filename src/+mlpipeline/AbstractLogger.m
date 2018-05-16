@@ -20,12 +20,51 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         clone(this)
     end
     
+    properties 
+        echoToCommandWindow
+    end
+    
     properties (Dependent)
         callerid
         contents
         creationDate
         hostname
         id % user id
+    end
+    
+    methods (Static)
+        function fqfn = loggerFilename(varargin)
+            %% LOGGERFILENAME ... 
+            %  Usage:  fq_filename = loggerFilename(['func', func_value, 'tag', tag_value, 'path', path_value]) 
+            %  @param method is the name of the calling function
+            %  @param tag is any string identifier
+            %  @param path is the path to the log file
+            %  @returns fqfn is a standardized log filename
+
+            fqfn = [mlpipeline.AbstractLogger.loggerFileprefix(varargin{:}) '.log'];
+        end
+        function fqfp = loggerFileprefix(varargin)
+            %% LOGGERFILEPREFIX ... 
+            %  Usage:  fq_fileprefix = loggerFileprefix(['func', func_value, 'tag', tag_value, 'path', path_value]) 
+            %  @param method is the name of the calling function
+            %  @param tag is any string identifier
+            %  @param path is the path to the log file
+            %  @returns fqfp is a standardized log fileprefix
+
+            ip = inputParser;
+            addRequired( ip, 'tag', @ischar);
+            addParameter(ip, 'func', 'unknownFunc', @ischar);
+            addParameter(ip, 'path', pwd, @isdir);
+            parse(ip, varargin{:});
+            tag = strrep(mybasename(ip.Results.tag), '.', '_');
+            if (~isempty(tag) && strcmp(tag(end), '_'))
+                tag = tag(1:end-1);
+            end
+            func = strrep(mybasename(ip.Results.func), '.', '_');
+
+            fqfp = fullfile(ip.Results.path, ...
+                 sprintf('%s_%s_D%s', tag, func, datestr(now,'yyyymmddTHHMMSSFFF')));
+        end
     end
     
     methods 
@@ -77,6 +116,9 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             empty = logical(this.cellArrayList_.isempty);
         end
         function           add(this, varargin) 
+            if (this.echoToCommandWindow)
+                fprintf(varargin{:}); fprintf('\n');
+            end
             if (this.includeTimeStamp)
                 s = sprintf('%s:  ', datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF'));
                 this.cellArrayList_.add([s sprintf(varargin{:})]);
@@ -122,27 +164,30 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
                 this.filesuffix_         = varargin{1}.filesuffix_;
                 this.filesystemRegistry_ = varargin{1}.filesystemRegistry_;
                 
-                this.callerid_      = varargin{1}.callerid_;
-                this.cellArrayList_ = mlpatterns.CellArrayList(varargin{1}.cellArrayList_); % copy-ctor
-                this.creationDate_  = varargin{1}.creationDate_;
-                this.hostname_      = varargin{1}.hostname_;
-                this.id_            = varargin{1}.id_;
+                this.callerid_           = varargin{1}.callerid_;
+                this.cellArrayList_      = mlpatterns.CellArrayList(varargin{1}.cellArrayList_); % copy-ctor
+                this.creationDate_       = varargin{1}.creationDate_;
+                this.echoToCommandWindow = varargin{1}.echoToCommandWindow;
+                this.hostname_           = varargin{1}.hostname_;
+                this.id_                 = varargin{1}.id_;
                 return
             end % for copy-ctor      
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional(ip, 'fileprefix',       this.defaultFqfileprefix, @ischar);
-            addOptional(ip, 'callback',         this,                     @(x) ~isempty(class(x)));
+            addOptional(ip, 'fileprefix', this.defaultFqfileprefix, @ischar);
+            addOptional(ip, 'callback',   this,                     @(x) ~isempty(class(x)));
+            addParameter(ip, 'echoToCommandWindow', true,           @islogical);
             parse(ip, varargin{:});
             
-            this.fqfileprefix = ip.Results.fileprefix;
-            this.filesuffix = this.FILETYPE_EXT;
-            this.callerid_  = strrep(class(ip.Results.callback), '.', '_');   
+            this.fqfileprefix        = ip.Results.fileprefix;
+            this.filesuffix          = this.FILETYPE_EXT;
+            this.callerid_           = strrep(class(ip.Results.callback), '.', '_');   
+            this.echoToCommandWindow = ip.Results.echoToCommandWindow;
+            
             this.creationDate_  = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
             [~,this.hostname_]  = mlbash('hostname'); this.hostname_ = strtrim(this.hostname_);
-            [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);
-            
+            [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);            
             this.cellArrayList_ = mlpatterns.CellArrayList;
             if (~isempty(this.header))
                 this.cellArrayList_.add(this.header);
