@@ -36,7 +36,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         end
         function g = get.logger(this)
             g = this.logger_;
-        end  
+        end 
         function g = get.product(this)
             g = this.product_;
         end
@@ -62,10 +62,21 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %%
         
+        function g    = getLogPath(this)
+            if (~isempty(this.logger))
+                g = this.logger.filepath;
+                return
+            end
+            g = pwd;
+        end  
         function g    = getNeverTouch(this)
+            %% may be overridden
+            
             g = this.finished_.neverTouchFinishfile;            
         end
         function this = setNeverTouch(this, s)
+            %% may be overridden
+            
             assert(islogical(s));
             this.finished_.neverTouchFinishfile = s;
         end
@@ -99,17 +110,13 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             addParameter(ip, 'tag2', '', @ischar);
             parse(ip, varargin{:});
             
-            ensuredir(this.logPath);
+            ensuredir(this.getLogPath);
             this.finished_ = mlpipeline.Finished(this, ...
-                'path', this.logPath, ...
+                'path', this.getLogPath, ...
                 'tag', sprintf('%s%s', ip.Results.tag, ip.Results.tag2), ...
                 'neverTouchFinishfile', this.neverTouchFinishfile, ...
                 'ignoreFinishfile', this.ignoreFinishfile);
-        end  
-        function pth  = logPath(this)
-            pth = fullfile(this.sessionData.tracerLocation, 'Log', '');
-            ensuredir(pth);
-        end      
+        end     
         function this = packageProduct(this, prod)
             %  @param prod, an objects understood by mlfourd.ImagingContext.
             %  @return this.product packaged as an ImagingContext if nontrivial; otherwise this.product := [].
@@ -139,6 +146,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
  			ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.AbstractLogger'));
+            addParameter(ip, 'logPath', this.getLogPath, @ischar);
             addParameter(ip, 'product', []);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
@@ -151,11 +159,13 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
                 this = this.copyCtor(varargin{:});
                 return
             end
-            this.logger_         = ip.Results.logger;
-            this.product_        = ip.Results.product;
-            this.sessionData_    = ip.Results.sessionData;
-            this.buildVisitor_   = ip.Results.buildVisitor;
-            this.keepForensics   = ip.Results.keepForensics;
+            this.logger_          = ip.Results.logger;
+            this.logger_.filepath = ip.Results.logPath;
+            ensuredir(ip.Results.logPath);
+            this.product_         = ip.Results.product;
+            this.sessionData_     = ip.Results.sessionData;
+            this.buildVisitor_    = ip.Results.buildVisitor;
+            this.keepForensics    = ip.Results.keepForensics;
             this.neverTouchFinishfile = ip.Results.neverTouchFinishfile;
             this.ignoreFinishfile = ip.Results.ignoreFinishfile;            
         end
