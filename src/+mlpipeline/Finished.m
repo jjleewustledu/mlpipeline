@@ -21,12 +21,16 @@ classdef Finished
         tag
     end
     
-    methods %% GET
-        function g = get.path(this)
+    methods %% GET, SET
+        function g    = get.path(this)
             g = this.path_;
         end
-        function g = get.tag(this)
+        function g    = get.tag(this)
             g = this.tag_;
+        end
+        function this = set.tag(this, s)
+            assert(ischar(s));
+            this.tag_ = s;
         end
     end
     
