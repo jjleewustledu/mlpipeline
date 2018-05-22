@@ -374,6 +374,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
     
         %%  
         
+        function loc  = buildLocation(this, varargin)
+            loc = this.tracerLocation(varargin{:});
+        end
         function obj  = ctObject(this, varargin)
             ip = inputParser;
             ip.KeepUnmatched = true;
@@ -612,26 +615,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             
             loc = locationType(ip.Results.typ, this.sessionPath);
         end
-        function loc  = tracerLocation(~, varargin)
+        function loc  = tracerLocation(this, varargin)
             loc = this.petLocation(varargin{:});
-        end
-        function loc  = tracerResolved(~, varargin)
-            loc = '';
-        end
-        function loc  = tracerResolvedFinal(~, varargin)
-            loc = '';
-        end
-        function loc  = tracerResolvedFinalSumt(~, varargin)
-            loc = '';
-        end
-        function loc  = tracerResolvedSumt(~, varargin)
-            loc = '';
-        end
-        function loc  = tracerRevision(~, varargin)
-            loc = '';
-        end
-        function loc  = tracerRevisionSumt(~, varargin)
-            loc = '';
         end
         function obj  = umapPhantom(this, varargin)
             ip = inputParser;
