@@ -46,8 +46,8 @@ classdef Finished
             addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IDataBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
-            addParameter(ip, 'neverTouchFinishfile', false, @islogical);
-            addParameter(ip, 'ignoreFinishfile', false, @islogical);
+            addParameter(ip, 'neverTouchFinishfile', true, @islogical);
+            addParameter(ip, 'ignoreFinishfile', true, @islogical);
             parse(ip, varargin{:});
             
             this.builder_ = ip.Results.builder;
