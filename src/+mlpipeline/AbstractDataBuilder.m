@@ -85,16 +85,16 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         %%
         
         function g    = getLogPath(this)
-            if (~isempty(this.logger))
-                g = this.logger.filepath;
-                return
-            end
-            g = pwd;
+            assert(~isempty(this.logger), ...
+                'mlpipeline:unexpectedState', ...
+                'AbstractDataBuilder.getLogPath:  this.prepareLogging may have failed');
+            g = this.logger.filepath;
         end  
         function this = setLogPath(this, s)
-            if (~isempty(this.logger))
-                this.logger.filepath = s;
-            end
+            assert(~isempty(this.logger), ...
+                'mlpipeline:unexpectedState', ...
+                'AbstractDataBuilder.setLogPath:  this.prepareLogging may have failed');
+            this.logger.filepath = s;
         end
         function g    = getNeverTouch(this)
             %% may be overridden
@@ -185,7 +185,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
  			ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.AbstractLogger'));
-            addParameter(ip, 'logPath', pwd, @ischar);
+            addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also method prepareLogging.
             addParameter(ip, 'product', []);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
@@ -206,7 +206,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             this.neverTouchFinishfile = ip.Results.neverTouchFinishfile;
             this.ignoreFinishfile   = ip.Results.ignoreFinishfile;  
             
-            this = this.prepareLogging;
+            this = this.prepareLogging(ip.Results.logPath);
         end
         function tf   = receivedCtor(~, varargin)
             tf = (1 == length(varargin)) && ...
@@ -247,13 +247,16 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
                 warning('mlpipeline:isequal:mismatchedClass', msg);
             end
         end
-        function this     = prepareLogging(this)
+        function this     = prepareLogging(this, varargin)
             %% overrides mlpipeline.AbstractDataBuilder.prepareLogging.
             
-            preferredPath = fullfile(this.sessionData.buildLocation, 'Log', '');
-            ensuredir(preferredPath);
+            ip = inputParser;
+            addRequired(ip, 'prefPath', @ischar);
+            parse(ip, varargin{:});
+            
+            ensuredir(ip.Results.prefPath);
             this.logger_.fqfilename = fullfile( ...
-                preferredPath, ...
+                ip.Results.prefPath, ...
                 strrep(sprintf('%s_prepareLogging_D%s', class(this), datestr(now,30)), '.', '_'));
         end
     end
