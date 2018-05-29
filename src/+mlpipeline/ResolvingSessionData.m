@@ -9,11 +9,10 @@ classdef ResolvingSessionData < mlpipeline.SessionData
 	properties
         epoch
         %indexOfReference % incipient bug
-        resolveTagPrefix = 'op_'
     end
        
     properties (Dependent)
-        epochLabel
+        epochTag
         resolveTag
     end
 
@@ -21,7 +20,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         
         %% GET/SET
         
-        function g = get.epochLabel(this)
+        function g = get.epochTag(this)
             if (isempty(this.epoch))
                 g = '';
                 return
@@ -38,7 +37,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
                 g = this.resolveTag_;
                 return
             end
-            g = [this.resolveTagPrefix this.tracerRevision('typ','fp')];
+            g = ['op_' this.tracerRevision('typ','fp')];
         end
         
         function this = set.resolveTag(this, s)
@@ -70,23 +69,9 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             [ipr,schar] = this.iprLocation(varargin{:});
             fqfn = fullfile( ...
                 this.tracerLocation('tracer', ipr.tracer, 'snumber', ipr.snumber, 'typ', 'path'), ...
-                sprintf('%s%sv%i%s%s', lower(ipr.tracer), schar, this.vnumber, this.epochLabel, this.filetypeExt));
+                sprintf('%s%sv%i%s%s', lower(ipr.tracer), schar, this.vnumber, this.epochTag, this.filetypeExt));
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
-        function obj  = umap(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addOptional(ip, 'tag', '', @ischar);
-            parse(ip, varargin{:});
-            
-            if (isempty(ip.Results.tag))
-                fn = 'umapSynth';
-            else 
-                fn = sprintf('umapSynth_%s%s', ip.Results.tag, this.filetypeExt);
-            end
-            fqfn = fullfile(this.tracerRevision('typ','filepath'), fn);
-            obj  = this.fqfilenameObject(fqfn, varargin{2:end});
-        end 
         
  		function this = ResolvingSessionData(varargin)
  			this = this@mlpipeline.SessionData(varargin{:});
