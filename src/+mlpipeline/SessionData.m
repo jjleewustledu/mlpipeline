@@ -28,7 +28,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         attenuationCorrected
         builder
         frame
-        hasBreathingTube
         isotope
         pnumber
         rnumber
@@ -156,13 +155,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function this = set.frame(this, s)
             assert(isnumeric(s));
             this.frame_ = s;
-        end
-        function g    = get.hasBreathingTube(this)
-            if (strcmpi(this.tracer, 'OC') || strcmpi(this.tracer, 'OO'))
-                g = true;
-                return
-            end
-            g = false;
         end
         function g    = get.isotope(this)
             tr = lower(this.tracer);
@@ -374,9 +366,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
     
         %%  
         
-        function loc  = buildLocation(this, varargin)
-            loc = this.tracerLocation(varargin{:});
-        end
         function obj  = ctObject(this, varargin)
             ip = inputParser;
             ip.KeepUnmatched = true;
@@ -638,7 +627,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
  			%  @param [param-name, param-value[, ...]]
             %         'abs'          is logical
             %         'ac'           is logical
-            %         'intervention' is char
             %         'frame'        is numeric
             %         'pnumber'      is char
             %         'rnumber'      is numeric
@@ -654,7 +642,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             ip.KeepUnmatched = true;
             addParameter(ip, 'abs', false,            @islogical);
             addParameter(ip, 'ac', false,             @islogical);
-            addParameter(ip, 'intervention',          @(x) ischar(x) || isnumeric(x));
             addParameter(ip, 'frame', nan,            @isnumeric);
             addParameter(ip, 'pnumber', '',           @ischar);
             addParameter(ip, 'rnumber', 1,            @isnumeric);
@@ -684,7 +671,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
             this.frame_                = ip.Results.frame;
-            this.intervention_         = ip.Results.intervention;
             this.pnumber_              = ip.Results.pnumber;
             this.rnumber_              = ip.Results.rnumber;
             this.snumber_              = ip.Results.snumber;
@@ -700,7 +686,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         attenuationCorrected_
         builder_
         frame_
-        intervention_
         pnumber_
         rnumber_
         region_
@@ -730,13 +715,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             end
             niid.img = niid.img(cropping{:});            
             niid = niid.append_fileprefix('_crop');
-            ic = mlfourd.ImagingContext.repackageImagingContext(niid, class(ic));
+            ic = mlfourd.ImagingContext.recastImagingContext(niid, class(ic));
         end
         function ic = flip(ic, dim)
             niid = ic.niftid;
             niid.img = flip(niid.img, dim);
             niid = niid.append_fileprefix(sprintf('_flip%i', dim));
-            ic = mlfourd.ImagingContext.repackageImagingContext(niid, class(ic));
+            ic = mlfourd.ImagingContext.recastImagingContext(niid, class(ic));
         end
         function ic = flipAndCropImaging(ic, varargin)
             ip = inputParser;
@@ -763,7 +748,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
                 niid.fileprefix = niid.fileprefix(1:strfind(niid.fileprefix, '.4dfp')-1);
             end
             niid = niid.append_fileprefix(sprintf('_flip%i_crop', ip.Results.flipdim));
-            ic = mlfourd.ImagingContext.repackageImagingContext(niid, class(ic));
+            ic = mlfourd.ImagingContext.recastImagingContext(niid, class(ic));
             ic.save;
         end
         function f  = fullfile(~, varargin)
