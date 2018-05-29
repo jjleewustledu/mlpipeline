@@ -11,10 +11,12 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         census
         filetypeExt
         freesurfersDir
+        rawdataDir
         sessionFolder
         sessionPath
         subjectsDir
         subjectsFolder
+        vfolder
         
         attenuationCorrected
         pnumber
@@ -62,6 +64,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function g    = get.freesurfersDir(this)
             g = this.sessionData.freesurfersDir;
         end
+        function g    = get.rawdataDir(this)
+            g = this.sessionData_.rawdataDir;
+        end
         function g    = get.sessionFolder(this)
             g = this.sessionData.sessionFolder;
         end
@@ -98,6 +103,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function this = set.tracer(this, s)
             this.sessionData_.tracer = s;
         end  
+        function g    = get.vfolder(this)
+            g = this.sessionData_.vfolder;
+        end
         function g    = get.vnumber(this)
             g = this.sessionData.vnumber;
         end
