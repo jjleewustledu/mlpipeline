@@ -60,7 +60,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             vtor = mlfourdfp.FourdfpVisitor;
             [s,r] = vtor.nifti_4dfp_ng(varargin{:});
         end
-        function fn = niigzFilename(fn)
+        function fn    = niigzFilename(fn)
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f '.nii.gz']);
         end
