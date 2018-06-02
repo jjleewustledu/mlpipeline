@@ -240,13 +240,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function obj = atlas(this, varargin)
             ip = inputParser;
             addParameter(ip, 'desc', 'TRIO_Y_NDC', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
             parse(ip, varargin{:});
             
             obj = imagingType(ip.Results.typ, ...
                 fullfile(getenv('REFDIR'), ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
         end
         function obj = boldResting(this, varargin)
             obj = this.mrObject('ep2d_bold_150', varargin{:});
@@ -274,7 +274,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function obj = mprage(this, varargin)
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             parse(ip, varargin{:});
             
             obj = this.mrObject('mpr', varargin{:});
@@ -370,12 +370,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             ip = inputParser;
             ip.KeepUnmatched = true;
             addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'fqfp', @ischar);
             parse(ip, varargin{:});
             
             fqfn = fullfile(this.sessionLocation, ...
-                            sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt));
+                            sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt));
             this.ensureCTFqfilename(fqfn);
             obj = imagingType(ip.Results.typ, fqfn);
         end
@@ -436,21 +436,21 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             ip = inputParser;
             ip.KeepUnmatched = true;
             addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
             parse(ip, varargin{:});
             [pth,fp,ext] = fileparts(ip.Results.fqfn);
-            obj = imagingType(ip.Results.typ, fullfile(pth, [fp ip.Results.suffix ext]));
+            obj = imagingType(ip.Results.typ, fullfile(pth, [fp ip.Results.tag ext]));
         end
         function obj  = fqfileprefixObject(~, varargin)
             ip = inputParser;
             ip.KeepUnmatched = true;
             addRequired( ip, 'fqfp', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'fqfp', @ischar);
             parse(ip, varargin{:});
             
-            obj = imagingType(ip.Results.typ, [ip.Results.fqfp ip.Results.suffix]);
+            obj = imagingType(ip.Results.typ, [ip.Results.fqfp ip.Results.tag]);
         end
         function loc  = freesurferLocation(this, varargin)
             ip = inputParser;
@@ -463,13 +463,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function obj  = freesurferObject(this, varargin)
             ip = inputParser;
             addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
             parse(ip, varargin{:});
             
             obj = imagingType(ip.Results.typ, ...
                 fullfile(this.mriLocation, ...
-                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.suffix)));
+                         sprintf('%s%s.mgz', ip.Results.desc, ip.Results.tag)));
         end
         function loc  = fslLocation(this, varargin)
             ip = inputParser;
@@ -560,13 +560,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             ip = inputParser;
             ip.KeepUnmatched = true;
             addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
             parse(ip, varargin{:});
             
             obj = imagingType(ip.Results.typ, ...
                 fullfile(this.fslLocation, ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.suffix, this.filetypeExt)));
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
         end 
         function loc  = petLocation(this, varargin)
             loc = this.vLocation(varargin{:});
@@ -574,10 +574,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function obj  = petObject(this, varargin)
             ip = inputParser;
             addRequired( ip, 'tracer', @ischar);
-            addParameter(ip, 'suffix', '', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'typ', 'mlpet.PETImagingContext', @ischar);
             parse(ip, varargin{:});
-            suff = ip.Results.suffix;
+            suff = ip.Results.tag;
             if (~isempty(suff) && ~strcmp(suff(1),'_'))
                 suff = ['_' suff];
             end
