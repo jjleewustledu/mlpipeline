@@ -213,8 +213,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             g = this.tracer_;
         end
         function this = set.tracer(this, t)
+            %% SET.TRACER updates this.tracer and this.sessionDate.
+            
             assert(ischar(t));
             this.tracer_ = t;
+            this.sessionDate_ = this.readDatetime0;
         end
         function g    = get.vnumber(this)
             g = this.vnumber_;
@@ -506,11 +509,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             parse(ip, varargin{:});            
             ipr = ip.Results;
             this.attenuationCorrected = ip.Results.ac;
-            this.tracer  = ip.Results.tracer; 
-            this.rnumber = ip.Results.rnumber;
-            this.snumber = ip.Results.snumber;
-            this.vnumber = ip.Results.vnumber; 
-            this.frame   = ip.Results.frame;
+            this.tracer_  = ip.Results.tracer; 
+            this.rnumber_ = ip.Results.rnumber;
+            this.snumber_ = ip.Results.snumber;
+            this.vnumber_ = ip.Results.vnumber; 
+            this.frame_   = ip.Results.frame;
             if (~lstrfind(upper(ipr.tracer), 'OC') && ...
                 ~lstrfind(upper(ipr.tracer), 'OO') && ...
                 ~lstrfind(upper(ipr.tracer), 'HO'))
