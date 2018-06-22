@@ -16,6 +16,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
     end
     
 	properties (Dependent)
+        dbgTag
         freesurfersDir
         sessionDate
         sessionFolder
@@ -78,6 +79,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         
         %% GET/SET
         
+        function g    = get.dbgTag(~)            
+            if (~isempty(getenv('DEBUG')))
+                g = '_DEBUG';
+            else
+                g = '';
+            end
+        end
         function g    = get.freesurfersDir(this)
             g = this.studyData_.freesurfersDir;
         end
