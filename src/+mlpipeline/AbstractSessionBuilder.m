@@ -9,6 +9,7 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
 
     properties (Dependent)
         census
+        dbgTag
         filetypeExt
         freesurfersDir
         rawdataDir
@@ -55,6 +56,9 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         
         %% GET
         
+        function g    = get.dbgTag(this)
+            g = this.sessionData.dbgTag;
+        end
         function g    = get.census(this)
             g = this.census_;
         end
