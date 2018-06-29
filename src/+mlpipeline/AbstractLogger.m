@@ -6,11 +6,6 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
  	%  Developed on Matlab 7.13.0.564 (R2011b) 
  	%  $Id: AbstractLogger.m 2647 2013-09-21 22:59:08Z jjlee $ 
  	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad) 
-
-    properties (Abstract, Constant)
-        FILETYPE
-        FILETYPE_EXT
-    end
     
     properties (Abstract)
         includeTimeStamp
@@ -90,9 +85,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         %% mlio.AbstractHandleIO
         
         function save(this, varargin)
-            %% SAVE supports extensions 
-            %  mlfourd.JimmyShenInterface.SUPPORTED_EXT and mlsurfer.SurferRegistry.SUPPORTED_EXT,
-            %  defaulting to this.FILETYPE_EXT if needed. 
+            %% SAVE 
             %  If this.noclobber == true,  it will never overwrite files.
             %  If this.noclobber == false, it may overwrite files. 
             %  @param perm are string file permission passed to fopen.  See also:  fopen.
