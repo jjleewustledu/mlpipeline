@@ -629,6 +629,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
                 sprintf('umapSynth_b40%s', this.filetypeExt));
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
+        function loc  = vallLocation(this, varargin)
+            loc = this.sessionLocation(varargin{:});
+        end 
         function loc  = vLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
         end 
