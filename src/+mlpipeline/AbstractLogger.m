@@ -14,6 +14,11 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
     methods (Abstract)
         clone(this)
     end
+        
+    properties (Constant)
+        FILETYPE     = 'mlpipeline.AbstractLogger'
+        FILETYPE_EXT = '.log'
+    end
     
     properties 
         echoToCommandWindow

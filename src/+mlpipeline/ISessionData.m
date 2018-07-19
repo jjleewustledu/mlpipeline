@@ -1,4 +1,4 @@
-classdef (Abstract) ISessionData 
+classdef (Abstract) ISessionData
 	%% ISESSIONDATA  
 
 	%  $Revision$
@@ -7,7 +7,6 @@ classdef (Abstract) ISessionData
  	%  last modified $LastChangedDate$
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
- 	
 	
 	properties (Abstract)
         filetypeExt
@@ -18,13 +17,6 @@ classdef (Abstract) ISessionData
         subjectsFolder  
         vfolder
         vnumber
-    end
-
-    methods (Static, Abstract)
-        [s,r] = nifti_4dfp_4(~)
-        [s,r] = nifti_4dfp_n(~)
-        [s,r] = nifti_4dfp_ng(~)
-        fn    = niigzFilename(~)
     end
     
 	methods (Abstract)

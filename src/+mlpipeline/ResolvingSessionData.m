@@ -13,6 +13,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
        
     properties (Dependent)
         epochTag
+        reference
         resolveTag
     end
 
@@ -31,6 +32,11 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             else
                 g = sprintf('e%ito%i', this.epoch(1), this.epoch(end));
             end
+        end
+        function g = get.reference(this)
+            stbl = this.studyCensus.censusSubtable;
+            this.vnumber = stbl.v_(1);
+            g = this;
         end
         function g = get.resolveTag(this)
             if (~isempty(this.resolveTag_))
