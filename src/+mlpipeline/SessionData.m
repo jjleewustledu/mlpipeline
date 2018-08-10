@@ -57,10 +57,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             vtor = mlfourdfp.FourdfpVisitor;
             [s,r] = vtor.nifti_4dfp_n(varargin{:});
         end
-        function [s,r] = nifti_4dfp_ng(varargin)
-            vtor = mlfourdfp.FourdfpVisitor;
-            [s,r] = vtor.nifti_4dfp_ng(varargin{:});
-        end
         function fn    = niigzFilename(fn)
             [p,f] = myfileparts(fn);
             fn = fullfile(p, [f '.nii.gz']);
@@ -427,7 +423,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
                         return
                     case {'.4dfp.ifh' '.4dfp.hdr' '.4dfp.img' '.4dfp.img.rec'}
                         fqfp = fullfile(p, f);
-                        this.nifti_4dfp_ng(fqfp);
+                        this.nifti_4dfp_n(fqfp);
                         return
                     otherwise
                         fqfn = fullfile(p, [f '.nii.gz']);
@@ -781,7 +777,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             if (lexist(f, 'file')); return; end
             f = fullfile(path, sprintf('%s.4dfp.nii.gz', varargin{end}));
             if (lexist(f, 'file')); return; end
-            f = fullfile(path, sprintf('%s.4dfp.ifh',    varargin{end}));
+            f = fullfile(path, sprintf('%s.4dfp.hdr',    varargin{end}));
             if (lexist(f, 'file')); return; end
             f = '';
             return

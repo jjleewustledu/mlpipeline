@@ -55,7 +55,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
 		  
         function obj  = umapSynthOpT1001(this, varargin)
             t1   = this.T1001('typ', 'fp');
-            fqfn = fullfile(this.vLocation, sprintf('umapSynth_op_%s_b40.4dfp.ifh', t1));
+            fqfn = fullfile(this.vLocation, sprintf('umapSynth_op_%s_b40.4dfp.hdr', t1));
             obj  = this.fqfilenameObject(fqfn, varargin{2:end});
         end
         function tag  = resolveTagFrame(this, varargin)

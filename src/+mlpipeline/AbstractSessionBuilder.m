@@ -44,9 +44,6 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function [s,r] = nifti_4dfp_n(varargin)
             [s,r] = mlpipeline.SessionData.nifti_4dfp_n(varargin{:});
         end
-        function [s,r] = nifti_4dfp_ng(varargin)
-            [s,r] = mlpipeline.SessionData.nifti_4dfp_ng(varargin{:});
-        end
         function fn    = niigzFilename(varargin)
             fn = mlpipeline.SessionData.niigzFilename(varargin{:});
         end
@@ -122,8 +119,8 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function [s,r] = ensure4dfp(this, varargin)
             %% ENSURE4DFP
             %  @param filename is any string descriptor found in an existing file on the filesystem;
-            %  ensureNifti will search for files with extensions .4dfp.ifh.
-            %  @returns s, the bash status; r, any bash messages.  ensure4dfp ensures files are .4dfp.ifh.            
+            %  ensureNifti will search for files with extensions .4dfp.hdr.
+            %  @returns s, the bash status; r, any bash messages.  ensure4dfp ensures files are .4dfp.hdr.            
             
             ip = inputParser;
             addRequired(ip, 'filename', @ischar);
@@ -141,10 +138,10 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
                     return
                 end
                 [s,r] = this.buildVisitor.nifti_4dfp_4(myfileprefix(ip.Results.filename));
-                assert(lexist(myfilename(ip.Results.filename, '.4dfp.ifh'), 'file'));
+                assert(lexist(myfilename(ip.Results.filename, '.4dfp.hdr'), 'file'));
                 return
             end
-            if (2 == exist([ip.Results.filename '.4dfp.ifh'], 'file'))
+            if (2 == exist([ip.Results.filename '.4dfp.hdr'], 'file'))
                 return
             end
             if (2 == exist([ip.Results.filename '.nii'], 'file'))
@@ -166,7 +163,7 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
         function [s,r] = ensureNifti(this, varargin)
             %% ENSURENIFTI
             %  @param filename is any string descriptor found in an existing file on the filesystem;
-            %  ensureNifti will search for files with extensions .nii, .nii.gz or .4dfp.ifh.
+            %  ensureNifti will search for files with extensions .nii, .nii.gz or .4dfp.hdr.
             %  @returns s, the bash status; r, any bash messages.  ensureNifti ensures files are .nii.gz.
             
             ip = inputParser;
@@ -183,7 +180,7 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
                     [s,r] = mlbash(sprintf('mri_convert %s.mgz %s.nii.gz', fp, fp));
                     return
                 end
-                [s,r] = this.buildVisitor.nifti_4dfp_ng(myfileprefix(ip.Results.filename));
+                [s,r] = this.buildVisitor.nifti_4dfp_n(myfileprefix(ip.Results.filename));
                 assert(lexist(myfilename(ip.Results.filename), 'file'));
                 return
             end
@@ -198,11 +195,11 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.IS
                 [s,r] = mlbash(sprintf('mri_convert %s.mgz %s.nii.gz', ip.Results.filename, ip.Results.filename));
                 return
             end    
-            if (2 == exist([ip.Results.filename '.4dfp.ifh'], 'file'))
+            if (2 == exist([ip.Results.filename '.4dfp.hdr'], 'file'))
                 if (2 == exist([ip.Results.filename '.nii'], 'file'))
                     return
                 end
-                [s,r] = this.ensureNifti([ip.Results.filename '.4dfp.ifh']);
+                [s,r] = this.ensureNifti([ip.Results.filename '.4dfp.hdr']);
                 return
             end
             error('mlfourdfp:fileNotFound', ...
