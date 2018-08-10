@@ -7,6 +7,11 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
  	%  $Id: AbstractLogger.m 2647 2013-09-21 22:59:08Z jjlee $ 
  	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad) 
     
+    properties (Abstract, Constant)        
+        FILETYPE
+        FILETYPE_EXT
+    end
+    
     properties (Abstract)
         includeTimeStamp
     end
@@ -14,10 +19,10 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
     methods (Abstract)
         clone(this)
     end
-        
+    
     properties (Constant)
-        FILETYPE     = 'mlpipeline.AbstractLogger'
-        FILETYPE_EXT = '.log'
+        DATESTR_FORMAT = 'ddd mmm dd HH:MM:SS yyyy'
+        TIMESTR_FORMAT = 'ddd mmm dd HH:MM:SS:FFF yyyy' 
     end
     
     properties 
@@ -30,6 +35,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         creationDate
         hostname
         id % user id
+        uname
     end
     
     methods (Static)
@@ -86,6 +92,9 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         function g = get.id(this)
             g = this.id_;
         end
+        function g = get.uname(this)
+            g = this.uname_;
+        end
         
         %% mlio.AbstractHandleIO
         
@@ -118,7 +127,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
                 fprintf(varargin{:}); fprintf('\n');
             end
             if (this.includeTimeStamp)
-                s = sprintf('%s:  ', datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF'));
+                s = sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT));
                 this.cellArrayList_.add([s sprintf(varargin{:})]);
                 return
             end
@@ -183,9 +192,10 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             this.callerid_           = strrep(class(ip.Results.callback), '.', '_');   
             this.echoToCommandWindow = ip.Results.echoToCommandWindow;
             
-            this.creationDate_  = datestr(now, 'yyyy-mm-dd HH:MM:SS.FFF');
-            [~,this.hostname_]  = mlbash('hostname'); this.hostname_ = strtrim(this.hostname_);
-            [~,this.id_]        = mlbash('id -u -n'); this.id_       = strtrim(this.id_);            
+            this.creationDate_  = datestr(now, this.DATESTR_FORMAT);
+            [~,this.hostname_]  = mlbash('hostname');   this.hostname_ = strtrim(this.hostname_);
+            [~,this.id_]        = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
+            [~,this.uname_]     = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
             this.cellArrayList_ = mlpatterns.CellArrayList;
             if (~isempty(this.header))
                 this.cellArrayList_.add(this.header);
@@ -201,6 +211,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
         creationDate_
         hostname_
         id_
+        uname_
     end
     
     methods (Access = 'protected')

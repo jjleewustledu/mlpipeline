@@ -84,6 +84,12 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %%
         
+        function        cd(~, varargin)
+            if (isempty(varargin) || isempty(varargin{1}))
+                return
+            end
+            cd(varargin{:});
+        end
         function g    = getLogPath(this)
             assert(~isempty(this.logger), ...
                 'mlpipeline:unexpectedState', ...
@@ -171,7 +177,7 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             
             this.product_ = mlfourd.ImagingContext(prod);
             if (lstrfind(this.product_.filesuffix, '4dfp'))
-                this.product_.filesuffix = '.4dfp.ifh';
+                this.product_.filesuffix = '.4dfp.hdr';
             end
         end
         

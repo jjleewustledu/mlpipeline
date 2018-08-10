@@ -6,7 +6,12 @@ classdef Logger < mlpipeline.AbstractLogger
  	%  Developed on Matlab 7.13.0.564 (R2011b) 
  	%  $Id: Logger.m 2647 2013-09-21 22:59:08Z jjlee $ 
  	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad) 
-
+        
+    properties (Constant)
+        FILETYPE     = 'mlpipeline.Logger'
+        FILETYPE_EXT = '.log'
+    end
+    
     properties 
         includeTimeStamp = true
     end
