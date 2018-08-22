@@ -1,4 +1,4 @@
-classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
+classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpatterns.List
 	%% ABSTRACTLOGGER accumulates logging strings in a CellArrayList.  It is a handle class.
     
     %  Version $Revision: 2647 $ was created $Date: 2013-09-21 17:59:08 -0500 (Sat, 21 Sep 2013) $ by $Author: jjlee $,
@@ -81,7 +81,7 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             g = this.callerid_;
         end
         function g = get.contents(this)
-            g = this.char;
+            g = this.cellArrayList_;
         end
         function g = get.creationDate(this)
             g = this.creationDate_;
@@ -164,30 +164,23 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
             %  prescribed by abstract data type mlpatterns.List.
 
             if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractLogger')) 
-                this.includeTimeStamp = varargin{1}.includeTimeStamp;
-                
-                this.filepath_           = varargin{1}.filepath_;
-                this.fileprefix_         = varargin{1}.fileprefix_;
-                this.filesuffix_         = varargin{1}.filesuffix_;
-                this.filesystemRegistry_ = varargin{1}.filesystemRegistry_;
-                
-                this.callerid_           = varargin{1}.callerid_;
-                this.cellArrayList_      = mlpatterns.CellArrayList(varargin{1}.cellArrayList_); % copy-ctor
-                this.creationDate_       = varargin{1}.creationDate_;
-                this.echoToCommandWindow = varargin{1}.echoToCommandWindow;
-                this.hostname_           = varargin{1}.hostname_;
-                this.id_                 = varargin{1}.id_;
+                this = copy(varargin{1});
                 return
-            end % for copy-ctor      
+            end
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional(ip, 'fileprefix', this.defaultFqfileprefix, @ischar);
-            addOptional(ip, 'callback',   this,                     @(x) ~isempty(class(x)));
-            addParameter(ip, 'echoToCommandWindow', true,           @islogical);
+            addOptional( ip, 'fqfileprefix', this.defaultFqfileprefix, @ischar);
+            addOptional( ip, 'callback',     this,                     @(x) ~isempty(class(x)));
+            addParameter(ip, 'echoToCommandWindow', true,              @islogical);
             parse(ip, varargin{:});
             
-            this.fqfileprefix        = ip.Results.fileprefix;
+            fqfp = ip.Results.fqfileprefix;
+            if (strcmp(fqfp(end-3:end), this.FILETYPE_EXT))
+                fqfp = fqfp(1:end-4);
+            end
+            
+            this.fqfileprefix        = fqfp;
             this.filesuffix          = this.FILETYPE_EXT;
             this.callerid_           = strrep(class(ip.Results.callback), '.', '_');   
             this.echoToCommandWindow = ip.Results.echoToCommandWindow;
@@ -215,6 +208,12 @@ classdef AbstractLogger < mlio.AbstractHandleIO & mlpatterns.List
     end
     
     methods (Access = 'protected')
+        function that = copyElement(this)
+            %%  See also web(fullfile(docroot, 'matlab/ref/matlab.mixin.copyable-class.html'))
+            
+            that = copyElement@matlab.mixin.Copyable(this);
+            that.cellArrayList_ = copy(this.contexth_);
+        end
         function fn   = defaultFqfileprefix(this)
             fn = fullfile(this.filepath, ['AbstractLogger_' datestr(now,30)]);
         end

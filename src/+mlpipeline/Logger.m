@@ -1,4 +1,4 @@
-classdef Logger < mlpipeline.AbstractLogger
+classdef Logger < handle & mlpipeline.AbstractLogger
 	%% LOGGER accumulates logging strings in a CellArrayList.  It is a handle class.
     
     %  Version $Revision: 2647 $ was created $Date: 2013-09-21 17:59:08 -0500 (Sat, 21 Sep 2013) $ by $Author: jjlee $,
@@ -29,10 +29,7 @@ classdef Logger < mlpipeline.AbstractLogger
             this = this@mlpipeline.AbstractLogger(varargin{:});                    
         end 
         function c = clone(this)
-            %% CLONE
-            %  @return c is a deep copy of a handle class
-            
-            c = mlpipeline.Logger(this);
+            c = copy(this);
         end
     end
     
