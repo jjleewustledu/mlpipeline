@@ -1,4 +1,4 @@
-classdef StudyDataSingleton < mlpipeline.StudyDataHandle
+classdef StudyDataSingleton < handle & mlpipeline.StudyData
 	%% STUDYDATASINGLETON  
 
 	%  $Revision$
@@ -7,88 +7,17 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
  	%  last modified $LastChangedDate$
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
- 	
-    
-    properties
-        comments
-    end
 
 	methods
         
-        %% concrete implementation of abstract StudyDataHandle
+        %% 
+        
         function iter = createIteratorForSessionData(this)
             iter = this.sessionDataComposite_.createIterator;
         end
-        function        diaryOff(~)
-            diary off;
-        end
-        function        diaryOn(this, varargin)
-            ip = inputParser;
-            addOptional(ip, 'path', this.subjectsDir, @isdir);
-            parse(ip, varargin{:});
-            
-            diary(fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
-        end
-        function d    = freesurfersDir(this)
-            d = this.subjectsDir;
-        end
-        function loc  = loggingLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'type', 'path', @isLocationType);
-            parse(ip, varargin{:});
-            
-            switch (ip.Results.type)
-                case 'folder'
-                    [~,loc] = fileparts(this.subjectsDir);
-                case 'path'
-                    loc = this.subjectsDir;
-                otherwise
-                    error('mlpipeline:insufficientSwitchCases', ...
-                          'StudyDataSingleton.loggingLocation.ip.Results.type->%s not recognized', ip.Results.type);
-            end
-        end
-        function d    = rawdataDir(this)
-            d = this.subjectsDir;
+        function        register(~)
         end
         function this = replaceSessionData(this, varargin)
-        end
-        function loc  = saveWorkspace(this, varargin)
-            ip = inputParser;
-            addOptional(ip, 'path', this.subjectsDir, @isdir);
-            parse(ip, varargin{:});
-            
-            loc = fullfile(ip.Results.path, sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30)));
-            if (this.isChpcHostname)
-                save(loc, '-v7.3');
-                return
-            end
-            save(loc);
-        end
-        function sess = sessionData(varargin)
-            %% SESSIONDATA
-            %  @param [parameter name,  parameter value, ...] as expected by mlpipeline.SessionData are optional;
-            %  'studyData' and this are always internally supplied.
-            %  @returns for empty param:  mlpatterns.CellComposite object or it's first element when singleton, 
-            %  which are instances of mlpipeline.SessionData.
-            %  @returns for non-empty param:  instance of mlraichle.SessionData corresponding to supplied params.
-            
-            if (isempty(varargin))
-                sess = this.sessionDataComposite_;
-                if (1 == length(sess))
-                    sess = sess.get(1);
-                end
-                return
-            end
-            sess = mlpipeline.SessionData('studyData', this, varargin{:});
-        end
-        
-        %%
-        
-        function tf   = isChpcHostname(~)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
-        end
-        function        register(~)
         end
     end
     
@@ -99,12 +28,17 @@ classdef StudyDataSingleton < mlpipeline.StudyDataHandle
     end
     
     methods (Access = protected)
+        function that = copyElement(this)
+            that = mlpipeline.StudyData;
+            that.comments = this.comments;
+            that.sessionDataComposite_ = this.sessionDataComposite_;
+        end
         function this = StudyDataSingleton(varargin)
             %% STUDYDATASINGLETON 
             %  @param [1] that is a mlpattern.CellComposite:  this replaces internal this.sessionDataComposite_ and returns.
             %  @param [1...N] that is a mlpipeline.SessionData:  
             %  this adds everything to this.sessionDataCompoaite_ and returns.
-            %  @param [1...N] that is a valid param for mlpipeline.StudyDataHandle.assignSessionDataCompositeFromPaths:
+            %  @param [1...N] that is a valid param for mlpipeline.IStudyHandle.assignSessionDataCompositeFromPaths:
             %  this adds to this.sessionDataComposite_ according to assignSessionDataCompositeFromPaths.
             %  @returns this.
             

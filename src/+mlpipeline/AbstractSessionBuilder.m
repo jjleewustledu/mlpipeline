@@ -1,4 +1,4 @@
-classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder & mlpipeline.ISessionData
+classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder
 	%% ABSTRACTSESSIONBUILDER provides convenience methods that return information from this.sessionData.
 
 	%  $Revision$
