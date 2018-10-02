@@ -1,6 +1,6 @@
 classdef (Abstract) IDataBuilder 
 	%% IDATABUILDER specifies an interface for builder design patterns for mlpipeline classes.
-    %  @param keeForensics is logical.
+    %  @param finished is logical.
     %  @param logger is a logging object, e.g., mlpipeline.AbstractLogger.
     %  @param product is, e.g., mlfourd.ImagingContext.
     %  @param sessionData is, e.g., mlpipeline.SessionData.
@@ -20,7 +20,6 @@ classdef (Abstract) IDataBuilder
         logger
         product        
         sessionData
-        studyData
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

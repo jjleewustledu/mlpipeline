@@ -7,14 +7,17 @@ classdef ResolvingSessionData < mlpipeline.SessionData
  	%% It was developed on Matlab 9.2.0.538062 (R2017a) for MACI64.  Copyright 2017 John Joowon Lee.
  	
 	properties
+        compAlignMethod  = 'align_multiSpectral'
         epoch
-        %indexOfReference % incipient bug
+        frameAlignMethod = 'align_2051'
+        %indexOfReference % INCIPIENT BUG
     end
        
     properties (Dependent)
         epochTag
         reference
         resolveTag
+        rnumber
     end
 
 	methods 
@@ -45,11 +48,18 @@ classdef ResolvingSessionData < mlpipeline.SessionData
             end
             g = ['op_' this.tracerRevision('typ','fp')];
         end
-        
         function this = set.resolveTag(this, s)
             assert(ischar(s));
             this.resolveTag_ = s;
         end  
+        function g = get.rnumber(this)
+            g = this.rnumber_;
+        end
+        function this = set.rnumber(this, r)
+            assert(isnumeric(r));
+            this.rnumber_ = r;
+        end
+        
         
         %%
 		  
@@ -80,12 +90,17 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         end
         
  		function this = ResolvingSessionData(varargin)
+            % @param 'resolveTag' is char
+            % @param 'rnumber'    is numeric
+            
  			this = this@mlpipeline.SessionData(varargin{:});
             ip = inputParser;
             ip.KeepUnmatched = true;           
             addParameter(ip, 'resolveTag', '',   @ischar);
+            addParameter(ip, 'rnumber', 1,            @isnumeric);
             parse(ip, varargin{:});             
             this.resolveTag_ = ip.Results.resolveTag;
+            this.rnumber_    = ip.Results.rnumber;
  		end
     end 
     
@@ -93,6 +108,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
     
     properties (Access = protected)
         resolveTag_
+        rnumber_
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

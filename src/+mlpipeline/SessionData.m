@@ -1,4 +1,4 @@
-classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet.IPETData
+classdef (Abstract) SessionData < mlpipeline.ISessionData 
 	%% SESSIONDATA  
     %  @param builder is an mlpipeline.IDataBuilder.
 
@@ -9,18 +9,18 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
  	
-    properties 
-        frameAlignMethod = 'align_2051'
-        compAlignMethod  = 'align_multiSpectral'
-        modality
+    properties (Abstract)
+        rnumber
     end
     
 	properties (Dependent)
         dbgTag
         freesurfersDir
+        freesurfersFolder
         sessionDate
         sessionFolder
         sessionPath
+        study
         studyData
         subjectsDir
         subjectsFolder
@@ -31,7 +31,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         frame
         isotope
         pnumber
-        rnumber
         region
         snumber
         tracer
@@ -85,6 +84,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function g    = get.freesurfersDir(this)
             g = this.studyData_.freesurfersDir;
         end
+        function g    = get.freesurfersFolder(this)
+            g = basename(this.freesurfersDir);
+        end
         function g    = get.subjectsDir(this)
             g = this.studyData_.subjectsDir;
         end
@@ -119,6 +121,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         end
         function this = set.sessionPath(this, s)
             [this.studyData_.subjectsDir,this.sessionFolder_] = fileparts(s);
+        end
+        function g    = get.study(this)
+            g = this.studyData;
+        end
+        function this = set.study(this, s)
+            this.studyData = s;
         end
         function g    = get.studyData(this)
             g = this.studyData_;
@@ -191,13 +199,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         function this = set.pnumber(this, s)
             assert(ischar(s));
             this.pnumber_ = s;
-        end
-        function g    = get.rnumber(this)
-            g = this.rnumber_;
-        end
-        function this = set.rnumber(this, r)
-            assert(isnumeric(r));
-            this.rnumber_ = r;
         end
         function g    = get.region(this)
             g = this.region_;
@@ -514,7 +515,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             ipr = ip.Results;
             this.attenuationCorrected = ip.Results.ac;
             this.tracer_  = ip.Results.tracer; 
-            this.rnumber_ = ip.Results.rnumber;
+            this.rnumber  = ip.Results.rnumber;
             this.snumber_ = ip.Results.snumber;
             this.vnumber_ = ip.Results.vnumber; 
             this.frame_   = ip.Results.frame;
@@ -639,7 +640,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             %         'ac'           is logical
             %         'frame'        is numeric
             %         'pnumber'      is char
-            %         'rnumber'      is numeric
             %         'sessionDate'  is datetime
             %         'sessionPath'  is a path to the session data
             %         'snumber'      is numeric
@@ -654,12 +654,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
             addParameter(ip, 'ac', false,             @islogical);
             addParameter(ip, 'frame', nan,            @isnumeric);
             addParameter(ip, 'pnumber', '',           @ischar);
-            addParameter(ip, 'rnumber', 1,            @isnumeric);
             addParameter(ip, 'sessionDate', NaT,      @isdatetime);
             addParameter(ip, 'sessionFolder', '',     @ischar);
             addParameter(ip, 'sessionPath', '',       @ischar);
             addParameter(ip, 'snumber', 1,            @isnumeric);
-            addParameter(ip, 'studyData',             @(x) isa(x, 'mlpipeline.StudyDataHandle'));
+            addParameter(ip, 'studyData',             @(x) isa(x, 'mlpipeline.IStudyHandle'));
             addParameter(ip, 'subjectsDir', '',       @(x) isdir(x) || isempty(x));
             addParameter(ip, 'tracer', 'FDG',         @ischar);
             addParameter(ip, 'vnumber', 1,            @isnumeric);
@@ -676,13 +675,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
                 this.sessionFolder_ = ip.Results.sessionFolder;
             end
             if (~isempty(ip.Results.sessionPath))
-                [this.studyData_.subjectsDir,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
+                [~,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
             end                           
             this.absScatterCorrected_  = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
             this.frame_                = ip.Results.frame;
             this.pnumber_              = ip.Results.pnumber;
-            this.rnumber_              = ip.Results.rnumber;
             this.snumber_              = ip.Results.snumber;
             this.tracer_               = ip.Results.tracer;
             this.vnumber_              = ip.Results.vnumber;            
@@ -697,7 +695,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData & mlmr.IMRData & mlpet
         builder_
         frame_
         pnumber_
-        rnumber_
         region_
         sessionDate_
         sessionFolder_
