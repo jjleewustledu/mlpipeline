@@ -34,15 +34,37 @@ classdef Test_Logger < matlab.unittest.TestCase
         end
         function test_ctor(this)
             this.verifyEqual(this.testObj.callerid, 'mlpipeline_Logger');
-            this.verifyEqual(this.testObj.contents(end-20:end), 'testing log element 2');
+            c = this.testObj.contents.char;
+            this.verifyEqual(c(end-20:end), 'testing log element 2');
             this.verifyEqual(this.testObj.hostname(1:10), 'ophthalmic');
             this.verifyEqual(this.testObj.id, 'jjlee');
             this.verifyEqual(this.testObj.filename, 'Test_Logger.log');
         end
+        function test_ctor_fqfn(this)
+            import mlpipeline.*;
+            tobj = Logger;
+            fprintf('%s\n', tobj.fqfn);
             
+            tobj = Logger('test_ctor_fqfn');
+            fprintf('%s\n', tobj.fqfn);
+            
+            tobj = Logger(fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn'));
+            fprintf('%s\n', tobj.fqfn);
+            
+            tobj = Logger(fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn.log'));
+            fprintf('%s\n', tobj.fqfn);
+            
+            tobj = Logger(fullfile(getenv('HOME'), 'Tmp', 'NonexistentDir', 'test_ctor_fqfn.log'));
+            fprintf('%s\n', tobj.fqfn);
+            
+            tobj = Logger('', this, 'tag', 'test_ctor_fqfn');
+            fprintf('%s\n', tobj.fqfn);
+        end
+        
  		function test_add(this)
             this.testObj.add(sprintf('test string_3\ntest string4\ntest string5'));
-            this.verifyEqual(this.testObj.contents(end-11:end), 'test string5');
+            c = this.testObj.contents.char;
+            this.verifyEqual(c(end-11:end), 'test string5');
         end
         function test_char(this)
             c = this.testObj.char;
@@ -81,7 +103,6 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.testObj.save;
             this.verifyTrue(lexist(this.testObj.fqfilename, 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
-            this.verifyEqual(c{1}(end-19:end), 'p7377ho1.img.rec.log');
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
         function test_saveas(this)
@@ -89,14 +110,13 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.testObj.saveas(FQFP);            
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
-            this.verifyEqual(c{1}(end-19:end), 'p7377ho1.img.rec.log');
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
  	end
 
  	methods (TestClassSetup)
  		function setupLogger(this)          
-            this.sessionPath = fullfile(getenv('MLUNIT_TEST_PATH'), 'cvl', 'np755', 'mm01-020_p7377_2009feb5', '');
+            this.sessionPath = fullfile('/data', 'cvl', 'np755', 'mm01-020_p7377_2009feb5', '');
             this.workPath    = fullfile(this.sessionPath, 'fsl', '');
             this.test_fqfn   = fullfile(this.workPath, 'Test_Logger.log');
  		end

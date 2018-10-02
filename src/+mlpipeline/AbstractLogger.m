@@ -1,4 +1,4 @@
-classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpatterns.List
+classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline.ILogger
 	%% ABSTRACTLOGGER accumulates logging strings in a CellArrayList.  It is a handle class.
     
     %  Version $Revision: 2647 $ was created $Date: 2013-09-21 17:59:08 -0500 (Sat, 21 Sep 2013) $ by $Author: jjlee $,
@@ -6,19 +6,6 @@ classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO
  	%  Developed on Matlab 7.13.0.564 (R2011b) 
  	%  $Id: AbstractLogger.m 2647 2013-09-21 22:59:08Z jjlee $ 
  	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad) 
-    
-    properties (Abstract, Constant)        
-        FILETYPE
-        FILETYPE_EXT
-    end
-    
-    properties (Abstract)
-        includeTimeStamp
-    end
-    
-    methods (Abstract)
-        clone(this)
-    end
     
     properties (Constant)
         DATESTR_FORMAT = 'ddd mmm dd HH:MM:SS yyyy'
@@ -31,48 +18,13 @@ classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO
     
     properties (Dependent)
         callerid
-        contents
+        contents % @return cell of char-arrays.  Use char(this) for single char-array.
         creationDate
         hostname
         id % user id
         uname
     end
-    
-    methods (Static)
-        function fqfn = loggerFilename(varargin)
-            %% LOGGERFILENAME ... 
-            %  Usage:  fq_filename = loggerFilename(['func', func_value, 'tag', tag_value, 'path', path_value]) 
-            %  @param method is the name of the calling function
-            %  @param tag is any string identifier
-            %  @param path is the path to the log file
-            %  @returns fqfn is a standardized log filename
-
-            fqfn = [mlpipeline.AbstractLogger.loggerFileprefix(varargin{:}) '.log'];
-        end
-        function fqfp = loggerFileprefix(varargin)
-            %% LOGGERFILEPREFIX ... 
-            %  Usage:  fq_fileprefix = loggerFileprefix(['func', func_value, 'tag', tag_value, 'path', path_value]) 
-            %  @param method is the name of the calling function
-            %  @param tag is any string identifier
-            %  @param path is the path to the log file
-            %  @returns fqfp is a standardized log fileprefix
-
-            ip = inputParser;
-            addRequired( ip, 'tag', @ischar);
-            addParameter(ip, 'func', 'unknownFunc', @ischar);
-            addParameter(ip, 'path', pwd, @isdir);
-            parse(ip, varargin{:});
-            tag = strrep(mybasename(ip.Results.tag), '.', '_');
-            if (~isempty(tag) && strcmp(tag(end), '_'))
-                tag = tag(1:end-1);
-            end
-            func = strrep(mybasename(ip.Results.func), '.', '_');
-
-            fqfp = fullfile(ip.Results.path, ...
-                 sprintf('%s_%s_D%s', tag, func, datestr(now,'yyyymmddTHHMMSSFFF')));
-        end
-    end
-    
+     
     methods 
         
         %% GET
@@ -155,13 +107,12 @@ classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO
         %%
         
         function this = AbstractLogger(varargin)
-            %% ABSTRACTLOGGER provides copy-construction for its handle.
-            %  @param [fileprefix] is a fileprefix consistent with the filesystem.  
-            %  Pre-existing files will be read.  Non-existing files will be created on save.
-            %  @param [callback] is a reference from the client that requests logging.
-            %  @param [Logger_instance] will construct a deep copy.
-            %  @return this is a class instance with IO functionality and logging functionality 
-            %  prescribed by abstract data type mlpatterns.List.
+            %  @param optional 'fqfileprefix' is char.
+            %  @param optional 'callerid', object or char, identifies the client requesting logging.
+            %  @param named 'tag' is char to augment a constructed filename.
+            %  @param named 'echoToCommandWindow' is logical (default true).
+            %  @param instance of mlpipeline.AbstractLogger, by itself, will construct a deep copy.
+            %  @return this
 
             if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractLogger')) 
                 this = copy(varargin{1});
@@ -170,26 +121,22 @@ classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional( ip, 'fqfileprefix', this.defaultFqfileprefix, @ischar);
-            addOptional( ip, 'callback',     this,                     @(x) ~isempty(class(x)));
-            addParameter(ip, 'echoToCommandWindow', true,              @islogical);
-            parse(ip, varargin{:});
-            
-            fqfp = ip.Results.fqfileprefix;
-            if (strcmp(fqfp(end-3:end), this.FILETYPE_EXT))
-                fqfp = fqfp(1:end-4);
-            end
-            
-            this.fqfileprefix        = fqfp;
+            addOptional( ip, 'fqfileprefix', '', @ischar);
+            addOptional( ip, 'callerid', this);
+            addParameter(ip, 'tag', '', @ischar);
+            addParameter(ip, 'echoToCommandWindow', true, @islogical);
+            parse(ip, varargin{:});            
+            this.callerid_           = this.callerid2str(ip.Results.callerid);
+            this.tag_                = this.aufbauTag(ip.Results.tag);
+            this.fqfileprefix        = this.aufbauFqfileprefix(ip.Results.fqfileprefix);
             this.filesuffix          = this.FILETYPE_EXT;
-            this.callerid_           = strrep(class(ip.Results.callback), '.', '_');   
             this.echoToCommandWindow = ip.Results.echoToCommandWindow;
             
-            this.creationDate_  = datestr(now, this.DATESTR_FORMAT);
-            [~,this.hostname_]  = mlbash('hostname');   this.hostname_ = strtrim(this.hostname_);
-            [~,this.id_]        = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
-            [~,this.uname_]     = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
-            this.cellArrayList_ = mlpatterns.CellArrayList;
+            this.creationDate_       = datestr(now, this.DATESTR_FORMAT);
+            [~,this.hostname_]       = mlbash('hostname');   this.hostname_ = strtrim(this.hostname_);
+            [~,this.id_]             = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
+            [~,this.uname_]          = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
+            this.cellArrayList_      = mlpatterns.CellArrayList;
             if (~isempty(this.header))
                 this.cellArrayList_.add(this.header);
             end
@@ -204,18 +151,39 @@ classdef AbstractLogger < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO
         creationDate_
         hostname_
         id_
+        tag_
         uname_
     end
     
     methods (Access = 'protected')
+        function fqfp = aufbauFqfileprefix(this, fqfp)
+            if (~isempty(fqfp))
+                fqfp = strexcise(fqfp, this.FILETYPE_EXT);
+                return
+            end            
+            fqfp = fullfile(this.filepath, sprintf('%s%s_D%s', this.callerid_, this.tag_, datestr(now,'yyyymmddTHHMMSSFFF')));
+        end
+        function t    = aufbauTag(~, t)
+            t = char(t);
+            if (isempty(t))
+                return
+            end
+            if (~strcmp(t(1), '_'))
+                t = ['_' t];
+            end
+        end
+        function cid  = callerid2str(~, cid)
+            if (ischar(cid))
+                return
+            end
+            cid = class(cid);
+            cid = strrep(cid, '.', '_');
+        end
         function that = copyElement(this)
             %%  See also web(fullfile(docroot, 'matlab/ref/matlab.mixin.copyable-class.html'))
             
             that = copyElement@matlab.mixin.Copyable(this);
-            that.cellArrayList_ = copy(this.contexth_);
-        end
-        function fn   = defaultFqfileprefix(this)
-            fn = fullfile(this.filepath, ['AbstractLogger_' datestr(now,30)]);
+            that.cellArrayList_ = copy(this.cellArrayList_);
         end
         function this = ensureExtension(this)
             if (isempty(this.filesuffix))
