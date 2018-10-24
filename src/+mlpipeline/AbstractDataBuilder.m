@@ -10,18 +10,17 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
  	
 
 	properties
- 		keepForensics
+ 		keepForensics % consider moving to mlfourdfp.AbstractT4ResolveBuilder
     end
     
     properties (Dependent)
         buildVisitor
         finished
-        ignoreFinishfile
+        ignoreFinishfile     % KLUDGE to configure finished
+        neverTouchFinishfile %
         logger
-        neverTouchFinishfile
         product        
         sessionData
-        studyData
  	end
 
 	methods 
@@ -39,22 +38,19 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
                 g = this.finished_.ignoreFinishfile;
             end
         end
-        function g = get.logger(this)
-            g = this.logger_;
-        end 
         function g = get.neverTouchFinishfile(this)
             if (~isempty(this.finished_))
                 g = this.finished_.neverTouchFinishfile;
             end
         end
+        function g = get.logger(this)
+            g = this.logger_;
+        end 
         function g = get.product(this)
             g = this.product_;
         end
         function g = get.sessionData(this)
             g = this.sessionData_;
-        end
-        function g = get.studyData(this)
-            g = this.sessionData.studyData;
         end
         
         function this = set.buildVisitor(this, v)
@@ -67,15 +63,13 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         end
         function this = set.ignoreFinishfile(this, s)
             assert(islogical(s));
-            if (~isempty(this.finished_))
-                this.finished_.ignoreFinishfile = s;
-            end
+            assert(~isempty(this.finished_))
+            this.finished_.ignoreFinishfile = s;
         end
         function this = set.neverTouchFinishfile(this, s)
             assert(islogical(s));
-            if (~isempty(this.finished_))
-                this.finished_.neverTouchFinishfile = s;
-            end
+            assert(~isempty(this.finished_))
+            this.finished_.neverTouchFinishfile = s;            
         end
         function this = set.sessionData(this, s)
             assert(isa(s, 'mlpipeline.SessionData'));
@@ -84,12 +78,6 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         
         %%
         
-        function        cd(~, varargin)
-            if (isempty(varargin) || isempty(varargin{1}))
-                return
-            end
-            cd(varargin{:});
-        end
         function g    = getLogPath(this)
             assert(~isempty(this.logger), ...
                 'mlpipeline:unexpectedState', ...
@@ -214,21 +202,6 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             
             this = this.prepareLogging(ip.Results.logPath);
         end
-        function tf   = receivedCtor(~, varargin)
-            tf = (1 == length(varargin)) && ...
-                 isa(varargin{1}, 'mlpipeline.AbstractDataBuilder');
-        end
-        function this = copyCtor(this, varargin)
-            aCopy = varargin{1};
-            this.logger_ = aCopy.logger;
-            this.product_ = aCopy.product_;
-            this.sessionData_ = aCopy.sessionData_;
-            this.buildVisitor_ = aCopy.buildVisitor_;
-            this.keepForensics = aCopy.keepForensics;
-            this.neverTouchFinishfile = aCopy.neverTouchFinishfile;
-            this.ignoreFinishfile = aCopy.ignoreFinishfile;
-            this.finished_ = aCopy.finished;
-        end
     end
     
     %% PROTECTED
@@ -252,6 +225,21 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
             if (~tf)
                 warning('mlpipeline:isequal:mismatchedClass', msg);
             end
+        end
+        function this     = copyCtor(this, varargin)
+            aCopy = varargin{1};
+            this.logger_ = aCopy.logger;
+            this.product_ = aCopy.product_;
+            this.sessionData_ = aCopy.sessionData_;
+            this.buildVisitor_ = aCopy.buildVisitor_;
+            this.keepForensics = aCopy.keepForensics;
+            this.neverTouchFinishfile = aCopy.neverTouchFinishfile;
+            this.ignoreFinishfile = aCopy.ignoreFinishfile;
+            this.finished_ = aCopy.finished;
+        end
+        function tf       = receivedCtor(~, varargin)
+            tf = (1 == length(varargin)) && ...
+                 isa(varargin{1}, 'mlpipeline.AbstractDataBuilder');
         end
         function this     = prepareLogging(this, varargin)
             %% overrides mlpipeline.AbstractDataBuilder.prepareLogging.
