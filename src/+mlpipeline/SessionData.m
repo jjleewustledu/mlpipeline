@@ -8,10 +8,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  last modified $LastChangedDate$
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
- 	
-    properties (Abstract)
-        rnumber
-    end
     
 	properties (Dependent)
         dbgTag
@@ -193,7 +189,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 return
             end
             warning('off', 'mfiles:regexpNotFound');
-            g = str2pnum(this.sessionLocation('typ', 'folder'));
+            g = str2pnum(this.vLocation);
             warning('on', 'mfiles:regexpNotFound');
         end
         function this = set.pnumber(this, s)
