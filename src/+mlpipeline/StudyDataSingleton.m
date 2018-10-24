@@ -60,6 +60,9 @@ classdef StudyDataSingleton < handle & mlpipeline.StudyData
             end
             this.register;
         end
+        
+        function this = assignSessionDataCompositeFromPaths(this, varargin)
+        end
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
