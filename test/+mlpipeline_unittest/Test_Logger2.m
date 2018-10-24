@@ -1,8 +1,8 @@
-classdef Test_Logger < matlab.unittest.TestCase
-	%% TEST_LOGGER 
+classdef Test_Logger2 < matlab.unittest.TestCase
+	%% TEST_LOGGER2 
 
-	%  Usage:  >> results = run(mlpipeline_unittest.Test_Logger)
- 	%          >> result  = run(mlpipeline_unittest.Test_Logger, 'test_dt')
+	%  Usage:  >> results = run(mlpipeline_unittest.Test_Logger2)
+ 	%          >> result  = run(mlpipeline_unittest.Test_Logger2, 'test_dt')
  	%  See also:  file:///Applications/Developer/MATLAB_R2014b.app/help/matlab/matlab-unit-test-framework.html
 
 	%  $Revision$
@@ -23,7 +23,7 @@ classdef Test_Logger < matlab.unittest.TestCase
 
 	methods (Test)
         function test_copyCtor(this)
-            copy = mlpipeline.Logger(this.testObj);
+            copy = mlpipeline.Logger2(this.testObj);
             this.verifyNotSameHandle(copy, this.testObj)
             prps = properties(copy);
             for p = 1:length(prps)
@@ -33,31 +33,31 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyEqual(copy.length, this.testObj.length + 1);
         end
         function test_ctor(this)
-            this.verifyEqual(this.testObj.callerid, 'mlpipeline.Logger');
+            this.verifyEqual(this.testObj.callerid, 'mlpipeline.Logger2');
             c = this.testObj.contents.char;
             this.verifyEqual(c(end-20:end), 'testing log element 2');
             this.verifyEqual(this.testObj.hostname(1:10), 'ophthalmic');
             this.verifyEqual(this.testObj.id, 'jjlee');
-            this.verifyEqual(this.testObj.filename, 'Test_Logger.log');
+            this.verifyEqual(this.testObj.filename, 'Test_Logger2.log');
         end
         function test_ctor_fqfn(this)
             import mlpipeline.*;
-            tobj = Logger;
+            tobj = Logger2;
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger('test_ctor_fqfn');
+            tobj = Logger2('fileprefix', 'test_ctor_fqfn');
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger(fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn'));
+            tobj = Logger2('fileprefix', fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn'));
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger(fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn.log'));
+            tobj = Logger2('fileprefix', fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn.log'));
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger(fullfile(getenv('HOME'), 'Tmp', 'NonexistentDir', 'test_ctor_fqfn.log'));
+            tobj = Logger2('fileprefix', fullfile(getenv('HOME'), 'Tmp', 'NonexistentDir', 'test_ctor_fqfn.log'));
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger('', this, 'tag', 'test_ctor_fqfn');
+            tobj = Logger2(this, 'tag', 'test_ctor_fqfn');
             fprintf('%s\n', tobj.fqfn);
         end
         
@@ -90,7 +90,7 @@ classdef Test_Logger < matlab.unittest.TestCase
         function test_isempty(this)
             this.verifyFalse(this.testObj.isempty);
             
-            obj = mlpipeline.Logger;            
+            obj = mlpipeline.Logger2;            
             this.verifyFalse(obj.isempty);
         end
         function test_length(this)
@@ -106,7 +106,7 @@ classdef Test_Logger < matlab.unittest.TestCase
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
         function test_saveas(this)
-            FQFP = fullfile(this.workPath, 'Test_Logger_test_saveas');
+            FQFP = fullfile(this.workPath, 'Test_Logger2_test_saveas');
             this.testObj.saveas(FQFP);            
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
             c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
@@ -115,25 +115,25 @@ classdef Test_Logger < matlab.unittest.TestCase
  	end
 
  	methods (TestClassSetup)
- 		function setupLogger(this)          
+ 		function setupLogger2(this)
             this.sessionPath = fullfile('/data', 'cvl', 'np755', 'mm01-020_p7377_2009feb5', '');
             this.workPath    = fullfile(this.sessionPath, 'fsl', '');
-            this.test_fqfn   = fullfile(this.workPath, 'Test_Logger.log');
+            this.test_fqfn   = fullfile(this.workPath, 'Test_Logger2.log');
  		end
  	end
 
  	methods (TestMethodSetup)
         function setupMethods(this)
-            this.testObj = mlpipeline.Logger(fullfile(this.workPath, 'p7377ho1.img.rec'));
+            this.testObj = mlpipeline.Logger2( ...
+                'fileprefix', fullfile(this.workPath, 'p7377ho1.img.rec'));
             this.testObj.add('testing log element 1');
             this.testObj.add('testing log element 2');
             this.testObj.fqfilename = this.test_fqfn;
-            this.testNoStamp = mlpipeline.Logger(fullfile(this.workPath, 'p7377ho1.img.rec'));
-            this.testNoStamp.includeTimeStamp = false;
+            this.testNoStamp = mlpipeline.Logger2( ...
+                'fileprefix', fullfile(this.workPath, 'p7377ho1.img.rec'), 'includeTimeStamp', false);
             this.testNoStamp.add('testing log element 1');
             this.testNoStamp.add('testing log element 2');
-            this.testNoStamp.fqfilename = this.test_fqfn;
-            
+            this.testNoStamp.fqfilename = this.test_fqfn;            
             this.addTeardown(@this.deleteFiles);
         end
     end
@@ -141,7 +141,7 @@ classdef Test_Logger < matlab.unittest.TestCase
     methods (Access = private)
         function deleteFiles(this)
             deleteExisting(this.test_fqfn);
-            deleteExisting2(fullfile(this.workPath, 'Test_Logger*'));
+            deleteExisting2(fullfile(this.workPath, 'Test_Logger2*'));
         end
     end
     

@@ -1,31 +1,30 @@
-classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline.ILogger
-	%% ABSTRACTLOGGER accumulates logging strings in a CellArrayList.  It is a handle class.
+classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpatterns.List & mlpipeline.ILogger
+	%% LOGGER2 accumulates logging strings using mlpatterns.List. 
     
-    %  Version $Revision: 2647 $ was created $Date: 2013-09-21 17:59:08 -0500 (Sat, 21 Sep 2013) $ by $Author: jjlee $,
- 	%  last modified $LastChangedDate: 2013-09-21 17:59:08 -0500 (Sat, 21 Sep 2013) $ and checked into svn repository $URL: file:///Users/jjlee/Library/SVNRepository_2012sep1/mpackages/mlpipeline/src/+mlpipeline/trunk/AbstractLogger.m $ 
- 	%  Developed on Matlab 7.13.0.564 (R2011b) 
- 	%  $Id: AbstractLogger.m 2647 2013-09-21 22:59:08Z jjlee $ 
- 	%  N.B. classdef (Sealed, Hidden, InferiorClasses = {?class1,?class2}, ConstructOnLoad) 
-    
+	%  $Revision$
+ 	%  was created 22-Oct-2018 17:21:18 by jjlee,
+ 	%  last modified $LastChangedDate$ and placed into repository /Users/jjlee/MATLAB-Drive/mlpipeline/src/+mlpipeline.
+ 	%% It was developed on Matlab 9.4.0.813654 (R2018a) for MACI64.  Copyright 2018 John Joowon Lee.
+        
     properties (Constant)
+        FILETYPE = 'mlpipeline.Logger2'
+        FILETYPE_EXT = '.log'
         DATESTR_FORMAT = 'ddd mmm dd HH:MM:SS yyyy'
         TIMESTR_FORMAT = 'ddd mmm dd HH:MM:SS:FFF yyyy' 
-    end
-    
-    properties 
-        echoToCommandWindow
-    end
+    end    
     
     properties (Dependent)
         callerid
         contents % @return cell of char-arrays.  Use char(this) for single char-array.
         creationDate
+        echoToCommandWindow
         hostname
         id % user id
-        uname
+        includeTimeStamp
+        uname % machine id
     end
-     
-    methods 
+    
+    methods
         
         %% GET
         
@@ -38,8 +37,14 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
         function g = get.creationDate(this)
             g = this.creationDate_;
         end
+        function g = get.echoToCommandWindow(this)
+            g = this.echoToCommandWindow_;
+        end
         function g = get.hostname(this)
             g = this.hostname_;
+        end
+        function g = get.includeTimeStamp(this)
+            g = this.includeTimeStamp_;
         end
         function g = get.id(this)
             g = this.id_;
@@ -52,10 +57,10 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
         
         function save(this, varargin)
             %% SAVE 
-            %  If this.noclobber == true,  it will never overwrite files.
-            %  If this.noclobber == false, it may overwrite files. 
+            %  If this.noclobber == true,  this will never overwrite files.
+            %  If this.noclobber == false, this may overwrite files. 
             %  @param perm are string file permission passed to fopen.  See also:  fopen.
-            %  @return saves this AbstractLogger to this.fqfilename.  
+            %  @return saves this AbstractLogger2 to this.fqfilename.  
             %  @throws mlpipeline.IOError:noclobberPreventedSaving
             
             if (~isempty(this.footer))
@@ -106,42 +111,50 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
         
         %%
         
-        function this = AbstractLogger(varargin)
-            %  @param optional 'fqfileprefix' is char; trailing this.FILETYPE_EXT is dropped.
-            %  @param optional 'callerid' is char, identifying the client requesting logging; 
-            %         an object is replaced with its classname.
-            %  @param named 'tag' is char to augment a constructed filename; '_' is prepended as needed.
-            %  @param named 'echoToCommandWindow' is logical (default true).
-            %  @param instance of mlpipeline.AbstractLogger, by itself, will construct a deep copy.
-            %  @return this
+        function this = Logger2(varargin) 
+            %% LOGGER2 provides copy-construction for its handle.  
+            %  Its interface is simplified compared to mlpipeline.Logger.
+            %  @param optional 'callerid' is char, identifying the client requesting logging | 
+            %                  'callerid' is an object to be replaced with its classname.
+            %  @param 'fileprefix' is char; any trailing this.FILETYPE_EXT is dropped.
+            %  @param 'tag' is char to augment fileprefixes; '_' is prepended as needed.
+            %  @param 'echoToCommandWindow' is logical; default := true.
+            %  @param 'includeTimeStamp' is logical; default := true.
+            %  @param instance of mlpipeline.AbstractLogger2 by itself will construct a deep copy.
+            %  @return this            
 
-            if (1 == nargin && isa(varargin{1}, 'mlpipeline.AbstractLogger')) 
+            if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger2')) 
                 this = copy(varargin{1});
                 return
             end
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional( ip, 'fqfileprefix', '', @ischar);
             addOptional( ip, 'callerid', this);
+            addParameter(ip, 'fileprefix', '', @ischar);
             addParameter(ip, 'tag', '', @ischar);
             addParameter(ip, 'echoToCommandWindow', true, @islogical);
+            addParameter(ip, 'includeTimeStamp', true, @islogical);
             parse(ip, varargin{:});            
-            this.callerid_           = this.callerid2str(ip.Results.callerid);
-            this.tag_                = this.aufbauTag(ip.Results.tag);
-            this.fqfileprefix        = this.aufbauFqfileprefix(ip.Results.fqfileprefix);
-            this.filesuffix          = this.FILETYPE_EXT;
-            this.echoToCommandWindow = ip.Results.echoToCommandWindow;
+            this.callerid_            = this.callerid2str(ip.Results.callerid);
+            this.tag_                 = this.aufbauTag(ip.Results.tag); % dependency
+            this.fqfileprefix         = this.aufbauFqfileprefix(ip.Results.fileprefix);
+            this.filesuffix           = this.FILETYPE_EXT;
+            this.echoToCommandWindow_ = ip.Results.echoToCommandWindow;
+            this.includeTimeStamp_    = ip.Results.includeTimeStamp;
             
-            this.creationDate_       = datestr(now, this.DATESTR_FORMAT);
-            [~,this.hostname_]       = mlbash('hostname');   this.hostname_ = strtrim(this.hostname_);
-            [~,this.id_]             = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
-            [~,this.uname_]          = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
-            this.cellArrayList_      = mlpatterns.CellArrayList;
+            this.creationDate_  = datestr(now, this.DATESTR_FORMAT);
+            [~,this.hostname_]  = mlbash('hostname');   this.hostname_ = strtrim(this.hostname_);
+            [~,this.id_]        = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
+            [~,this.uname_]     = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
+            this.cellArrayList_ = mlpatterns.CellArrayList;
             if (~isempty(this.header))
                 this.cellArrayList_.add(this.header);
-            end
-        end         
+            end                   
+        end 
+        function c = clone(this) % assumes no handle instance data
+            c = copy(this);
+        end
     end
     
     %% PROTECTED
@@ -150,8 +163,10 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
         callerid_
         cellArrayList_
         creationDate_
+        echoToCommandWindow_
         hostname_
         id_
+        includeTimeStamp_
         tag_
         uname_
     end
@@ -191,8 +206,9 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
                 this.filesuffix = this.FILETYPE_EXT;
             end
         end
-        function txt  = header(~)
-            txt = '';
+        function txt  = header(this)
+            txt = sprintf('%s:  %s from %s on %s (%s) initialized %s', ...
+                this.creationDate, this.callerid, this.id, this.hostname, this.uname, this.fqfilename);
         end
         function txt  = footer(~)
             txt = '';
