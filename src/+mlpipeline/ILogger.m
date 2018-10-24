@@ -20,7 +20,7 @@ classdef (Abstract) ILogger < handle & matlab.mixin.Copyable & mlpatterns.List
         hostname
         includeTimeStamp 
         id % user id
-        uname		
+        uname % machine id
  	end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
