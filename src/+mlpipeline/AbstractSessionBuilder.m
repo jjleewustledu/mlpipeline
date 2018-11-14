@@ -1,4 +1,4 @@
-classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder
+classdef AbstractSessionBuilder < mlpipeline.AbstractBuilder
 	%% ABSTRACTSESSIONBUILDER provides convenience methods that return information from this.sessionData.
 
 	%  $Revision$
@@ -13,6 +13,7 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder
         filetypeExt
         freesurfersDir
         rawdataDir
+        sessionData
         sessionFolder
         sessionPath
         subjectsDir
@@ -67,6 +68,13 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder
         end
         function g    = get.rawdataDir(this)
             g = this.sessionData_.rawdataDir;
+        end
+        function g    = get.sessionData(this)
+            g = this.sessionData_;
+        end
+        function this = set.sessionData(this, s)
+            assert(isa(s, 'mlpipeline.SessionData'));
+            this.sessionData_ = s;
         end
         function g    = get.sessionFolder(this)
             g = this.sessionData.sessionFolder;
@@ -312,14 +320,22 @@ classdef AbstractSessionBuilder < mlpipeline.AbstractDataBuilder
  		function this = AbstractSessionBuilder(varargin)
  			%% ABSTRACTSESSIONBUILDER
 
- 			this = this@mlpipeline.AbstractDataBuilder(varargin{:});            
+ 			this = this@mlpipeline.AbstractBuilder(varargin{:});            
             ip = inputParser;
             ip.KeepUnmatched = true;            
             addParameter(ip, 'census', [], @(x) isa(x, 'mlpipeline.IStudyCensus') || isempty(x));
+            addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             parse(ip, varargin{:});            
             this.census_ = ip.Results.census;
+            this.sessionData_ = ip.Results.sessionData;
  		end
     end 
+    
+    %% PROTECTED
+    
+    properties (Access = protected)
+        sessionData_
+    end
     
     %% PRIVATE
     

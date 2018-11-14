@@ -1,4 +1,4 @@
-classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
+classdef AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
 	%% ABSTRACTDATABUILDER  
 
 	%  $Revision$
@@ -10,7 +10,7 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
  	
 
 	properties
- 		keepForensics % consider moving to mlfourdfp.AbstractT4ResolveBuilder
+ 		keepForensics 
     end
     
     properties (Dependent)
@@ -20,7 +20,6 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
         neverTouchFinishfile %
         logger
         product        
-        sessionData
  	end
 
 	methods 
@@ -49,9 +48,6 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
         function g = get.product(this)
             g = this.product_;
         end
-        function g = get.sessionData(this)
-            g = this.sessionData_;
-        end
         
         function this = set.buildVisitor(this, v)
             assert(~isempty(v));
@@ -73,23 +69,23 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
                 this.finished_.neverTouchFinishfile = s;
             end
         end
-        function this = set.sessionData(this, s)
-            assert(isa(s, 'mlpipeline.SessionData'));
-            this.sessionData_ = s;
-        end
         
         %%
         
         function g    = getLogPath(this)
+            %% may be overridden
+            
             assert(~isempty(this.logger), ...
-                'mlpipeline:unexpectedState', ...
-                'AbstractDataBuilder.getLogPath:  this.prepareLogging may have failed');
+                'mlpipeline:RuntimeError', ...
+                'AbstractBuilder.getLogPath:  this.prepareLogger may have failed');
             g = this.logger.filepath;
         end  
         function this = setLogPath(this, s)
+            %% may be overridden
+            
             assert(~isempty(this.logger), ...
-                'mlpipeline:unexpectedState', ...
-                'AbstractDataBuilder.setLogPath:  this.prepareLogging may have failed');
+                'mlpipeline:RuntimeError', ...
+                'AbstractBuilder.setLogPath:  this.prepareLogger may have failed');
             this.logger.filepath = s;
         end
         function g    = getNeverTouch(this)
@@ -114,10 +110,18 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
             %  @param obj any object
             %  @return tf := operational equivalence of this and obj.
             
-            if (isempty(obj)); tf = false; return; end
-            tf = this.classesequal(obj);
-            if (tf)
-                tf = this.sessionData.isequal(obj.sessionData);
+            if (isempty(obj))
+                tf = false; 
+                return
+            end
+            tf  = true; 
+            msg = '';
+            if (~isa(obj, class(this)))
+                tf  = false;
+                msg = sprintf('class(this)-> %s but class(compared)->%s', class(this), class(obj));
+            end
+            if (~tf)
+                warning('mlpipeline:classesequal:mismatchedClass', msg);
             end
         end   
         function tf   = isfinished(this, varargin)
@@ -129,17 +133,14 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
         end        
         function this = updateFinished(this, varargin)
             %% UPDATEFINISHED, the protected superclass property which is an mlpipeline.Finished
-            %  @param tag containing information such as this.sessionData.tracerRevision, class(this).
+            %  @param tag containing information such as this.session.tracerRevision, class(this).
             %  @param tag2.
             %  @param neverTouchFinishfile is boolean.
             %  @param ignoreFinishfile is boolean.
             %  @return property this.finished instantiated with path, tags, the booleans.
             
             ip = inputParser;
-            addParameter(ip, 'tag', ...
-                sprintf('%s_%s', ...
-                    lower(this.sessionData.tracerRevision('typ','fp')), class(this)), ...
-                @ischar);
+            addParameter(ip, 'tag', sprintf('%s_%s', lower(this.session.tracerRevision('typ','fp')), class(this)), @ischar);
             addParameter(ip, 'tag2', '', @ischar);
             addParameter(ip, 'neverTouchFinishfile', false, @islogical);
             addParameter(ip, 'ignoreFinishfile', false, @islogical);
@@ -148,7 +149,7 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
             ensuredir(this.getLogPath);
             this.finished_ = mlpipeline.Finished(this, ...
                 'path', this.getLogPath, ...
-                'tag', sprintf('%s%s', ip.Results.tag, ip.Results.tag2), ...
+                'tag', [ip.Results.tag ip.Results.tag2], ...
                 'neverTouchFinishfile', ip.Results.neverTouchFinishfile, ...
                 'ignoreFinishfile', ip.Results.ignoreFinishfile);
         end    
@@ -171,38 +172,38 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
             end
         end
         
-        function this = AbstractDataBuilder(varargin)
+        function this = AbstractBuilder(varargin)
             %% ABSTRACTDATABUILDER
             %  @param named logger is an mlpipeline.AbstractLogger.
+            %  @param named buildVisitor.
+            %  @param named logger is mlpipeline.ILogger.
+            %  @param named logPath is char; will be created as needed.
+            %  @param named keepForensics is logical.
+            %  @param named ignoreFinishfile is logical.
+            %  @param named neverTouchFinishfile is logical.
             %  @param named product is the initial state of the product to build; default := [].
-            %  @param named sessionData is an mlpipeline.ISessionData; default := [].
-            %  @param named buildVisitor ...
             
  			ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.AbstractLogger'));
-            addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also method prepareLogging.
-            addParameter(ip, 'product', []);
-            addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
+            addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.ILogger'));
+            addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also prepareLogger.
             addParameter(ip, 'keepForensics', false, @islogical);
-            addParameter(ip, 'neverTouchFinishfile', false, @islogical);
             addParameter(ip, 'ignoreFinishfile', false, @islogical);
+            addParameter(ip, 'neverTouchFinishfile', false, @islogical);
+            addParameter(ip, 'product', []);
             parse(ip, varargin{:});
             
             if (this.receivedCtor(varargin{:}))
                 this = this.copyCtor(varargin{:});
                 return
             end
-            this.logger_            = ip.Results.logger;
-            this.product_           = ip.Results.product;
-            this.sessionData_       = ip.Results.sessionData;
-            this.buildVisitor_      = ip.Results.buildVisitor;
-            this.keepForensics      = ip.Results.keepForensics;
-            this.neverTouchFinishfile = ip.Results.neverTouchFinishfile;
-            this.ignoreFinishfile   = ip.Results.ignoreFinishfile;  
-            
-            this = this.prepareLogging(ip.Results.logPath);
+            this.buildVisitor_        = ip.Results.buildVisitor;
+            this                      = this.prepareLogger(ip.Results);
+            this.keepForensics        = ip.Results.keepForensics;
+            this.ignoreFinishfile     = ip.Results.ignoreFinishfile;     
+            this.neverTouchFinishfile = ip.Results.neverTouchFinishfile;  
+            this.product_             = ip.Results.product;       
         end
     end
     
@@ -213,47 +214,29 @@ classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
         finished_
         logger_
         product_
-        sessionData_
     end
     
     methods (Access = protected)
-        function [tf,msg] = classesequal(this, c)
-            tf  = true; 
-            msg = '';
-            if (~isa(c, class(this)))
-                tf  = false;
-                msg = sprintf('class(this)-> %s but class(compared)->%s', class(this), class(c));
-            end
-            if (~tf)
-                warning('mlpipeline:isequal:mismatchedClass', msg);
-            end
-        end
-        function this     = copyCtor(this, varargin)
+        function this = copyCtor(this, varargin)
             aCopy = varargin{1};
-            this.logger_ = aCopy.logger;
-            this.product_ = aCopy.product_;
-            this.sessionData_ = aCopy.sessionData_;
             this.buildVisitor_ = aCopy.buildVisitor_;
+            this.logger_ = aCopy.logger;
             this.keepForensics = aCopy.keepForensics;
-            this.neverTouchFinishfile = aCopy.neverTouchFinishfile;
             this.ignoreFinishfile = aCopy.ignoreFinishfile;
+            this.neverTouchFinishfile = aCopy.neverTouchFinishfile;
             this.finished_ = aCopy.finished;
+            this.product_ = aCopy.product_;
         end
-        function tf       = receivedCtor(~, varargin)
-            tf = (1 == length(varargin)) && ...
-                 isa(varargin{1}, 'mlpipeline.AbstractDataBuilder');
-        end
-        function this     = prepareLogging(this, varargin)
-            %% overrides mlpipeline.AbstractDataBuilder.prepareLogging.
-            
-            ip = inputParser;
-            addRequired(ip, 'prefPath', @ischar);
-            parse(ip, varargin{:});
-            
-            ensuredir(ip.Results.prefPath);
+        function this = prepareLogger(this, ipr)
+            this.logger_ = ipr.logger;
+            ensuredir(ipr.logPath);
             this.logger_.fqfilename = fullfile( ...
-                ip.Results.prefPath, ...
+                ipr.logPath, ...
                 strrep(sprintf('%s_prepareLogging_D%s', class(this), datestr(now,30)), '.', '_'));
+        end
+        function tf   = receivedCtor(~, varargin)
+            tf = (1 == length(varargin)) && ...
+                 isa(varargin{1}, 'mlpipeline.AbstractBuilder');
         end
     end
     
