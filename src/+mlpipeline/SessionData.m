@@ -1,6 +1,6 @@
 classdef (Abstract) SessionData < mlpipeline.ISessionData 
 	%% SESSIONDATA  
-    %  @param builder is an mlpipeline.IDataBuilder.
+    %  @param builder is an mlpipeline.IBuilder.
 
 	%  $Revision$
  	%  was created 21-Jan-2016 22:20:41
@@ -154,7 +154,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = this.builder_;
         end
         function this = set.builder(this, s)
-            assert(isa(s, 'mlpipeline.IDataBuilder'));
+            assert(isa(s, 'mlpipeline.IBuilder'));
             this.builder_ = s;
         end
         function g    = get.frame(this)

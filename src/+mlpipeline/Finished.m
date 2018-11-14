@@ -1,7 +1,7 @@
 classdef Finished 
 	%% FINISHED provides tools to mark finished milestones in a long processing stream:
     %  it touches hidden files, checks for existence of those files.   Finished behaves as a 
-    %  visitor to mlpipeline.IDataBuilder classes.
+    %  visitor to mlpipeline.IBuilder classes.
     %  See also:  mlfourdfp_unittest.Test_T4ResolveBuilder.test_finished
 
 	%  $Revision$
@@ -38,12 +38,12 @@ classdef Finished
  		function this = Finished(varargin)
  			%% FINISHED
  			%  Usage:  this = Finished(builder[,'path' , 'Log', 'tag', 'fdg'])
-            %  @param builder is an mlpipeline.IDataBuilder.
+            %  @param builder is an mlpipeline.IBuilder.
             %  @param named path is a filesystem path.
             %  @param named tag is a string.
 
             ip = inputParser;
-            addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IDataBuilder'));
+            addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
             addParameter(ip, 'neverTouchFinishfile', true, @islogical);

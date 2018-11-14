@@ -1,4 +1,4 @@
-classdef IImageBuilder < mlpipeline.IDataBuilder
+classdef IImageBuilder < mlpipeline.IBuilder
 	%% IIMAGEBUILDER  
 
 	%  $Revision$
