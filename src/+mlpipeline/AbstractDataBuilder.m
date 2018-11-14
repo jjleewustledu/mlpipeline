@@ -1,4 +1,4 @@
-classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuilder
+classdef AbstractDataBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
 	%% ABSTRACTDATABUILDER  
 
 	%  $Revision$
@@ -63,13 +63,15 @@ classdef AbstractDataBuilder < mlpipeline.RootDataBuilder & mlpipeline.IDataBuil
         end
         function this = set.ignoreFinishfile(this, s)
             assert(islogical(s));
-            assert(~isempty(this.finished_))
-            this.finished_.ignoreFinishfile = s;
+            if (~isempty(this.finished_))
+                this.finished_.ignoreFinishfile = s;
+            end
         end
         function this = set.neverTouchFinishfile(this, s)
             assert(islogical(s));
-            assert(~isempty(this.finished_))
-            this.finished_.neverTouchFinishfile = s;            
+            if (~isempty(this.finished_))
+                this.finished_.neverTouchFinishfile = s;
+            end
         end
         function this = set.sessionData(this, s)
             assert(isa(s, 'mlpipeline.SessionData'));
