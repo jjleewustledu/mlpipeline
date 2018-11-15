@@ -1,4 +1,4 @@
-classdef AbstractSessionBuilder < mlfourdfp.AbstractBuilder
+classdef AbstractSessionBuilder < mlpipeline.AbstractBuilder
 	%% ABSTRACTSESSIONBUILDER provides convenience methods that return information from this.sessionData.
 
 	%  $Revision$
@@ -26,6 +26,21 @@ classdef AbstractSessionBuilder < mlfourdfp.AbstractBuilder
         snumber
         tracer
         vnumber
+    end
+    
+    methods (Static)        
+        function fn    = fslchfiletype(varargin)
+            fn = mlfourdfp.AbstractBuilder.fslchfiletype(varargin{:});
+        end
+        function fn    = mri_convert(varargin)   
+            fn = mlfourdfp.AbstractBuilder.mri_convert(varargin{:});
+        end
+        function [s,r] = nifti_4dfp_4(varargin)
+            [s,r] = mlfourdfp.AbstractBuilder.nifti_4dfp_4(varargin{:});
+        end
+        function [s,r] = nifti_4dfp_n(varargin)
+            [s,r] = mlfourdfp.AbstractBuilder.nifti_4dfp_n(varargin{:});
+        end
     end
     
 	methods
@@ -207,7 +222,7 @@ classdef AbstractSessionBuilder < mlfourdfp.AbstractBuilder
  		function this = AbstractSessionBuilder(varargin)
  			%% ABSTRACTSESSIONBUILDER
 
- 			this = this@mlfourdfp.AbstractBuilder(varargin{:});            
+ 			this = this@mlpipeline.AbstractBuilder(varargin{:});            
             ip = inputParser;
             ip.KeepUnmatched = true;            
             addParameter(ip, 'census', [], @(x) isa(x, 'mlpipeline.IStudyCensus') || isempty(x));
