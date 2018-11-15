@@ -20,6 +20,24 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         rnumber
     end
 
+    methods (Static)        
+        function fn    = fslchfiletype(varargin)
+            fn = mlfourdfp.AbstractBuilder.fslchfiletype(varargin{:});
+        end
+        function fn    = mri_convert(varargin)   
+            fn = mlfourdfp.AbstractBuilder.mri_convert(varargin{:});
+        end
+        function [s,r] = nifti_4dfp_4(varargin)
+            [s,r] = mlfourdfp.AbstractBuilder.nifti_4dfp_4(varargin{:});
+        end
+        function [s,r] = nifti_4dfp_n(varargin)
+            [s,r] = mlfourdfp.AbstractBuilder.nifti_4dfp_n(varargin{:});
+        end
+        function fn    = niigzFilename(varargin)
+            fn = mlfourdfp.AbstractBuilder.niigzFilename(varargin{:});
+        end
+    end
+    
 	methods 
         
         %% GET/SET
