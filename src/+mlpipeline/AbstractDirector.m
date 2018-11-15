@@ -1,4 +1,4 @@
-classdef (Abstract) AbstractDirector < mlpipeline.IDirector
+classdef AbstractDirector < mlpipeline.IDirector
 	%% ABSTRACTDIRECTOR
     %  See also:  mlxnat.*.
 

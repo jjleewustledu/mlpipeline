@@ -33,39 +33,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         vnumber
     end
     
-    methods (Static)
-        function fn    = fslchfiletype(varargin)
-            fn = mlfsl.FslVisitor.fslchfiletype(varargin{:});
-        end
-        function fn    = mri_convert(varargin)
-            %% MRI_CONVERT
-            %  @param fn is the source possessing a filename extension recognized by mri_convert
-            %  @param fn is the destination, also recognized by mri_convert.  Optional.  Default is [fileprefix(fn) '.nii.gz'] 
-            
-            fn = mlsurfer.SurferVisitor.mri_convert(varargin{:});
-        end
-        function [s,r] = nifti_4dfp_4(varargin)
-            vtor = mlfourdfp.FourdfpVisitor;
-            [s,r] = vtor.nifti_4dfp_4(varargin{:});
-        end
-        function [s,r] = nifti_4dfp_n(varargin)
-            vtor = mlfourdfp.FourdfpVisitor;
-            [s,r] = vtor.nifti_4dfp_n(varargin{:});
-        end
-        function fn    = niigzFilename(fn)
-            [p,f] = myfileparts(fn);
-            fn = fullfile(p, [f '.nii.gz']);
-        end
-        function sz    = size_4dfp(fqfp)
-            %% SIZETRACERREVISION
-            %  @return sz, the size of the image data specified by this.tracerRevision.
-            
-            bv = mlfourdfp.FourdfpVisitor;
-            assert(bv.lexist_4dfp( fqfp));
-            sz = bv.ifhMatrixSize([fqfp '.4dfp.ifh']);
-        end
-    end
-    
     methods 
         
         %% GET/SET
