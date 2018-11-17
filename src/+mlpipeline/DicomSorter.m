@@ -9,13 +9,19 @@ classdef (Abstract) DicomSorter
     methods (Abstract, Static)
         this  = Create(varargin)
         this  = CreateSorted(varargin)
-        [s,r] = copyConverted(varargin)
-        tf    = lexistConverted(fqfp)
     end
     
     methods (Abstract)
         fp = dcm2imagingFormat(this, varargin)
         g  = getDcmConverter(this)
+    end
+    
+    methods (Static)
+        function c = fillEmpty(c)
+            if (isempty(c))
+                c = num2str(rand);
+            end
+        end
     end
     
     properties
@@ -178,7 +184,7 @@ classdef (Abstract) DicomSorter
                 end
             end
             if (~isempty(filteredNames))
-                this.linkPreferredSeries(filteredNames, ip.Results.preferredName);
+                this.usePreferredName(filteredNames, ip.Results.preferredName);
             end            
             popd(pwd0);
         end 
@@ -197,8 +203,8 @@ classdef (Abstract) DicomSorter
                 seriesList = {'AC_CT'};
                 targetList = {'ct'};
             else
-                seriesList = {'t1_mprage_sag' 't2_spc_sag' 'TOF' 'pcasl' 'ep2d_bold'};
-                targetList = {'mpr' 't2' 'tof' 'pcasl' 'bold'};
+                seriesList = {'t1_mprage_sag' 't2_spc_sag' }; %'TOF' 'pcasl' 'ep2d_bold'
+                targetList = {'mpr' 't2' }; %'tof' 'pcasl' 'bold'
             end
             for s = 1:length(seriesList)
                 try
@@ -235,43 +241,11 @@ classdef (Abstract) DicomSorter
         sessionData_
     end
     
-    methods (Static, Access = protected)   
-        function re    = ctFolderRegexp(str)
-            %% CTFOLDERREGEXP
-            %  @param string for regexp.
-            %  @returns regexp result with name:  subjid.
-            
-            assert(ischar(str));
-            re = regexp(str, '(?<subjid>^([A-Za-z]+\d+|[A-Za-z]+\d+_\d+|[A-Za-z]+\d+-\d+))(_|-)[A-Za-z_-]+\w*', 'names');
-        end      
-        function c     = fillEmpty(c)
-            if (isempty(c))
-                c = num2str(rand);
-            end
-        end        
-        function tf    = isct(ipr)
-            assert(isstruct(ipr));
-            tf = ipr.ct || ...
-                 lstrfind(ipr.srcPath, 'CT')  || ...
-                 lstrfind(ipr.srcPath, 'CAL');
-        end
-        function [s,r] = linkPreferredSeries(filteredNames, preferredName)
-            assert(iscell(filteredNames));
-            assert(ischar(preferredName));
-            
-            pwd0 = pushd(myfileparts(filteredNames{1}));      
-            import mlpipeline.*;
-            filteredNames = DicomSorter.sortBySeriesNumber(filteredNames);
-            if (~DicomSorter.lexistConverted(preferredName))
-                [s,r] = DicomSorter.copyConverted(filteredNames{1}, preferredName);
-            end
-            popd(pwd0);
-        end
-        
+    methods (Static, Access = protected)                          
     end
     
     methods (Access = protected)
-        function [s,r]         = appendInfoFieldToIfh(~, info, ifield, canonFp)
+        function [s,r] = appendInfoFieldToIfh(~, info, ifield, canonFp)
             if (~isfield(info, ifield))
                 return
             end
@@ -282,7 +256,18 @@ classdef (Abstract) DicomSorter
             end
             [s,r] = mlbash(sprintf('echo "%s" >> %s.4dfp.ifh', str, canonFp));
         end
-        function tf            = filterMatch(this, varargin)
+        function [s,r] = copyConverted(~, varargin)
+            error('mlpipeline:NotImplementedError', 'DicomSorter.copyConverted');
+        end      
+        function re    = ctFolderRegexp(~, str)
+            %% CTFOLDERREGEXP
+            %  @param string for regexp.
+            %  @returns regexp result with name:  subjid.
+            
+            assert(ischar(str));
+            re = regexp(str, '(?<subjid>^([A-Za-z]+\d+|[A-Za-z]+\d+_\d+|[A-Za-z]+\d+-\d+))(_|-)[A-Za-z_-]+\w*', 'names');
+        end    
+        function tf    = filterMatch(this, varargin)
             %% FILTERMATCH
             %  @param info is a struct produced by dcminfo.
             %  @param tomatch is a filtering string.
@@ -307,7 +292,19 @@ classdef (Abstract) DicomSorter
             end
             tf = lstrfind(values, ip.Results.tomatch);
         end  
-        function n             = scrubCanonicalName(~, n)
+        function tf    = isct(~, ipr)
+            assert(isstruct(ipr));
+            tf = ipr.ct || ...
+                 lstrfind(ipr.srcPath, 'CT')  || ...
+                 lstrfind(ipr.srcPath, 'CAL');
+        end  
+        function tf    = lexistConverted(this, varargin)
+            error('mlpipeline:NotImplementedError', 'DicomSorter.lexistConverted');
+        end
+        function [s,r] = moveConverted(this, varargin)
+            error('mlpipeline:NotImplementedError', 'DicomSorter.moveConverted');
+        end 
+        function n     = scrubCanonicalName(~, n)
             %% SCRUBCANONICALNAME removes '*', '[', ']', ' '; and replaces '<', '>', '(', ')', ':' with '_'.
             
             n = strrep(n, '*', '');
@@ -320,10 +317,31 @@ classdef (Abstract) DicomSorter
             n = strrep(n, ' ', '');
             n = strrep(n, ':', '_');
         end        
-        function n             = scrubSubjectID(~, n)
+        function n     = scrubSubjectID(~, n)
             %% SCRUBSUBJECTID replaces '-' with '_'.
             
             n = strrep(n, '-', '_');
+        end
+        function names = sortBySeriesNumber(~, names)
+            seriesNums = zeros(1,length(names));
+            for n = 1:length(names)                
+                re = regexp(names{n}, '\S+_series(?<series>\d+)\S*', 'names');
+                seriesNums(n) = str2double(re.series);
+            end
+            tbl   = table(seriesNums', names', 'VariableNames', {'seriesNums' 'names'});
+            tbl   = sortrows(tbl);
+            names = tbl.names;
+        end   
+        function [s,r] = usePreferredName(this, filteredNames, preferredName)
+            assert(iscell(filteredNames));
+            assert(ischar(preferredName));
+            
+            pwd0 = pushd(myfileparts(filteredNames{1}));    
+            filteredNames = this.sortBySeriesNumber(filteredNames);
+            if (~this.lexistConverted(preferredName))
+                [s,r] = this.moveConverted(filteredNames{1}, preferredName);
+            end
+            popd(pwd0);
         end
     end
 
