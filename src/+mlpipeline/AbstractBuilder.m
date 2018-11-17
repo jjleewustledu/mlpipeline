@@ -87,6 +87,7 @@ classdef AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
                 'mlpipeline:RuntimeError', ...
                 'AbstractBuilder.setLogPath:  this.prepareLogger may have failed');
             this.logger.filepath = s;
+            ensuredir(s);
         end
         function g    = getNeverTouch(this)
             %% may be overridden
@@ -130,17 +131,17 @@ classdef AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
                 return
             end
             tf = this.finished.isfinished;
-        end        
+        end    
         function this = updateFinished(this, varargin)
             %% UPDATEFINISHED, the protected superclass property which is an mlpipeline.Finished
-            %  @param tag containing information such as this.session.tracerRevision, class(this).
+            %  @param tag.
             %  @param tag2.
             %  @param neverTouchFinishfile is boolean.
             %  @param ignoreFinishfile is boolean.
             %  @return property this.finished instantiated with path, tags, the booleans.
             
             ip = inputParser;
-            addParameter(ip, 'tag', sprintf('%s_%s', lower(this.session.tracerRevision('typ','fp')), class(this)), @ischar);
+            addParameter(ip, 'tag', class(this), @ischar);
             addParameter(ip, 'tag2', '', @ischar);
             addParameter(ip, 'neverTouchFinishfile', false, @islogical);
             addParameter(ip, 'ignoreFinishfile', false, @islogical);
