@@ -80,7 +80,9 @@ classdef Finished
             if (this.neverTouchFinishfile)
                 return
             end
-            mlbash(['touch ' this.finishedMarkerFilename(varargin{:})]);
+            fqfn = this.finishedMarkerFilename(varargin{:});
+            ensuredir(fileparts(fqfn));
+            mlbash(['touch ' fqfn]);
         end
     end 
     

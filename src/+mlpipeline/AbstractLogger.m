@@ -62,6 +62,7 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
                 this.cellArrayList_.add(this.footer);
             end
             this = this.ensureExtension;
+            ensuredir(this.filepath);
             mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
                 this.cellArrayList_, this.fqfilename, varargin{:});
         end
