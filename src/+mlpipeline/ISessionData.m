@@ -13,6 +13,7 @@ classdef (Abstract) ISessionData
         freesurfersFolder
         rawdataDir % homolog of subjectsDir
         rawdataFolder
+        scan
         sessionDate
         sessionFolder
         sessionPath
@@ -25,8 +26,11 @@ classdef (Abstract) ISessionData
     
     properties (Dependent)
         freesurfersPath
+        project      % alias
         rawdataPath  % alias
+        session 
         sessionDir   % alias
+        subject      % alias
         subjectsPath % alias
     end
     
@@ -42,11 +46,20 @@ classdef (Abstract) ISessionData
         function g = get.freesurfersPath(this)
             g = this.freesurfersDir;
         end
+        function g = get.project(this)
+            g = this.study;
+        end
         function g = get.rawdataPath(this)
             g = this.rawdataDir;
         end
+        function g = get.session(this)
+            g = sprintf('%s_%s', this.sessionFolder, this.vfolder);
+        end
         function g = get.sessionDir(this)
             g = this.sessionPath;
+        end
+        function g = get.subject(this)
+            g = this.subjectsFolder;
         end
         function g = get.subjectsPath(this)
             g = this.subjectsDir;

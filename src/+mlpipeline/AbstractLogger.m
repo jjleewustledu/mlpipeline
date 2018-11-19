@@ -76,6 +76,10 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             empty = logical(this.cellArrayList_.isempty);
         end
         function           add(this, varargin) 
+            %% ADD understands argument conventions of sprintf.  If this.echoToCommandWindow it echos.
+            %  If this.includeTimeStamp it stamps the beginning of each add().  It always adds '\n', so additional
+            %  '\n' in varargin will create line breaks in logs.
+            
             if (this.echoToCommandWindow)
                 fprintf(varargin{:}); fprintf('\n');
             end

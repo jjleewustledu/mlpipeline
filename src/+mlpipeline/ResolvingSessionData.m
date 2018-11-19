@@ -1,4 +1,4 @@
-classdef ResolvingSessionData < mlpipeline.SessionData
+classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
 	%% RESOLVINGSESSIONDATA  
 
 	%  $Revision$
@@ -62,12 +62,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
         
         
         %%
-		  
-        function obj  = umapSynthOpT1001(this, varargin)
-            t1   = this.T1001('typ', 'fp');
-            fqfn = fullfile(this.vLocation, sprintf('umapSynth_op_%s_b40.4dfp.hdr', t1));
-            obj  = this.fqfilenameObject(fqfn, varargin{2:end});
-        end
+		   
         function tag  = resolveTagFrame(this, varargin)
             ip = inputParser;
             addRequired( ip, 'f', @isnumeric);
@@ -78,7 +73,7 @@ classdef ResolvingSessionData < mlpipeline.SessionData
                 this.resolveTag = '';
             end
             tag = sprintf('%s_frame%i', this.resolveTag, ip.Results.f);
-        end        
+        end       
         function obj  = tracerEpoch(this, varargin)
             %% TRACEREPOCH is tracerRevision without the rnumber label.
             
