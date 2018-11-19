@@ -12,8 +12,8 @@ classdef Finished
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.
  	
     properties
-        neverTouchFinishfile
         ignoreFinishfile
+        neverMarkFinished
     end
 
     properties (Dependent)
@@ -42,26 +42,27 @@ classdef Finished
             %  @param named path is a filesystem path.
             %  @param named tag is a string.
 
+            res = mlpet.Resources.instance;
             ip = inputParser;
             addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
-            addParameter(ip, 'neverTouchFinishfile', true, @islogical);
+            addParameter(ip, 'neverMarkFinished', res.neverMarkFinished, @islogical);
             addParameter(ip, 'ignoreFinishfile', true, @islogical);
             parse(ip, varargin{:});
             
-            this.builder_ = ip.Results.builder;
-            this.path_ = ip.Results.path;
-            this.tag_ = ip.Results.tag;
-            this.neverTouchFinishfile = ip.Results.neverTouchFinishfile;
-            this.ignoreFinishfile = ip.Results.ignoreFinishfile;
+            this.builder_          = ip.Results.builder;
+            this.path_             = ip.Results.path;
+            this.tag_              = ip.Results.tag;
+            this.neverMarkFinished = ip.Results.neverMarkFinished;
+            this.ignoreFinishfile  = ip.Results.ignoreFinishfile;
         end        
         
         function        deleteFinishedMarker(this, varargin)
-            deleteExisting(this.finishedMarkerFilename(varargin{:}));
+            deleteExisting(this.markerFilename(varargin{:}));
         end
-        function fqfn = finishedMarkerFilename(this, varargin)
-            %% FINISHEDMARKERFILENAME
+        function fqfn = markerFilename(this, varargin)
+            %% MARKERFILENAME
             %  @param named path is a filesystem path.
             %  @param named tag is a string.
             
@@ -74,13 +75,13 @@ classdef Finished
                 sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
         end
         function tf   = isfinished(this, varargin) % KLUDGE
-            tf = lexist(this.finishedMarkerFilename, 'file') && ~this.ignoreFinishfile;
+            tf = lexist(this.markerFilename, 'file') && ~this.ignoreFinishfile;
         end
-        function        touchFinishedMarker(this, varargin)
-            if (this.neverTouchFinishfile)
+        function        markAsFinished(this, varargin)
+            if (this.neverMarkFinished)
                 return
             end
-            fqfn = this.finishedMarkerFilename(varargin{:});
+            fqfn = this.markerFilename(varargin{:});
             ensuredir(fileparts(fqfn));
             mlbash(['touch ' fqfn]);
         end
