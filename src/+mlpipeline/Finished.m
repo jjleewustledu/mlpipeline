@@ -12,7 +12,7 @@ classdef Finished
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.
  	
     properties
-        ignoreFinishfile
+        ignoreFinishMark
         neverMarkFinished
     end
 
@@ -24,6 +24,10 @@ classdef Finished
     methods %% GET, SET
         function g    = get.path(this)
             g = this.path_;
+        end
+        function this = set.path(this, s)
+            ensuredir(s);
+            this.path_ = s;
         end
         function g    = get.tag(this)
             g = this.tag_;
@@ -48,14 +52,14 @@ classdef Finished
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
             addParameter(ip, 'neverMarkFinished', res.neverMarkFinished, @islogical);
-            addParameter(ip, 'ignoreFinishfile', true, @islogical);
+            addParameter(ip, 'ignoreFinishMark', res.ignoreFinishMark, @islogical);
             parse(ip, varargin{:});
             
             this.builder_          = ip.Results.builder;
             this.path_             = ip.Results.path;
             this.tag_              = ip.Results.tag;
             this.neverMarkFinished = ip.Results.neverMarkFinished;
-            this.ignoreFinishfile  = ip.Results.ignoreFinishfile;
+            this.ignoreFinishMark  = ip.Results.ignoreFinishMark;
         end        
         
         function        deleteFinishedMarker(this, varargin)
@@ -74,8 +78,8 @@ classdef Finished
             fqfn = fullfile(ip.Results.path, ...
                 sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
         end
-        function tf   = isfinished(this, varargin) % KLUDGE
-            tf = lexist(this.markerFilename, 'file') && ~this.ignoreFinishfile;
+        function tf   = isfinished(this, varargin)
+            tf = lexist(this.markerFilename, 'file') && ~this.ignoreFinishMark;
         end
         function        markAsFinished(this, varargin)
             if (this.neverMarkFinished)
