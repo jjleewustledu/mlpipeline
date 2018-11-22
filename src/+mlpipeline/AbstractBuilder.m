@@ -16,8 +16,8 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
     properties (Dependent)
         buildVisitor
         finished
-        ignoreFinishfile     % KLUDGE to configure finished
-        neverMarkFinished %
+        ignoreFinishMark
+        neverMarkFinished
         logger
         product        
  	end
@@ -32,8 +32,8 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
         function g = get.finished(this)
             g = this.finished_;
         end
-        function g = get.ignoreFinishfile(this)
-            g = this.finished_.ignoreFinishfile;
+        function g = get.ignoreFinishMark(this)
+            g = this.finished_.ignoreFinishMark;
         end
         function g = get.neverMarkFinished(this)
             g = this.finished_.neverMarkFinished;
@@ -53,10 +53,10 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             assert(isa(s, 'mlpipeline.Finished'));
             this.finished_ = s;
         end
-        function this = set.ignoreFinishfile(this, s)
+        function this = set.ignoreFinishMark(this, s)
             assert(islogical(s));
             assert(~isempty(this.finished_));
-            this.finished_.ignoreFinishfile = s;
+            this.finished_.ignoreFinishMark = s;
         end
         function this = set.neverMarkFinished(this, s)
             assert(islogical(s));
@@ -109,7 +109,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             end
         end   
         function tf   = isfinished(this, varargin)
-            if (isempty(this.finished) || this.ignoreFinishfile)
+            if (isempty(this.finished) || this.ignoreFinishMark)
                 tf = false; 
                 return
             end
@@ -117,25 +117,19 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
         end    
         function this = updateFinished(this, varargin)
             %% UPDATEFINISHED, the protected superclass property which is an mlpipeline.Finished
+            %  @param path.
             %  @param tag.
-            %  @param neverMarkFinished is boolean.
-            %  @param ignoreFinishfile is boolean.
             %  @return property this.finished instantiated with path, tags, the booleans.
             
-            res = mlpet.Resources.instance;
             ip = inputParser;
             addParameter(ip, 'path', this.getLogPath, @isdir);
             addParameter(ip, 'tag', this.productTag, @ischar);
-            addParameter(ip, 'neverMarkFinished', res.neverMarkFinished, @islogical);
-            addParameter(ip, 'ignoreFinishfile', true, @islogical);
             parse(ip, varargin{:});
             
             ensuredir(this.getLogPath);
             this.finished_ = mlpipeline.Finished(this, ...
-                'path',                 ip.Results.path, ...
-                'tag',                  ip.Results.tag, ...
-                'neverMarkFinished', ip.Results.neverMarkFinished, ...
-                'ignoreFinishfile',     ip.Results.ignoreFinishfile);
+                'path', ip.Results.path, ...
+                'tag',  ip.Results.tag);
         end    
         function this = packageProduct(this, prod)
             %  @param prod, an objects understood by mlfourd.ImagingContext2.
@@ -163,15 +157,13 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             %  @param named logger is mlpipeline.ILogger.
             %  @param named logPath is char; will be created as needed.
             %  @param named keepForensics is logical.
-            %  @param named ignoreFinishfile is logical.
-            %  @param named neverMarkFinished is logical.
             %  @param named product is the initial state of the product to build; default := [].
             
  			ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
-            addParameter(ip, 'logger', mlpipeline.Logger, @(x) isa(x, 'mlpipeline.ILogger'));
             addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also prepareLogger.
+            addParameter(ip, 'logger', mlpipeline.Logger(fullfile(pwd, 'Log', '')), @(x) isa(x, 'mlpipeline.ILogger'));
             addParameter(ip, 'keepForensics', false, @islogical);
             addParameter(ip, 'product', []);
             parse(ip, varargin{:});
@@ -184,8 +176,8 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             this               = this.prepareLogger(ip.Results);
             this.keepForensics = ip.Results.keepForensics;
             this.product_      = ip.Results.product;
-            this.finished_     = mlpipeline.Finished(this, ...
-                    'path', this.getLogPath, 'tag', this.productTag);
+            
+            this.finished_ = mlpipeline.Finished(this, 'path', this.getLogPath, 'tag', this.productTag);
         end
     end
     
@@ -201,12 +193,10 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
     methods (Access = protected)
         function this = copyCtor(this, varargin)
             aCopy = varargin{1};
-            this.buildVisitor_ = aCopy.buildVisitor_;
-            this.logger_ = aCopy.logger;
             this.keepForensics = aCopy.keepForensics;
-            this.ignoreFinishfile = aCopy.ignoreFinishfile;
-            this.neverMarkFinished = aCopy.neverMarkFinished;
+            this.buildVisitor_ = aCopy.buildVisitor_;
             this.finished_ = aCopy.finished;
+            this.logger_ = aCopy.logger;
             this.product_ = aCopy.product_;
         end
         function this = prepareLogger(this, ipr)
@@ -214,7 +204,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             ensuredir(ipr.logPath);
             this.logger_.fqfilename = fullfile( ...
                 ipr.logPath, ...
-                strrep(sprintf('%s_prepareLogging_D%s', class(this), datestr(now,30)), '.', '_'));
+                sprintf('%s_prepareLogger_D%s', class(this), datestr(now,30)));
             this.logger_.add(evalc('disp(this.logger_)'));
         end
         function t    = productTag(this)
