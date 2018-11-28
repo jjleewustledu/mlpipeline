@@ -345,7 +345,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function obj = tr(this, varargin)
             obj = this.petObject('tr', varargin{:});
         end
-        function obj = umap(~, obj)
+        function obj = umapTagged(~, obj)
         end       
         function obj = umapSynth(~, obj)
         end       
@@ -450,7 +450,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             ip = inputParser;
             addRequired( ip, 'desc', @ischar);
             addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
+            addParameter(ip, 'typ', 'mlfourd.ImagingContext2', @ischar);
             parse(ip, varargin{:});
             
             obj = imagingType(ip.Results.typ, ...
