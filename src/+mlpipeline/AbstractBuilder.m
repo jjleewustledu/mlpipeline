@@ -142,6 +142,15 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             if (iscell(prod))
                 this.product_ = prod;
                 return
+            end            
+            if (length(prod) > 1)
+                for p = 1:length(prod)
+                    this.product_(p) = mlfourd.ImagingContext2(prod(p));
+                    if (lstrfind(this.product_(p).filesuffix, '4dfp'))
+                        this.product_(p).filesuffix = '.4dfp.hdr';
+                    end
+                end
+                return
             end
             
             this.product_ = mlfourd.ImagingContext2(prod);
@@ -204,16 +213,16 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             ensuredir(ipr.logPath);
             this.logger_.fqfilename = fullfile( ...
                 ipr.logPath, ...
-                sprintf('%s_prepareLogger_D%s', class(this), datestr(now,30)));
-            this.logger_.add(evalc('disp(this.logger_)'));
+                sprintf('%s_prepareLogger_D%s', myclass(this), datestr(now,30)));
+            this.logger_.addNoEcho(evalc('disp(this.logger_)'));
         end
         function t    = productTag(this)
-            t = class(this);
+            t = myclass(this);
             p = this.product_;
             if (isempty(p))
                 return
             end
-            t = [t '_' class(p)];
+            t = [t '_' myclass(p)];
             if (~isprop(p, 'fileprefix'))
                 return
             end
