@@ -114,6 +114,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 return
             end
             tf = this.finished.isfinished;
+            this.logger_.add(sprintf('%s is finished bulding %s', class(this), evalc('disp(this.product_)')));
         end    
         function this = updateFinished(this, varargin)
             %% UPDATEFINISHED, the protected superclass property which is an mlpipeline.Finished
@@ -143,13 +144,14 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 this.product_ = prod;
                 return
             end            
-            if (length(prod) > 1)
+            if (isa(prod, 'mlpipeline.AbstractBuilder') && length(prod) > 1)
                 for p = 1:length(prod)
-                    this.product_(p) = mlfourd.ImagingContext2(prod(p));
-                    if (lstrfind(this.product_(p).filesuffix, '4dfp'))
-                        this.product_(p).filesuffix = '.4dfp.hdr';
+                    prod(p) = mlfourd.ImagingContext2(prod(p));
+                    if (lstrfind(prod(p).filesuffix, '4dfp'))
+                        prod(p).filesuffix = '.4dfp.hdr';
                     end
                 end
+                this.product_ = prod;
                 return
             end
             
