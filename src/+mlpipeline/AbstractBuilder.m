@@ -114,7 +114,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 return
             end
             tf = this.finished.isfinished;
-            this.logger_.add(sprintf('%s is finished bulding %s', class(this), evalc('disp(this.product_)')));
+            this.logger_.add(sprintf('%s is finished building %s', class(this), evalc('disp(this.product_)')));
         end    
         function this = updateFinished(this, varargin)
             %% UPDATEFINISHED, the protected superclass property which is an mlpipeline.Finished
