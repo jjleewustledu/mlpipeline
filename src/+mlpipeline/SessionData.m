@@ -780,7 +780,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                         return
                     end
                 catch ME %#ok<NASGU>
-                    sprintf('SessionData.checkFields:  ignoring %s', flds{f});
+                    dispwarning('mlpipelinen:RuntimeWarning', 'SessionData.checkFields will ignore %s', flds{f});
                 end
             end
         end 
