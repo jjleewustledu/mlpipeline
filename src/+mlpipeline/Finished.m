@@ -1,4 +1,4 @@
-classdef Finished 
+classdef Finished < handle
 	%% FINISHED provides tools to mark finished milestones in a long processing stream:
     %  it touches hidden files, checks for existence of those files.   Finished behaves as a 
     %  visitor to mlpipeline.IBuilder classes.
@@ -22,17 +22,17 @@ classdef Finished
     end
     
     methods %% GET, SET
-        function g    = get.path(this)
+        function g = get.path(this)
             g = this.path_;
         end
-        function this = set.path(this, s)
+        function     set.path(this, s)
             ensuredir(s);
             this.path_ = s;
         end
-        function g    = get.tag(this)
+        function g = get.tag(this)
             g = this.tag_;
         end
-        function this = set.tag(this, s)
+        function     set.tag(this, s)
             assert(ischar(s));
             this.tag_ = s;
         end
@@ -75,19 +75,24 @@ classdef Finished
             addParameter(ip, 'tag', this.tag_, @ischar);
             parse(ip, varargin{:});
             
+            if (~isempty(this.markerFilename_))
+                fqfn = this.markerFilename_;
+                return
+            end
+            
             fqfn = fullfile(ip.Results.path, ...
                 sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
         end
         function tf   = isfinished(this, varargin)
             tf = lexist(this.markerFilename, 'file') && ~this.ignoreFinishMark;
         end
-        function        markAsFinished(this, varargin)
+        function         markAsFinished(this, varargin)
             if (this.neverMarkFinished)
                 return
             end
-            fqfn = this.markerFilename(varargin{:});
-            ensuredir(fileparts(fqfn));
-            mlbash(['touch ' fqfn]);
+            this.markerFilename_ = this.markerFilename(varargin{:});
+            ensuredir(fileparts(this.markerFilename_));
+            mlbash(['touch ' this.markerFilename_]);
         end
     end 
     
@@ -95,6 +100,7 @@ classdef Finished
     
     properties (Access = protected)
         builder_
+        markerFilename_
         path_
         tag_
     end
