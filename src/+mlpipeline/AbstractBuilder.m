@@ -8,15 +8,11 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.1.0.441655 (R2016b) for MACI64.  Copyright 2017 John Joowon Lee.
  	
-
-	properties
- 		keepForensics 
-    end
-    
     properties (Dependent)
         buildVisitor
         finished
         ignoreFinishMark
+        keepForensics
         neverMarkFinished
         logger
         product        
@@ -34,6 +30,9 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
         end
         function g = get.ignoreFinishMark(this)
             g = this.finished_.ignoreFinishMark;
+        end
+        function g = get.keepForensics(~)
+            g = mlnipet.Resources.instance.keepForensics;
         end
         function g = get.neverMarkFinished(this)
             g = this.finished_.neverMarkFinished;
@@ -57,6 +56,11 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             assert(islogical(s));
             assert(~isempty(this.finished_));
             this.finished_.ignoreFinishMark = s;
+        end
+        function this = set.keepForensics(this, s)
+            assert(islogical(s));
+            inst = mlnipet.Resources.instance;
+            inst.keepForensics = s;            
         end
         function this = set.neverMarkFinished(this, s)
             assert(islogical(s));
@@ -175,7 +179,6 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
             addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also prepareLogger.
             addParameter(ip, 'logger', mlpipeline.Logger(fullfile(pwd, 'Log', '')), @(x) isa(x, 'mlpipeline.ILogger'));
-            addParameter(ip, 'keepForensics', false, @islogical);
             addParameter(ip, 'product', []);
             parse(ip, varargin{:});
             
@@ -185,7 +188,6 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             end
             this.buildVisitor_ = ip.Results.buildVisitor;
             this               = this.prepareLogger(ip.Results);
-            this.keepForensics = ip.Results.keepForensics;
             this.product_      = ip.Results.product;
             
             this.finished_ = mlpipeline.Finished(this, 'path', this.getLogPath, 'tag', this.productTag);
@@ -204,7 +206,6 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
     methods (Access = protected)
         function this = copyCtor(this, varargin)
             aCopy = varargin{1};
-            this.keepForensics = aCopy.keepForensics;
             this.buildVisitor_ = aCopy.buildVisitor_;
             this.finished_ = aCopy.finished;
             this.logger_ = aCopy.logger;
