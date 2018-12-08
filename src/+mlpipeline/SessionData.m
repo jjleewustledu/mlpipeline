@@ -76,6 +76,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function g    = get.sessionDate(this)
             g = this.sessionDate_;
+            if (isempty(g))
+                g = this.readDatetime0;
+            end
+            if (isempty(g.TimeZone))
+                g.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
+            end
         end
         function this = set.sessionDate(this, s)
             assert(isdatetime(s));
@@ -200,7 +206,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             assert(ischar(t));
             this.tracer_ = t;
-            this.sessionDate_ = this.readDatetime0;
         end
         function g    = get.vnumber(this)
             g = this.vnumber_;
@@ -366,7 +371,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             obj = imagingType(ip.Results.typ, fqfn);
         end
         function dt   = datetime(this)
-            dt = this.sessionDate_;
+            dt = this.sessionDate;
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -646,9 +651,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 this.studyData_.subjectsDir = ip.Results.subjectsDir;
             end
             this.sessionDate_ = ip.Results.sessionDate;
-            if (isempty(this.sessionDate_.TimeZone))
-                this.sessionDate_.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
-            end
             if (~isempty(ip.Results.sessionFolder))
                 this.sessionFolder_ = ip.Results.sessionFolder;
             end
