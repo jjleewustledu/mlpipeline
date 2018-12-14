@@ -86,7 +86,7 @@ classdef Finished < handle
         function tf   = isfinished(this, varargin)
             tf = lexist(this.markerFilename, 'file') && ~this.ignoreFinishMark;
         end
-        function         markAsFinished(this, varargin)
+        function        markAsFinished(this, varargin)
             if (this.neverMarkFinished)
                 return
             end
