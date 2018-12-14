@@ -57,7 +57,7 @@ classdef Finished < handle
             
             this.builder_          = ip.Results.builder;
             this.path_             = ip.Results.path;
-            this.tag_              = ip.Results.tag;
+            this.tag_              = this.nodots(ip.Results.tag);
             this.neverMarkFinished = ip.Results.neverMarkFinished;
             this.ignoreFinishMark  = ip.Results.ignoreFinishMark;
         end        
@@ -81,7 +81,7 @@ classdef Finished < handle
             end
             
             fqfn = fullfile(ip.Results.path, ...
-                sprintf('.%s_%s_isfinished.touch', ip.Results.tag, class(this.builder_)));
+                sprintf('.%s_%s_isfinished.touch', this.nodots(ip.Results.tag), this.nodots(class(this.builder_))));
         end
         function tf   = isfinished(this, varargin)
             tf = lexist(this.markerFilename, 'file') && ~this.ignoreFinishMark;
@@ -103,6 +103,12 @@ classdef Finished < handle
         markerFilename_
         path_
         tag_
+    end
+    
+    methods (Access = protected)
+        function str = nodots(~, str)
+            str = strrep(str, '.', '_');
+        end
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
