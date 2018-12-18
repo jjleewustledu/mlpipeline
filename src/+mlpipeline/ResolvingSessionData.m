@@ -58,8 +58,7 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
         function this = set.rnumber(this, r)
             assert(isnumeric(r));
             this.rnumber_ = r;
-        end
-        
+        end        
         
         %%
 		   

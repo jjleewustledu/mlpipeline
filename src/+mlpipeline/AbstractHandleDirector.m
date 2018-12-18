@@ -1,5 +1,5 @@
-classdef AbstractDirector < mlpipeline.IDirector
-	%% ABSTRACTDIRECTOR
+classdef AbstractHandleDirector < handle & mlpipeline.IDirector
+	%% ABSTRACTHANDLEDIRECTOR
     %  See also:  mlxnat.*.
 
 	%  $Revision$
@@ -8,7 +8,7 @@ classdef AbstractDirector < mlpipeline.IDirector
  	%% It was developed on Matlab 9.3.0.713579 (R2017b) for MACI64.  Copyright 2017 John Joowon Lee.
 
 	properties (Dependent)
- 		builder
+ 		builder        
         sessionData
         xnat
     end
@@ -22,16 +22,15 @@ classdef AbstractDirector < mlpipeline.IDirector
         end
         function g = get.sessionData(this)
             g = this.builder_.sessionData;
-        end  
+        end
         function g = get.xnat(this)
             g = this.xnat_;
-        end      
-        
-        function this = set.sessionData(this, s)
+        end  
+        function     set.sessionData(this, s)
             assert(isa(s, 'mlpipeline.ISessionData'));
             this.builder_.sessionData = s;
         end
-        function this = set.xnat(this, s)
+        function     set.xnat(this, s)
             assert(isa(s, 'mlxnat.Xnat'));
             this.xnat_ = s;
         end

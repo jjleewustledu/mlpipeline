@@ -9,13 +9,8 @@ classdef (Abstract) IDirector
 
 	properties (Abstract)
  		builder
-        
-        project
-        subject
-        session
-        scan
-        resource
-        assessor
+        sessionData
+        xnat
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

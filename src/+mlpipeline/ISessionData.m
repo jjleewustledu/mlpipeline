@@ -9,62 +9,34 @@ classdef (Abstract) ISessionData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
 	
 	properties (Abstract)
-        freesurfersDir
+        project
+        subject
+        session
+        scan
+        resource
+        assessor
+        
+        freesurfersPath
+        freesurfersDir % homolog of subjectsDir
         freesurfersFolder
+        
+        rawdataPath
         rawdataDir % homolog of subjectsDir
         rawdataFolder
-        scan
-        sessionDate
-        sessionFolder
+        
         sessionPath
-        study
+        sessionDir % homolog of subjectsDir
+        sessionFolder
+        
+        subjectsPath
         subjectsDir % Freesurfer convention
         subjectsFolder  
-        vfolder
-        vnumber
-    end
-    
-    properties (Dependent)
-        freesurfersPath
-        project      % alias
-        rawdataPath  % alias
-        session 
-        sessionDir   % alias
-        subject      % alias
-        subjectsPath % alias
     end
     
 	methods (Abstract)
         tf  = isequal(this)
         tf  = isequaln(this)
  	end 
-    
-    methods 
-        
-        %% GET
-        
-        function g = get.freesurfersPath(this)
-            g = this.freesurfersDir;
-        end
-        function g = get.project(this)
-            g = this.study;
-        end
-        function g = get.rawdataPath(this)
-            g = this.rawdataDir;
-        end
-        function g = get.session(this)
-            g = sprintf('%s_%s', this.sessionFolder, this.vfolder);
-        end
-        function g = get.sessionDir(this)
-            g = this.sessionPath;
-        end
-        function g = get.subject(this)
-            g = this.subjectsFolder;
-        end
-        function g = get.subjectsPath(this)
-            g = this.subjectsDir;
-        end
-    end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
     
