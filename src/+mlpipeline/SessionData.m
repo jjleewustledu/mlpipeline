@@ -10,25 +10,40 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
 	properties (Dependent)
-        dbgTag
+        project
+        subject
+        session
+        scan
+        resource
+        assessor
+        
+        freesurfersPath
         freesurfersDir
         freesurfersFolder
-        sessionDate
-        sessionFolder
+        
+        rawdataPath
+        rawdataDir
+        rawdataFolder
+        
         sessionPath
-        study
-        studyData
+        sessionDir
+        sessionFolder
+        
+        subjectsPath
         subjectsDir
-        subjectsFolder
+        subjectsFolder        
         
         absScatterCorrected
         attenuationCorrected
         builder
+        dbgTag
         frame
         isotope
         pnumber
         region
+        sessionDate
         snumber
+        studyData
         tracer
         vnumber
     end
@@ -52,107 +67,96 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         
         %% GET/SET
         
-        function g    = get.dbgTag(~)            
-            if (~isempty(getenv('DEBUG')))
-                g = '_DEBUG';
-            else
-                g = '';
-            end
+        function g = get.project(this)
+             g = [];
         end
-        function g    = get.freesurfersDir(this)
+        function g = get.subject(this)
+             g = [];
+        end
+        function g = get.session(this)
+             g = [];
+        end
+        function g = get.scan(this)
+             g = [];
+        end
+        function g = get.resource(this)
+             g = [];
+        end
+        function g = get.assessor(this)
+             g = [];
+        end
+        
+        function g = get.freesurfersPath(this)
+            g = this.freesurfersDir;
+        end
+        function g = get.freesurfersDir(this)
             g = this.studyData_.freesurfersDir;
         end
-        function g    = get.freesurfersFolder(this)
+        function g = get.freesurfersFolder(this)
             g = basename(this.freesurfersDir);
         end
-        function g    = get.subjectsDir(this)
-            g = this.studyData_.subjectsDir;
+        
+        function g = get.rawdataPath(this)
+            g = this.rawdataDir;
         end
-        function this = set.subjectsDir(this, s)
-            assert(ischar(s));
-            newStudyData_ = this.studyData_;
-            newStudyData_.subjectsDir = s;
-            this.studyData_ = newStudyData_;
+        function g = get.rawdataDir(this)
+            g = this.studyData_.rawdataDir;
+        end 
+        function g = get.rawdataFolder(this)
+            g = basename(this.rawdataDir);
         end
-        function g    = get.sessionDate(this)
-            g = this.sessionDate_;
-            if (isempty(g))
-                g = this.readDatetime0;
-            end
-            if (isempty(g.TimeZone))
-                g.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
-            end
+        
+        function g = get.sessionPath(this)
+            g = fullfile(this.subjectsDir, this.sessionFolder_);
         end
-        function this = set.sessionDate(this, s)
-            assert(isdatetime(s));
-            if (isempty(s.TimeZone))
-                s.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
-            end
-            this.sessionDate_ = s;
+        function g = get.sessionDir(this)
+            g = this.sessionPath;
         end
-        function g    = get.sessionFolder(this)
+        function g = get.sessionFolder(this)
             g = this.sessionFolder_;
             if (isempty(g))
                 warning('mlpipeline:emptyParameter', 'mlpipeline.SessionData.get.sessionFolder.this.sessionFolder_');
             end
         end
-        function this = set.sessionFolder(this, s)
-            assert(ischar(s));
-            this.sessionFolder_ = s;            
+        
+        function g = get.subjectsPath(this)
+            g = this.subjectsDir;
         end
-        function g    = get.sessionPath(this)
-            g = fullfile(this.subjectsDir, this.sessionFolder_);
+        function g = get.subjectsDir(this)
+            g = this.studyData_.subjectsDir;
         end
-        function this = set.sessionPath(this, s)
-            [this.studyData_.subjectsDir,this.sessionFolder_] = fileparts(s);
-        end
-        function g    = get.study(this)
-            g = this.studyData;
-        end
-        function this = set.study(this, s)
-            this.studyData = s;
-        end
-        function g    = get.studyData(this)
-            g = this.studyData_;
-        end
-        function this = set.studyData(this, s)
-            assert(isa(s, 'mlpipeline.StudyData'));
-            this.studyData_ = s;
+        function g = get.subjectsFolder(this)
+            g = this.subjectsDir;
+            if (strcmp(g(end), filesep))
+                g = g(1:end-1);
+            end
+            g = mybasename(g);
         end
         
-        function g    = get.absScatterCorrected(this)
+        function g = get.absScatterCorrected(this)
             if (strcmpi(this.tracer, 'OC') || strcmp(this.tracer, 'OO'))
                 g = true;
                 return
             end
             g = this.absScatterCorrected_;
         end
-        function this = set.absScatterCorrected(this, s)
-            assert(islogical(s));
-            this.absScatterCorrected_ = s;
-        end
-        function g    = get.attenuationCorrected(this)
+        function g = get.attenuationCorrected(this)
             g = this.attenuationCorrected_;
         end
-        function this = set.attenuationCorrected(this, s)
-            assert(islogical(s));
-            this.attenuationCorrected_ = s;
-        end
-        function g    = get.builder(this)
+        function g = get.builder(this)
             g = this.builder_;
         end
-        function this = set.builder(this, s)
-            assert(isa(s, 'mlpipeline.IBuilder'));
-            this.builder_ = s;
+        function g = get.dbgTag(~)
+            if (~isempty(getenv('DEBUG')))
+                g = '_DEBUG';
+            else
+                g = '';
+            end
         end
-        function g    = get.frame(this)
+        function g = get.frame(this)
             g = this.frame_;
         end
-        function this = set.frame(this, s)
-            assert(isnumeric(s));
-            this.frame_ = s;
-        end
-        function g    = get.isotope(this)
+        function g = get.isotope(this)
             tr = lower(this.tracer);
             
             % N.B. order of testing by lstrfind
@@ -171,7 +175,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             error('mlpipeline:indeterminatePropertyValue', ...
                 'SessionData.isotope could not recognize tracer %s', this.sessionData.tracer);
         end
-        function g    = get.pnumber(this)
+        function g = get.pnumber(this)
             if (~isempty(this.pnumber_))
                 g = this.pnumber_;
                 return
@@ -180,35 +184,88 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = str2pnum(this.vLocation);
             warning('on', 'mfiles:regexpNotFound');
         end
+        function g = get.region(this)
+            g = this.region_;
+        end
+        function g = get.sessionDate(this)
+            g = this.sessionDate_;
+            if (isempty(g))
+                g = this.readDatetime0;
+            end
+            if (isempty(g.TimeZone))
+                g.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
+            end
+        end
+        function g = get.snumber(this)
+            g = this.snumber_;
+        end
+        function g = get.studyData(this)
+            g = this.studyData_;
+        end
+        function g = get.tracer(this)
+            g = this.tracer_;
+        end
+        function g = get.vnumber(this)
+            g = this.vnumber_;
+        end        
+        
+        function this = set.absScatterCorrected(this, s)
+            assert(islogical(s));
+            this.absScatterCorrected_ = s;
+        end
+        function this = set.attenuationCorrected(this, s)
+            assert(islogical(s));
+            this.attenuationCorrected_ = s;
+        end
+        function this = set.builder(this, s)
+            assert(isa(s, 'mlpipeline.IBuilder'));
+            this.builder_ = s;
+        end
+        function this = set.frame(this, s)
+            assert(isnumeric(s));
+            this.frame_ = s;
+        end
         function this = set.pnumber(this, s)
             assert(ischar(s));
             this.pnumber_ = s;
-        end
-        function g    = get.region(this)
-            g = this.region_;
         end
         function this = set.region(this, s)
             assert(isa(s, 'mlfourd.ImagingContext'));
             this.region_ = s;
         end
-        function g    = get.snumber(this)
-            g = this.snumber_;
+        function this = set.sessionDate(this, s)
+            assert(isdatetime(s));
+            if (isempty(s.TimeZone))
+                s.TimeZone = mldata.TimingData.PREFERRED_TIMEZONE;
+            end
+            this.sessionDate_ = s;
+        end
+        function this = set.sessionFolder(this, s)
+            assert(ischar(s));
+            this.sessionFolder_ = s;            
+        end
+        function this = set.sessionPath(this, s)
+            [this.studyData_.subjectsDir,this.sessionFolder_] = fileparts(s);
         end
         function this = set.snumber(this, s)
             assert(isnumeric(s));
             this.snumber_ = s;
         end
-        function g    = get.tracer(this)
-            g = this.tracer_;
+        function this = set.studyData(this, s)
+            assert(isa(s, 'mlpipeline.StudyData'));
+            this.studyData_ = s;
+        end
+        function this = set.subjectsDir(this, s)
+            assert(ischar(s));
+            newStudyData_ = this.studyData_;
+            newStudyData_.subjectsDir = s;
+            this.studyData_ = newStudyData_;
         end
         function this = set.tracer(this, t)
             %% SET.TRACER updates this.tracer and this.sessionDate.
             
             assert(ischar(t));
             this.tracer_ = t;
-        end
-        function g    = get.vnumber(this)
-            g = this.vnumber_;
         end
         function this = set.vnumber(this, v)
             assert(isnumeric(v));
