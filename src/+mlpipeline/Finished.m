@@ -48,7 +48,7 @@ classdef Finished < handle
 
             res = mlpet.Resources.instance;
             ip = inputParser;
-            addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IBuilder'));
+            addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IBuilder') || isa(x, 'mlpipeline.IHandleBuilder'));
             addParameter(ip, 'path', pwd, @isdir);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
             addParameter(ip, 'neverMarkFinished', res.neverMarkFinished, @islogical);
