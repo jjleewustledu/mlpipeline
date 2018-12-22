@@ -1,5 +1,5 @@
 classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
-	%% ABSTRACTDATABUILDER  
+	%% ABSTRACTBUILDER  
 
 	%  $Revision$
  	%  was created 01-Feb-2017 22:41:34
@@ -137,8 +137,13 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 'tag',  ip.Results.tag);
         end    
         function this = packageProduct(this, prod)
-            %  @param prod, an objects understood by mlfourd.ImagingContext2.
+            %  @param required prod, an objects understood by mlfourd.ImagingContext2.
+            %  @param imagingContext is logical => packages mlfourd.ImagingContext2.
             %  @return this.product packaged as an ImagingContext2 if nontrivial; otherwise this.product := [].
+            
+            ip = inputParser;
+            addParameter(ip, 'imagingContext', true, @islogical);
+            parse(ip, varargin{:});
             
             if (isempty(prod))
                 this.product_ = [];
@@ -147,7 +152,16 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             if (iscell(prod))
                 this.product_ = prod;
                 return
-            end            
+            end
+            if (~ip.Results.imagingContext)
+                if (isa(prod, 'mlpipeline.AbstractHandleBuilder') && length(prod) > 1)
+                    this.product_ = [];
+                    for p = 1:length(prod)
+                        this.product_(p) = prod(p);
+                    end
+                end
+                return
+            end
             if (isa(prod, 'mlpipeline.AbstractBuilder') && length(prod) > 1)
                 for p = 1:length(prod)
                     prod(p) = mlfourd.ImagingContext2(prod(p));
@@ -157,8 +171,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 end
                 this.product_ = prod;
                 return
-            end
-            
+            end            
             this.product_ = mlfourd.ImagingContext2(prod);
             if (lstrfind(this.product_.filesuffix, '4dfp'))
                 this.product_.filesuffix = '.4dfp.hdr';
@@ -166,12 +179,10 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
         end
         
         function this = AbstractBuilder(varargin)
-            %% ABSTRACTDATABUILDER
-            %  @param named logger is an mlpipeline.AbstractLogger.
+            %% ABSTRACTBUILDER
             %  @param named buildVisitor.
-            %  @param named logger is mlpipeline.ILogger.
             %  @param named logPath is char; will be created as needed.
-            %  @param named keepForensics is logical.
+            %  @param named logger is mlpipeline.ILogger.
             %  @param named product is the initial state of the product to build; default := [].
             
  			ip = inputParser;
@@ -188,9 +199,8 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             end
             this.buildVisitor_ = ip.Results.buildVisitor;
             this               = this.prepareLogger(ip.Results);
-            this.product_      = ip.Results.product;
-            
-            this.finished_ = mlpipeline.Finished(this, 'path', this.getLogPath, 'tag', this.productTag);
+            this.product_      = ip.Results.product;            
+            this.finished_     = mlpipeline.Finished(this, 'path', this.getLogPath, 'tag', this.productTag);
         end
     end
     
