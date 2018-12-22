@@ -1,4 +1,4 @@
-classdef (Abstract) IDirector 
+classdef (Abstract) IDirector
 	%% IDIRECTOR  
     %  See also mlxnat.*.
 

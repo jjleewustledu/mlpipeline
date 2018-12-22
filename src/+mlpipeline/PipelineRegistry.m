@@ -1,4 +1,4 @@
-classdef PipelineRegistry < mlpatterns.Singleton
+classdef PipelineRegistry < handle
 	%% PIPELINEREGISTRY is a singleton design pattern	
     %  N.B. environment variables:
     %       DEBUG, LOGGING, MLUNIT_TESTING, VERBOSE, VERBOSITY;
@@ -20,34 +20,34 @@ classdef PipelineRegistry < mlpatterns.Singleton
     end
 
 	methods %% set/get
-        function tf   = get.debugging(this) 
+        function tf = get.debugging(this) 
             tf = this.parseTruthvalue(getenv('DEBUGGING'));
         end
-        function tf   = get.logging(this) 
+        function tf = get.logging(this) 
             tf = this.parseTruthvalue(getenv('LOGGING'));
         end
-        function v    = get.verbosity(this)
+        function v  = get.verbosity(this)
             v = this.getenvVerbosity;
         end
-        function wl   = get.warningLevel(this)
+        function wl = get.warningLevel(this)
             wl = this.getenvWarningLevel;
         end
-        function tf   = get.verbose(this)
+        function tf = get.verbose(this)
             %% GET.VERBOSE returns a logical value based on debugging and verbosity settings
             
             tf = this.debugging || this.verbosity > 0 || this.warningLevel > 0;
         end     
                
-        function this = set.debugging(this,d)
+        function set.debugging(this,d)
             setenv('DEBUGGING', num2str(this.checkValueRange(d, [0 1])));
         end  
-        function this = set.logging(this,lg)
+        function set.logging(this,lg)
             setenv('LOGGING', num2str(this.checkValueRange(lg, [0 1])));
         end  
-        function this = set.verbosity(this,v)
+        function set.verbosity(this,v)
             setenv('VERBOSITY', num2str(this.checkValueRange(v, [0 1])));
         end 
-        function this = set.warningLevel(this, w)
+        function set.warningLevel(this, w)
             setenv('WARNING_LEVEL', num2str(this.checkValueRange(w, [0 1])));
         end
     end
@@ -78,7 +78,6 @@ classdef PipelineRegistry < mlpatterns.Singleton
     
     methods (Access = 'private')
  		function this = PipelineRegistry()
- 			this = this@mlpatterns.Singleton;
         end 
         
         function v    = getenvVerbosity(this)
