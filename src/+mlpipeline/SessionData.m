@@ -9,14 +9,16 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
-	properties (Dependent)
+    properties (Abstract)
         project
         subject
         session
         scan
         resource
         assessor
-        
+    end
+    
+	properties (Dependent)        
         freesurfersPath
         freesurfersDir
         freesurfersFolder
@@ -66,25 +68,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     methods 
         
         %% GET/SET
-        
-        function g = get.project(this)
-             g = [];
-        end
-        function g = get.subject(this)
-             g = [];
-        end
-        function g = get.session(this)
-             g = [];
-        end
-        function g = get.scan(this)
-             g = [];
-        end
-        function g = get.resource(this)
-             g = [];
-        end
-        function g = get.assessor(this)
-             g = [];
-        end
         
         function g = get.freesurfersPath(this)
             g = this.freesurfersDir;
