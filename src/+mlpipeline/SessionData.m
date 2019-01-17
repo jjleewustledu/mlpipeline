@@ -18,11 +18,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         assessor
     end
     
-	properties (Dependent)        
-        freesurfersPath
-        freesurfersDir
-        freesurfersFolder
-        
+	properties (Dependent)
         rawdataPath
         rawdataDir
         rawdataFolder
@@ -68,17 +64,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     methods 
         
         %% GET/SET
-        
-        function g = get.freesurfersPath(this)
-            g = this.freesurfersDir;
-        end
-        function g = get.freesurfersDir(this)
-            g = this.studyData_.freesurfersDir;
-        end
-        function g = get.freesurfersFolder(this)
-            g = basename(this.freesurfersDir);
-        end
-        
+                
         function g = get.rawdataPath(this)
             g = this.rawdataDir;
         end
@@ -484,12 +470,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             obj = imagingType(ip.Results.typ, [ip.Results.fqfp ip.Results.tag]);
         end
         function loc  = freesurferLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'typ', 'path', @ischar);
-            parse(ip, varargin{:});
-            
-            loc = locationType(ip.Results.typ, ...
-                fullfile(this.freesurfersDir, this.sessionLocation('typ', 'folder'), ''));
+            loc = this.vLocation(varargin{:});
         end
         function obj  = freesurferObject(this, varargin)
             ip = inputParser;
