@@ -136,7 +136,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 'path', ip.Results.path, ...
                 'tag',  ip.Results.tag);
         end    
-        function this = packageProduct(this, prod)
+        function this = packageProduct(this, prod, varargin)
             %  @param required prod, an objects understood by mlfourd.ImagingContext2.
             %  @param imagingContext is logical => packages mlfourd.ImagingContext2.
             %  @return this.product packaged as an ImagingContext2 if nontrivial; otherwise this.product := [].
