@@ -16,10 +16,6 @@ classdef (Abstract) ISessionData
         resource
         assessor
         
-        freesurfersPath
-        freesurfersDir % homolog of subjectsDir
-        freesurfersFolder
-        
         rawdataPath
         rawdataDir % homolog of subjectsDir
         rawdataFolder
