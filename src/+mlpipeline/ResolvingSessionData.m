@@ -6,6 +6,10 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
  	%  last modified $LastChangedDate$ and placed into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.2.0.538062 (R2017a) for MACI64.  Copyright 2017 John Joowon Lee.
  	
+    properties (Abstract)
+        studyCensus
+    end
+    
 	properties
         compAlignMethod  = 'align_multiSpectral'
         epoch
