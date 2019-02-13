@@ -43,6 +43,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         snumber
         studyData
         tracer
+        useNiftyPet
         vnumber
     end
 
@@ -103,6 +104,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         
         function g = get.absScatterCorrected(this)
+            if (this.useNiftyPet)
+                g = false;
+                return
+            end
             if (strcmpi(this.tracer, 'OC') || strcmp(this.tracer, 'OO'))
                 g = true;
                 return
@@ -173,6 +178,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function g = get.tracer(this)
             g = this.tracer_;
+        end
+        function g = get.useNiftyPet(~)
+            g = true;
         end
         function g = get.vnumber(this)
             g = this.vnumber_;
