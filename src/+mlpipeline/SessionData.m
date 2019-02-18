@@ -207,7 +207,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             this.pnumber_ = s;
         end
         function this = set.region(this, s)
-            assert(isa(s, 'mlfourd.ImagingContext'));
+            assert(isa(s, 'mlfourd.ImagingContext2'));
             this.region_ = s;
         end
         function this = set.sessionDate(this, s)
@@ -409,12 +409,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
-            %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext.
+            %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext2.
             %  @returns changes on the filesystem so that input fn manifests as an imaging file of type NIFTI_GZ 
             %  per the notation of fsl's fslchfiletype.
             %  See also:  mlpipeline.SessionData.fslchfiletype, mlpipeline.SessionData.mri_convert.
             
-            if (isa(obj, 'mlfourd.ImagingContext'))   
+            if (isa(obj, 'mlfourd.ImagingContext2'))   
                 fqfn = obj.fqfilename;             
                 if (~lexist(fqfn, 'file'))
                     obj.save;
@@ -456,13 +456,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             loc = this.vLocation(varargin{:});
         end
         function obj  = fqfilenameObject(~, varargin)
-            %  @param named typ has default 'mlfourd.ImagingContext'
+            %  @param named typ has default 'mlfourd.ImagingContext2'
             
             ip = inputParser;
             ip.KeepUnmatched = true;
             addRequired( ip, 'fqfn', @(x) lexist(x, 'file'));
             addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'mlfourd.ImagingContext', @ischar);
+            addParameter(ip, 'typ', 'mlfourd.ImagingContext2', @ischar);
             parse(ip, varargin{:});
             [pth,fp,ext] = fileparts(ip.Results.fqfn);
             obj = imagingType(ip.Results.typ, fullfile(pth, [fp ip.Results.tag ext]));
@@ -714,59 +714,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     end
     
     methods (Static, Access = protected)
-        function ic = cropImaging(ic, varargin)
-            ip = inputParser;
-            addRequired(ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
-            addOptional(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
-            parse(ip, ic, varargin{:});
-            fr = ip.Results.fractions;
-            
-            niid = ic.niftid;
-            for r = 1:niid.rank
-                if (fr(r) < 1)
-                    cropping{r} = ceil(0.5*fr(r)*niid.size(r)):floor((1-0.5*fr(r))*niid.size(r)); %#ok<AGROW>
-                else
-                    cropping{r} = 1:niid.size(r); %#ok<AGROW>
-                end
-            end
-            niid.img = niid.img(cropping{:});            
-            niid = niid.append_fileprefix('_crop');
-            ic = mlfourd.ImagingContext.recastImagingContext(niid, class(ic));
-        end
-        function ic = flip(ic, dim)
-            niid = ic.niftid;
-            niid.img = flip(niid.img, dim);
-            niid = niid.append_fileprefix(sprintf('_flip%i', dim));
-            ic = mlfourd.ImagingContext.recastImagingContext(niid, class(ic));
-        end
-        function ic = flipAndCropImaging(ic, varargin)
-            ip = inputParser;
-            addRequired( ip, 'ic', @(x) isa(x, 'mlfourd.ImagingContext'));
-            addParameter(ip, 'fractions', [0.5 0.5 1 1], @(x) isnumeric(x) && (4 == length(x)));
-            addParameter(ip, 'flipdim', 2, @isnumeric);
-            parse(ip, ic, varargin{:});
-            fr = ip.Results.fractions;
-            
-            niid = ic.niftid;
-            fprintf('SessionData.flipAndCropImaging is flipping %s\n', niid.fqfilename);
-            niid.img = flip(niid.img, ip.Results.flipdim);
-            
-            fprintf('SessionData.flipAndCropImaging is cropping %s\n', niid.fqfilename);
-            for r = 1:niid.rank
-                if (fr(r) < 1)
-                    cropping{r} = ceil(0.5*fr(r)*niid.size(r)):floor((1-0.5*fr(r))*niid.size(r)); %#ok<AGROW>
-                else
-                    cropping{r} = 1:niid.size(r); %#ok<AGROW>
-                end
-            end
-            niid.img = niid.img(cropping{:});
-            if (lstrfind(niid.fileprefix, '.4dfp'))
-                niid.fileprefix = niid.fileprefix(1:strfind(niid.fileprefix, '.4dfp')-1);
-            end
-            niid = niid.append_fileprefix(sprintf('_flip%i_crop', ip.Results.flipdim));
-            ic = mlfourd.ImagingContext.recastImagingContext(niid, class(ic));
-            ic.save;
-        end
         function f  = fullfile(~, varargin)
             assert(~isempty(varargin));
             if (1 == length(varargin))
