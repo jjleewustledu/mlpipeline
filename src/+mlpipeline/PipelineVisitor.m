@@ -83,7 +83,7 @@ classdef PipelineVisitor
                 end
                 nstruct = mlpipeline.PipelineVisitor.coregNameStruct(varargin{:});
                 fn      = fullfilename(nstruct.path, ...
-                                      [nstruct.pre mlfsl.FslRegistry.INTERIMAGE_TOKEN nstruct.post]);
+                                      [nstruct.pre '_on_' nstruct.post]);
             catch ME
                 handexcept(ME);
             end
@@ -145,12 +145,12 @@ classdef PipelineVisitor
             %  @param str is a string possibly containing the token.
             %  @param tok is the char token.
             %  @returns the substring in front of the first token, excluding filename suffixes .mat/.nii.gz; 
-            %  default is mlfsl.FslRegistry.INTERIMAGE_TOKEN
+            %  default is '_on_'
             
             import mlfsl.*;
             ip = inputParser;
             addRequired(ip, 'str', @ischar);
-            addOptional(ip, 'tok', FslRegistry.INTERIMAGE_TOKEN, @ischar);
+            addOptional(ip, 'tok', '_on_', @ischar);
             parse(ip, str, varargin{:});
             
             str  = fileprefix(fileprefix(str, FlirtVisitor.XFM_SUFFIX));
@@ -164,12 +164,12 @@ classdef PipelineVisitor
             %  @param str is a string possibly containing the token.
             %  @param tok is the char token.
             %  @returns the substring after the last token, excluding filename suffixes .mat/.nii.gz; 
-            %  default is mlfsl.FslRegistry.INTERIMAGE_TOKEN
+            %  default is '_on_'
            
             import mlfsl.*;
             ip = inputParser;
             addRequired(ip, 'str', @ischar);
-            addOptional(ip, 'tok', FslRegistry.INTERIMAGE_TOKEN, @ischar);
+            addOptional(ip, 'tok', '_on_', @ischar);
             parse(ip, str, varargin{:});
             
             str  = fileprefix(fileprefix(str, FlirtVisitor.XFM_SUFFIX));
