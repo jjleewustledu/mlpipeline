@@ -47,8 +47,8 @@ classdef StudyDataSingletons < handle
 %             mlderdeyn.TestDataSingleton.instance;
 %             mlarbelaez.StudyDataSingleton.instance;
 %             mlarbelaez.TestDataSingleton.instance;
-            mlpowers.StudyDataSingleton.instance;
-            mlpowers.TestDataSingleton.instance;
+%             mlpowers.StudyDataSingleton.instance;
+%             mlpowers.TestDataSingleton.instance;
 %            mlraichle.StudyDataSingleton.instance;
 %            mlraichle.SynthDataSingleton.instance;
 %            mlraichle.TestDataSingleton.instance;            

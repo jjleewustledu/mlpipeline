@@ -9,6 +9,11 @@ classdef AbstractOptions
  	%  developed on Matlab 8.1.0.604 (R2013a) 
  	%  $Id$ 
     
+    properties (Constant)
+        INTERIMAGE_TOKEN = '_on_';
+        XFM_SUFFIX = '.mat';
+    end
+    
 	methods 
  		function s = char(this) 
             %% CHAR
@@ -47,8 +52,15 @@ classdef AbstractOptions
         function imobj = imageObject(~, varargin)
             imobj = mlchoosers.ImagingChoosers.imageObject(varargin{:});
         end
-        function xfm   = transformFilename(~, varargin)
-            xfm = mlfsl.FslVisitor.transformFilename(varargin{:});
+        function xfm   = transformFilename(this, varargin)
+            if (1 == length(varargin))
+                xfm = myfilename(myfileprefix(char(varargin{1})), this.XFM_SUFFIX);
+                return
+            end
+            
+            nameStruct = mlpipeline.PipelineVisitor.coregNameStruct(varargin{:});
+            xfm        = fullfile(nameStruct.path, ...
+                                 [nameStruct.pre this.INTERIMAGE_TOKEN nameStruct.post this.XFM_SUFFIX]);
         end
         function str   = underscores2dashes(~, str)
             idxs = strfind(str, '_');
