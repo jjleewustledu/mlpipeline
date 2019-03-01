@@ -83,6 +83,9 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             if (this.echoToCommandWindow)
                 fprintf(varargin{:}); fprintf('\n');
             end
+            if (isempty(this.cellArrayList_))
+                this.cellArrayList_ = mlpatterns.CellArrayList;
+            end
             if (this.includeTimeStamp)
                 s = sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT));
                 this.cellArrayList_.add([s sprintf(varargin{:})]);
@@ -95,6 +98,9 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             %  If this.includeTimeStamp it stamps the beginning of each add().  It always adds '\n', so additional
             %  '\n' in varargin will create line breaks in logs.
             
+            if (isempty(this.cellArrayList_))
+                this.cellArrayList_ = mlpatterns.CellArrayList;
+            end
             if (this.includeTimeStamp)
                 s = sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT));
                 this.cellArrayList_.add([s sprintf(varargin{:})]);
@@ -213,6 +219,25 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
         end
         function txt  = footer(~)
             txt = '';
+        end
+        
+        function        setFilepath_(this, pth)
+            if (~isempty(this.filepath_))
+                this.add(sprintf('AbstractLogger.setFilepath_(''%s'')', pth));
+            end
+            this.setFilepath_@mlio.AbstractHandleIO(pth);
+        end
+        function        setFileprefix_(this, fp)
+            if (~isempty(this.filepath_))
+                this.add(sprintf('AbstractLogger.setFileprefix_(''%s'')', fp));
+            end
+            this.setFileprefix_@mlio.AbstractHandleIO(fp);
+        end
+        function        setFilesuffix_(this, fs)            
+            if (~isempty(this.filepath_))
+                this.add(sprintf('AbstractLogger.setFilesuffix_(''%s'')', fs));
+            end
+            this.setFilesuffix_@mlio.AbstractHandleIO(fs);
         end
     end
     
