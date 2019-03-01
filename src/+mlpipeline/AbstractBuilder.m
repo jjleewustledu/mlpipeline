@@ -11,9 +11,9 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
     properties (Dependent)
         buildVisitor
         finished
-        ignoreFinishMark
+        ignoreFinishMark % KLUDGE
         keepForensics
-        neverMarkFinished
+        neverMarkFinished % KLUDGE
         logger
         product        
  	end
