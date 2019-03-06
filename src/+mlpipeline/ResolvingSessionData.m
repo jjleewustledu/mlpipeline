@@ -5,11 +5,7 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
  	%  was created 18-Aug-2017 16:40:39 by jjlee,
  	%  last modified $LastChangedDate$ and placed into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.2.0.538062 (R2017a) for MACI64.  Copyright 2017 John Joowon Lee.
- 	
-    properties (Abstract)
-        studyCensus
-    end
-    
+ 	    
 	properties
         compAlignMethod  = 'align_multiSpectral'
         epoch
@@ -19,7 +15,6 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
        
     properties (Dependent)
         epochTag
-        reference
         resolveTag
         rnumber
     end
@@ -28,7 +23,7 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
         
         %% GET/SET
         
-        function g = get.epochTag(this)
+        function g    = get.epochTag(this)
             if (isempty(this.epoch))
                 g = '';
                 return
@@ -40,12 +35,7 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
                 g = sprintf('e%ito%i', this.epoch(1), this.epoch(end));
             end
         end
-        function g = get.reference(this)
-            stbl = this.studyCensus.censusSubtable;
-            this.vnumber = stbl.v_(1);
-            g = this;
-        end
-        function g = get.resolveTag(this)
+        function g    = get.resolveTag(this)
             if (~isempty(this.resolveTag_))
                 g = this.resolveTag_;
                 return
@@ -56,7 +46,7 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
             assert(ischar(s));
             this.resolveTag_ = s;
         end  
-        function g = get.rnumber(this)
+        function g    = get.rnumber(this)
             g = this.rnumber_;
         end
         function this = set.rnumber(this, r)
@@ -80,10 +70,10 @@ classdef (Abstract) ResolvingSessionData < mlpipeline.SessionData
         function obj  = tracerEpoch(this, varargin)
             %% TRACEREPOCH is tracerRevision without the rnumber label.
             
-            [ipr,schar] = this.iprLocation(varargin{:});
+            ipr = this.iprLocation(varargin{:});
             fqfn = fullfile( ...
                 this.tracerLocation('tracer', ipr.tracer, 'snumber', ipr.snumber, 'typ', 'path'), ...
-                sprintf('%s%sv%i%s%s', lower(ipr.tracer), schar, this.vnumber, this.epochTag, this.filetypeExt));
+                sprintf('%s%s%s', lower(ipr.tracer), this.epochTag, this.filetypeExt));
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
         

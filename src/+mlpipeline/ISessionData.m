@@ -13,8 +13,8 @@ classdef (Abstract) ISessionData
         subject
         session
         scan
-        resource
-        assessor
+        resources
+        assessors
         
         rawdataPath
         rawdataDir % homolog of subjectsDir
@@ -27,6 +27,10 @@ classdef (Abstract) ISessionData
         subjectsPath
         subjectsDir % Freesurfer convention
         subjectsFolder  
+        
+        projectsPath
+        projectsDir % homolog of subjectsDir
+        projectsFolder
     end
     
 	methods (Abstract)
