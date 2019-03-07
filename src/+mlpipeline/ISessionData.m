@@ -14,28 +14,55 @@ classdef (Abstract) ISessionData
         session
         scan
         resources
-        assessors
+        assessors   
         
         rawdataPath
         rawdataDir % homolog of subjectsDir
         rawdataFolder
         
+        tracerPath
+        tracerDir % homolog of subjectsDir
+        tracerFolder
+        
         sessionPath
         sessionDir % homolog of subjectsDir
         sessionFolder
+        
+        subjectPath
+        subjectDir
+        subjectFolder % \in subjectsFolder
         
         subjectsPath
         subjectsDir % Freesurfer convention
         subjectsFolder  
         
+        projectPath
+        projectDir
+        projectFolder % \in projectsFolder
+        
         projectsPath
         projectsDir % homolog of subjectsDir
         projectsFolder
+        
+        absScatterCorrected
+        attenuationCorrected
+        frame
+        isotope
+        region
+        studyData
+        tracer
+        useNiftyPet  
     end
     
 	methods (Abstract)
+        obj = ctObject(this)
+        dt  = datetime(this)
+        obj = fqfilenameObject(this)
+        obj = freesurferObject(this)
         tf  = isequal(this)
         tf  = isequaln(this)
+        obj = mrObject(this)
+        obj = petObject(this)
  	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
