@@ -37,7 +37,7 @@ classdef Logger < handle & mlpipeline.AbstractLogger
     
     methods (Access = 'protected')
         function fn   = defaultFqfileprefix(this)
-            fn = fullfile(this.filepath, ['Logger_' datestr(now,30)]);
+            fn = fullfile(this.filepath, ['Logger_' mydatetimestr(now)]);
         end
         function txt  = header(this)
             txt = sprintf('%s:  %s from %s at %s initialized %s', ...

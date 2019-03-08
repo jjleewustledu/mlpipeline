@@ -28,7 +28,6 @@ classdef IStudyDataSingleton
         iter = createIteratorForSessionData(this)
                diaryOff(this)
                diaryOn(this)
-        loc  = loggingLocation(this, ~)
                saveWorkspace(this)
         sess = sessionData(~)
     end

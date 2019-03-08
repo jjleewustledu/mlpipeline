@@ -17,32 +17,27 @@ classdef (Abstract) ISessionData
         assessors   
         
         rawdataPath
-        rawdataDir % homolog of subjectsDir
-        rawdataFolder
+        rawdataFolder % \in sessionFolder
         
         tracerPath
-        tracerDir % homolog of subjectsDir
-        tracerFolder
+        tracerFolder % \in sessionFolder
         
         sessionPath
-        sessionDir % homolog of subjectsDir
-        sessionFolder
-        
-        subjectPath
-        subjectDir
-        subjectFolder % \in subjectsFolder
-        
-        subjectsPath
-        subjectsDir % Freesurfer convention
-        subjectsFolder  
+        sessionFolder % \in projectFolder
         
         projectPath
-        projectDir
         projectFolder % \in projectsFolder
         
         projectsPath
-        projectsDir % homolog of subjectsDir
+        projectsDir % homolog of __Freesurfer__ subjectsDir
         projectsFolder
+        
+        subjectPath
+        subjectFolder % \in subjectsFolder
+        
+        subjectsPath
+        subjectsDir % __Freesurfer__ convention
+        subjectsFolder  
         
         absScatterCorrected
         attenuationCorrected

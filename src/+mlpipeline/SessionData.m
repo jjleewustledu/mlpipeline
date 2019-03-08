@@ -18,31 +18,26 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         assessors
         
         rawdataPath
-        rawdataDir
         rawdataFolder % \in sessionFolder
         
         tracerPath
-        tracerDir
         tracerFolder % \in sessionFolder
         
         sessionPath
-        sessionDir
         sessionFolder % \in projectFolder
         
         projectPath
-        projectDir
         projectFolder % \in projectsFolder
         
         projectsPath
-        projectsDir
+        projectsDir % homolog of __Freesurfer__ subjectsDir
         projectsFolder
         
         subjectPath
-        subjectDir
         subjectFolder % \in subjectsFolder
         
         subjectsPath 
-        subjectsDir % freesurfer-oriented synonym for projectsPath
+        subjectsDir % __Freesurfer__ convention
         subjectsFolder   
         
         absScatterCorrected
@@ -97,9 +92,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function g = get.rawdataPath(this)
             g = fullfile(this.sessionPath, this.rawdataFolder);
         end
-        function g = get.rawdataDir(this)
-            g = this.rawdataPath;
-        end 
         function g = get.rawdataFolder(~)
             g = 'rawdata';
         end
@@ -110,12 +102,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.tracerPath(this, s)
             assert(ischar(s));
             [this.sessionPath,this.tracerFolder] = myfileparts(s);
-        end
-        function g    = get.tracerDir(this)
-            g = this.tracerPath;
-        end
-        function this = set.tracerDir(this, s)
-            this.tracerPath = s;
         end
         function g    = get.tracerFolder(this)
             g = this.tracerFolder_;
@@ -132,12 +118,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             assert(ischar(s));
             [this.projectPath,this.sessionFolder] = fileparts(s);
         end
-        function g    = get.sessionDir(this)
-            g = this.sessionPath;
-        end
-        function this = set.sessionDir(this, s)
-            this.sessionPath = s;
-        end
         function g    = get.sessionFolder(this)
             g = this.sessionFolder_;
         end        
@@ -153,12 +133,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             assert(ischar(s));
             [this.projectsPath,this.projectFolder] = fileparts(s);
         end
-        function g    = get.projectDir(this)
-            g = this.projectPath;
-        end
-        function this = set.projectDir(this, s)
-            this.projectPath = s;
-        end
         function g    = get.projectFolder(this)
             g = this.projectFolder_;
         end
@@ -168,20 +142,20 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         
         function g    = get.projectsPath(this)
-            g = this.studyData_.projectsPath;
+            g = this.projectsDir;
         end
         function this = set.projectsPath(this, s)
-            assert(ischar(s));
-            this.studyData_.projectsPath = s;
+            this.projectsDir = s;
         end
         function g    = get.projectsDir(this)
-            g = this.projectsPath;
+            g = this.studyData_.projectsDir;
         end
         function this = set.projectsDir(this, s)
-            this.projectsPath = s;
+            assert(ischar(s));
+            this.studyData_.projectsDir = s;
         end
         function g    = get.projectsFolder(this)
-            g = this.projectsPath;
+            g = this.projectsDir;
             if (strcmp(g(end), filesep))
                 g = g(1:end-1);
             end
@@ -189,7 +163,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function this = set.projectsFolder(this, s)
             assert(ischar(s));
-            this.studyData_.projectsPath = fullfile(fileparts(this.projectsPath), s, '');
+            this.studyData_.projectsDir = fullfile(fileparts(this.projectsDir), s, '');
         end
         
         function g    = get.subjectPath(this)
@@ -198,12 +172,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.subjectPath(this, s)
             assert(ischar(s));
             [this.subjectsPath,this.subjectFolder] = fileparts(s);
-        end
-        function g    = get.subjectDir(this)
-            g = this.subjectPath;
-        end
-        function this = set.subjectDir(this, s)
-            this.subjectPath = s;
         end
         function g    = get.subjectFolder(this)
             g = this.subjectFolder_;
@@ -731,7 +699,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'frame', nan,        @isnumeric);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
-            addParameter(ip, 'projectsPath', '',  @ischar);
+            addParameter(ip, 'projectsDir', '',  @ischar);
             addParameter(ip, 'pnumber', '',       @ischar);
             addParameter(ip, 'sessionDate', NaT,  @isdatetime);
             addParameter(ip, 'sessionFolder', '', @ischar);
@@ -743,11 +711,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'subjectsDir', '',   @(x) isdir(x) || isempty(x));
             addParameter(ip, 'tracer', 'FDG',     @ischar);
             addParameter(ip, 'tracerFolder', '',  @ischar);
-            addParaemter(ip, 'tracerPath', '',    @ischar);
+            addParameter(ip, 'tracerPath', '',    @ischar);
             parse(ip, varargin{:});      
             this.absScatterCorrected_ = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
-            this.frame_ = ip.Results.frame;d
+            this.frame_ = ip.Results.frame;
             this.projectFolder_ = ip.Results.projectFolder;
             if (~isempty(ip.Results.projectPath))
                 [~,this.projectFolder_] = fileparts(ip.Results.projectPath);
@@ -771,8 +739,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end
             
             % studyData_, some kind of registry
-            if (~isempty(ip.Results.projectsPath))
-                this.studyData_.projectsPath = ip.Results.projectsPath;
+            if (~isempty(ip.Results.projectsDir))
+                this.studyData_.projectsDir = ip.Results.projectsDir;
             end 
             if (~isempty(ip.Results.subjectsDir))
                 this.studyData_.subjectsDir = ip.Results.subjectsDir;

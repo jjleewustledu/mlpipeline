@@ -56,7 +56,7 @@ classdef PipelineVisitor
         function str     = outputRedirection
             if (mlpipeline.PipelineRegistry.instance.logging)
                 str = sprintf('>> %s 2>&1', ...
-                             ['FslVisitor_' datestr(now,30) '.log']); %% KLUDGE 
+                             ['FslVisitor_' mydatetimestr(now) '.log']); %% KLUDGE 
             else
                 str = '';
             end            

@@ -29,39 +29,19 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyHandle
         function        diaryOn(this, varargin)
             ip = inputParser;
             addOptional(ip, 'path', this.subjectsDir, @isdir);
-            parse(ip, varargin{:});
-            
-            diary(fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, datestr(now, 30))));
+            parse(ip, varargin{:});            
+            diary( ...
+                fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, mydatetimestr(now))));
         end
         function tf   = isChpcHostname(~)
             [~,hn] = mlbash('hostname');
             tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
         end
-        function loc  = loggingLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'type', 'path', @isLocationType);
-            parse(ip, varargin{:});
-            
-            switch (ip.Results.type)
-                case 'folder'
-                    [~,loc] = fileparts(this.subjectsDir);
-                case 'path'
-                    loc = this.subjectsDir;
-                otherwise
-                    error('mlpipeline:unsupportedSwitchCase', ...
-                          'StudyData.loggingLocation.ip.Results.type->%s', ip.Results.type);
-            end
-        end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
             addOptional(ip, 'path', this.subjectsDir, @isdir);
             parse(ip, varargin{:});
-            
-            loc = fullfile(ip.Results.path, sprintf('%s_workspace_%s.mat', mfilename, datestr(now, 30)));
-            if (this.isChpcHostname)
-                save(loc, '-v7.3');
-                return
-            end
+            loc = fullfile(ip.Results.path, sprintf('%s_workspace_%s.mat', mfilename, mydatetimestr(now)));
             save(loc);
         end
     end
