@@ -187,7 +187,7 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             end            
             fqfp = fullfile( ...
                 this.filepath, ...
-                sprintf('%s%s_D%s', this.callerid_, this.tag_, mydatetimstr(now)));
+                sprintf('%s%s_%s', this.callerid_, this.tag_, mydatetimstr(now)));
         end
         function t    = aufbauTag(~, t)
             t = char(t);

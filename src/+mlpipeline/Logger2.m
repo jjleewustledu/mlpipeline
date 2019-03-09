@@ -179,7 +179,7 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
             end            
             fqfp = fullfile( ...
                 this.filepath, ...
-                sprintf('%s%s_D%s', this.callerid_, this.tag_, mydatetimestr(now)));
+                sprintf('%s%s_%s', this.callerid_, this.tag_, mydatetimestr(now)));
         end
         function t    = aufbauTag(~, t)
             t = char(t);

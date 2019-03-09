@@ -224,9 +224,9 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
         function this = prepareLogger(this, ipr)
             this.logger_ = ipr.logger;
             ensuredir(ipr.logPath);
-            this.logger_.fqfilename = fullfile( ...
+            this.logger_.fqfileprefix = fullfile( ...
                 ipr.logPath, ...
-                sprintf('%s_prepareLogger_D%s', myclass(this), mydatetimestr(now)));
+                sprintf('%s_prepareLogger_%s', myclass(this), mydatetimestr(now)));
             this.logger_.addNoEcho(evalc('disp(this.logger_)'));
         end
         function t    = productTag(this)
