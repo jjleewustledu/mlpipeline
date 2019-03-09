@@ -70,29 +70,29 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         
         %% GET/SET
         
-        function g = get.project(this)
+        function g    = get.project(this)
              g = this.projectFolder;
         end
-        function g = get.subject(this)
+        function g    = get.subject(this)
              g = this.subjectFolder;
         end
-        function g = get.session(this)
+        function g    = get.session(this)
              g = this.sessionFolder;
         end
-        function g = get.scan(this)
+        function g    = get.scan(this)
             g = this.tracerRevision('typ', 'fp');
         end  
-        function g = get.resources(~)
+        function g    = get.resources(~)
              g = [];
         end
-        function g = get.assessors(~)
+        function g    = get.assessors(~)
              g = [];
         end
                 
-        function g = get.rawdataPath(this)
+        function g    = get.rawdataPath(this)
             g = fullfile(this.sessionPath, this.rawdataFolder);
         end
-        function g = get.rawdataFolder(~)
+        function g    = get.rawdataFolder(~)
             g = 'rawdata';
         end
         
@@ -104,7 +104,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             [this.sessionPath,this.tracerFolder] = myfileparts(s);
         end
         function g    = get.tracerFolder(this)
-            g = this.tracerFolder_;
+            if (~isempty(this.tracerFolder_))
+                g = this.tracerFolder_;
+                return
+            end
+            assert(~isempty(this.tracer_));
+            assert(~isempty(this.attenuationCorrected_))
+            dtt = mlpet.DirToolTracer( ...
+                'tracer', fullfile(this.sessionPath, this.tracer_), ...
+                'ac', this.attenuationCorrected_);            
+            assert(~isempty(dtt.dns));
+            g = dtt.dns{1};
         end
         function this = set.tracerFolder(this, s)
             assert(ischar(s));
@@ -206,6 +216,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             this.studyData_.subjectsDir = fullfile(fileparts(this.subjectsPath), s, '');            
         end
         
+        %% GET/GET
+        
         function g    = get.absScatterCorrected(this)
             if (this.useNiftyPet)
                 g = false;
@@ -222,10 +234,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             this.absScatterCorrected_ = s;
         end
         function g    = get.attenuationCorrected(this)
-            g = this.attenuationCorrected_;
+            if (~isempty(this.attenuationCorrected_))
+                g = this.attenuationCorrected_;
+                return
+            end
+            g = mlpet.DirToolTracer.folder2ac(this.tracerFolder);
         end
         function this = set.attenuationCorrected(this, s)
             assert(islogical(s));
+            if (this.attenuationCorrected_ ~= s)
+                this.tracerFolder_ = '';
+            end
             this.attenuationCorrected_ = s;
         end
         function g    = get.frame(this)
@@ -289,12 +308,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             this.studyData_ = s;
         end
         function g    = get.tracer(this)
-            g = this.tracer_;
+            if (~isempty(this.tracer_))
+                g = this.tracer_;
+                return
+            end            
+            g = mlpet.DirToolTracer.folder2tracer(this.tracerFolder);
         end
         function this = set.tracer(this, t)
-            %% SET.TRACER updates this.tracer.
-            
             assert(ischar(t));
+            if (~strcmpi(this.tracer_, t))
+                this.tracerFolder_ = '';
+            end
             this.tracer_ = t;
         end
                 
@@ -441,12 +465,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             fqfn = fullfile(this.sessionLocation, ...
                             sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt));
-            this.ensureCTFqfilename(fqfn);
             obj = imagingType(ip.Results.typ, fqfn);
         end
         function dt   = datetime(this)
-            dtt = mlpet.DirToolTracer('tracer', this.tracerFolder, 'ac', this.attenuationCorrected_);
-            dt = datetime(dtt);
+            dt = mlpet.DirToolTracer.folder2datetime(this.tracerFolder);
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -568,7 +590,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});            
             ipr = ip.Results;
-            this.attenuationCorrected = ip.Results.ac;
+            this.attenuationCorrected_ = ip.Results.ac;
             this.tracer_  = ip.Results.tracer; 
             this.rnumber  = ip.Results.rnumber;
             this.snumber_ = ip.Results.snumber;
@@ -678,9 +700,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             %         'frame'        is numeric
             %         'projectFolder'
             %         'projectPath'
-            %         'projectPaths'
+            %         'projectsDir'
             %         'pnumber'      is char
-            %         'sessionDate'  is datetime
             %         'sessionFolder'
             %         'sessionPath'  is a path to the session data
             %         'snumber'      is numeric
@@ -699,9 +720,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'frame', nan,        @isnumeric);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
-            addParameter(ip, 'projectsDir', '',  @ischar);
+            addParameter(ip, 'projectsDir', '',   @ischar);
             addParameter(ip, 'pnumber', '',       @ischar);
-            addParameter(ip, 'sessionDate', NaT,  @isdatetime);
             addParameter(ip, 'sessionFolder', '', @ischar);
             addParameter(ip, 'sessionPath', '',   @ischar);
             addParameter(ip, 'snumber', nan,      @isnumeric);
@@ -709,7 +729,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'subjectFolder', '', @ischar);
             addParameter(ip, 'subjectPath', '',   @ischar);
             addParameter(ip, 'subjectsDir', '',   @(x) isdir(x) || isempty(x));
-            addParameter(ip, 'tracer', 'FDG',     @ischar);
+            addParameter(ip, 'tracer', '',        @ischar);
             addParameter(ip, 'tracerFolder', '',  @ischar);
             addParameter(ip, 'tracerPath', '',    @ischar);
             parse(ip, varargin{:});      
@@ -721,7 +741,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 [~,this.projectFolder_] = fileparts(ip.Results.projectPath);
             end
             this.pnumber_ = ip.Results.pnumber;
-            this.sessionDate_ = ip.Results.sessionDate;
             this.sessionFolder_ = ip.Results.sessionFolder;
             if (~isempty(ip.Results.sessionPath))
                 [~,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
