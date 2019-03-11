@@ -242,11 +242,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function this = set.attenuationCorrected(this, s)
             assert(islogical(s));
-            if (this.attenuationCorrected_ ~= s)
-                this.tracerFolder_ = '';
+            if (this.attenuationCorrected_ == s)
+                return
             end
+            this.tracerFolder_ = this.tracerFolderWithAC(s);
             this.attenuationCorrected_ = s;
-        end
+        end        
         function g    = get.frame(this)
             g = this.frame_;
         end
