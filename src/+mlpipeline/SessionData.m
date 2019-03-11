@@ -48,6 +48,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         region
         snumber
         studyData
+        taus
+        times
         tracer
     end
 
@@ -307,6 +309,21 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.studyData(this, s)
             assert(~isempty(s));
             this.studyData_ = s;
+        end
+        function g = get.taus(this)
+            if (lexist(this.tracerListmodeJson, 'file'))
+                j = jsondecode(fileread(this.tracerListmodeJson));
+                g = j.taus';
+                return
+            end
+            g = this.alternativeTaus;
+        end
+        function g = get.times(this)
+            t = this.taus;
+            g = zeros(size(t));
+            for ig = 1:length(t)-1
+                g(ig+1) = sum(t(1:ig));
+            end
         end
         function g    = get.tracer(this)
             if (~isempty(this.tracer_))
@@ -681,6 +698,43 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, this.subjectPath);
+        end        
+        function f    = tracerFolderWithAC(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'b', true, @islogical);            
+            parse(ip, varargin{:});
+            if (ip.Results.b)
+                if (this.attenuationCorrected_)
+                    f = this.tracerFolder;
+                    return
+                end
+                fsplit = strsplit(this.tracerFolder, '-NAC');
+                f = [fsplit{1} '-AC'];
+            else
+                if (~this.attenuationCorrected_)
+                    f = this.tracerFolder;
+                    return
+                end
+                fsplit = strsplit(this.tracerFolder, '-AC');
+                f = [fsplit{1} '-NAC'];
+            end
+        end
+        function obj  = tracerListmodeBf(this, varargin)
+            dt   = mlsystem.DirTool(fullfile(this.tracerPath, 'LM', '*.bf'));
+            assert(1 == length(dt.fqfns));
+            fqfn = dt.fqfns{1};            
+            obj  = this.fqfilenameObject(fqfn, varargin{:});
+        end
+        function obj  = tracerListmodeDcm(this, varargin)
+            dt   = mlsystem.DirTool(fullfile(this.tracerPath, 'LM', '*.dcm'));
+            assert(1 == length(dt.fqfns));
+            fqfn = dt.fqfns{1};            
+            obj  = this.fqfilenameObject(fqfn, varargin{:});
+        end
+        function f    = tracerListmodeJson(this)
+            dt = mlsystem.DirTool(fullfile(this.tracerOutputPetLocation, [upper(this.tracer) '_DT*.json']));
+            assert(1 == dt.length);
+            f = dt.fqfns{1};
         end
         function loc  = tracerLocation(this, varargin)
             ip = inputParser;
@@ -688,6 +742,24 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, this.tracerPath);
+        end
+        function loc  = tracerOutputLocation(this, varargin)
+            ipr = this.iprLocation(varargin{:});
+            loc = locationType(ipr.typ, ...
+                fullfile(this.tracerLocation(varargin{:}), this.outfolder, ''));
+        end
+        function loc  = tracerOutputPetLocation(this, varargin)
+            ipr = this.iprLocation(varargin{:});
+            loc = locationType(ipr.typ, ...
+                fullfile(this.tracerLocation(varargin{:}), this.outfolder, 'PET', ''));
+        end
+        function loc  = tracerOutputSingleFrameLocation(this, varargin)
+            ipr = this.iprLocation(varargin{:});
+            loc = locationType(ipr.typ, ...
+                fullfile(this.tracerOutputPetLocation(varargin{:}), 'single-frame', ''));
+        end
+        function f    = tracerPathWithAC(this, varargin)
+            f = fullfile(this.sessionPath, this.tracerFolderWithAC(varargin{:}));
         end
         function loc  = vallLocation(this, varargin)
             loc = this.subjectLocation(varargin{:});
@@ -807,6 +879,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             f = '';
             return
         end        
+    end
+    
+    methods (Access = protected)
+        function alternativeTaus(~) 
+            error('mlpipeline:NotImplementedError', 'SessionData.alternativeTaus');
+        end
     end
     
     %% PRIVATE
