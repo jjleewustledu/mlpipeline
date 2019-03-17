@@ -922,6 +922,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     end
     
     methods (Access = private)
+        function this = adjustAttenuationCorrectedFromTracerFolder(this)
+            if (contains(this.tracerFolder_, '-NAC'))
+                this.attenuationCorrected_ = false;
+            end
+            if (contains(this.tracerFolder_, '-AC'))
+                this.attenuationCorrected_ = true;
+            end
+        end
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
             msg = '';
