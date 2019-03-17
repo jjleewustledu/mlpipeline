@@ -312,6 +312,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             this.studyData_ = s;
         end
         function g = get.taus(this)
+            if (~isempty(this.taus_))
+                g = this.taus_;
+                return
+            end
             if (lexist(this.tracerListmodeJson, 'file'))
                 j = jsondecode(fileread(this.tracerListmodeJson));
                 g = j.taus';
@@ -734,7 +738,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function f    = tracerListmodeJson(this)
             dt = mlsystem.DirTool(fullfile(this.tracerOutputPetLocation, [upper(this.tracer) '_DT*.json']));
-            assert(1 == dt.length);
+            assert(1 == dt.length, [evalc('disp(dt)') '\n' evalc('disp(dt.fqfns)')]);
             f = dt.fqfns{1};
         end
         function loc  = tracerLocation(this, varargin)
@@ -839,6 +843,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if (~isempty(ip.Results.subjectsDir))
                 this.studyData_.subjectsDir = ip.Results.subjectsDir;
             end 
+            
+            % taus_            
+            if (lexist(this.tracerListmodeJson, 'file'))
+                j = jsondecode(fileread(this.tracerListmodeJson));
+                this.taus_ = j.taus';
+            end
         end
     end
 
@@ -855,6 +865,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         studyData_
         subjectFolder_
         snumber_
+        taus_
         tracer_
         tracerFolder_
     end
