@@ -121,6 +121,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.tracerFolder(this, s)
             assert(ischar(s));
             this.tracerFolder_ = s;
+            this = this.adjustAttenuationCorrectedFromTracerFolder;
         end
         
         function g    = get.sessionPath(this)
@@ -829,6 +830,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if (~isempty(ip.Results.tracerPath))
                 [~,this.tracerFolder_] = fileparts(ip.Results.tracerPath);
             end
+            this = this.adjustAttenuationCorrectedFromTracerFolder;
             
             % studyData_, some kind of registry
             if (~isempty(ip.Results.projectsDir))
