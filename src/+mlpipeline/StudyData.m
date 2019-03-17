@@ -34,8 +34,8 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyHandle
                 fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, mydatetimestr(now))));
         end
         function tf   = isChpcHostname(~)
-            [~,hn] = mlbash('hostname');
-            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login');
+            [~,hn] = hostname;
+            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login') || lstrfind(hn, 'cluster');
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;

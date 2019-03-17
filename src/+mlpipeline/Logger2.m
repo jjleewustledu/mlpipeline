@@ -144,7 +144,7 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
             this.includeTimeStamp_    = ip.Results.includeTimeStamp;
             
             this.creationDate_  = datestr(now, this.DATESTR_FORMAT);
-            [~,this.hostname_]  = mlbash('hostname');   this.hostname_ = strtrim(this.hostname_);
+            this.hostname_      = hostname;
             [~,this.id_]        = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
             [~,this.uname_]     = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
             this.cellArrayList_ = mlpatterns.CellArrayList;
