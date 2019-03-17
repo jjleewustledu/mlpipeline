@@ -751,17 +751,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function loc  = tracerOutputLocation(this, varargin)
             ipr = this.iprLocation(varargin{:});
             loc = locationType(ipr.typ, ...
-                fullfile(this.tracerLocation(varargin{:}), this.outfolder, ''));
+                fullfile(this.tracerPath, this.outfolder, ''));
         end
         function loc  = tracerOutputPetLocation(this, varargin)
             ipr = this.iprLocation(varargin{:});
             loc = locationType(ipr.typ, ...
-                fullfile(this.tracerLocation(varargin{:}), this.outfolder, 'PET', ''));
+                fullfile(this.tracerPath, this.outfolder, 'PET', ''));
         end
         function loc  = tracerOutputSingleFrameLocation(this, varargin)
             ipr = this.iprLocation(varargin{:});
             loc = locationType(ipr.typ, ...
-                fullfile(this.tracerOutputPetLocation(varargin{:}), 'single-frame', ''));
+                fullfile(this.tracerPath, this.outfolder, 'PET', 'single-frame', ''));
         end
         function f    = tracerPathWithAC(this, varargin)
             f = fullfile(this.sessionPath, this.tracerFolderWithAC(varargin{:}));
