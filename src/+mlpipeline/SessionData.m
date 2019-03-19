@@ -43,6 +43,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         absScatterCorrected
         attenuationCorrected
         frame
+        hasTracer
         isotope
         pnumber
         region
@@ -110,8 +111,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 g = this.tracerFolder_;
                 return
             end
-            assert(~isempty(this.tracer_));
-            assert(~isempty(this.attenuationCorrected_))
+            assert(~isempty(this.tracer_),               'mlpipeline:AssertionError', 'SessionData.get.tracerFolder');
+            assert(~isempty(this.attenuationCorrected_), 'mlpipeline:AssertionError', 'SessionData.get.tracerFolder')
             dtt = mlpet.DirToolTracer( ...
                 'tracer', fullfile(this.sessionPath, this.tracer_), ...
                 'ac', this.attenuationCorrected_);            
@@ -258,6 +259,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             assert(isnumeric(s));
             this.frame_ = s;
         end
+        function g    = get.hasTracer(this)
+            g = ~isempty(this.tracer_);
+        end
         function g    = get.isotope(this)
             tr = lower(this.tracer);
             
@@ -311,7 +315,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             assert(~isempty(s));
             this.studyData_ = s;
         end
-        function g = get.taus(this)
+        function g    = get.taus(this)
             if (~isempty(this.taus_))
                 g = this.taus_;
                 return
@@ -323,7 +327,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end
             g = this.alternativeTaus;
         end
-        function g = get.times(this)
+        function g    = get.times(this)
             t = this.taus;
             g = zeros(size(t));
             for ig = 1:length(t)-1
