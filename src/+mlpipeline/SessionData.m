@@ -633,6 +633,20 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 tf = this.fieldsequaln(obj);
             end
         end 
+        function loc  = logLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            if (~isempty(this.tracerFolder_))
+                loc = locationType(ip.Results.typ, fullfile(this.tracerPath, 'Log', ''));
+            else
+                loc = locationType(ip.Results.typ, fullfile(this.sessionPath, 'Log', ''));
+            end
+        end
+        function obj  = logObject(this, varargin)
+            obj = mlpipeline.Logger2(varargin{:});
+            obj.filepath = this.logLocation;
+        end  
         function loc  = mriLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -640,6 +654,18 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             loc = locationType(ip.Results.typ, fullfile(this.freesurferLocation, 'mri', ''));
         end
+        function obj  = mrObject(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
+            addParameter(ip, 'typ', 'fqfp', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(this.fslLocation, ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
+        end 
         function loc  = onAtlasLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
