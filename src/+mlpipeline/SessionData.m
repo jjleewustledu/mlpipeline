@@ -338,8 +338,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if (~isempty(this.tracer_))
                 g = this.tracer_;
                 return
-            end            
-            g = mlpet.DirToolTracer.folder2tracer(this.tracerFolder);
+            end   
+            % ask forgiveness not permission
+            try
+                g = mlpet.DirToolTracer.folder2tracer(this.tracerFolder);
+            catch ME
+                handwarning(ME);
+                g = '';
+            end
         end
         function this = set.tracer(this, t)
             assert(ischar(t));
