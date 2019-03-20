@@ -875,7 +875,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end 
             
             % taus_            
-            if (lexist(this.tracerListmodeJson, 'file'))
+            if (~isempty(this.tracerFolder_) && lexist(this.tracerListmodeJson, 'file'))
                 j = jsondecode(fileread(this.tracerListmodeJson));
                 this.taus_ = j.taus';
             end
