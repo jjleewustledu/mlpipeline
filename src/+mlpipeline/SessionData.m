@@ -43,7 +43,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         absScatterCorrected
         attenuationCorrected
         frame
-        hasTracer
         isotope
         pnumber
         region
@@ -258,9 +257,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.frame(this, s)
             assert(isnumeric(s));
             this.frame_ = s;
-        end
-        function g    = get.hasTracer(this)
-            g = ~isempty(this.tracer_);
         end
         function g    = get.isotope(this)
             tr = lower(this.tracer);
@@ -685,18 +681,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, fullfile(this.subjectsDir, 'OpAtlas'));
-        end 
-        function obj  = mrObject(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'fqfp', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(this.fslLocation, ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
         end 
         function loc  = petLocation(this, varargin)
             loc = this.tracerLocation(varargin{:});
