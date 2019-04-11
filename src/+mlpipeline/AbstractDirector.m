@@ -40,8 +40,8 @@ classdef AbstractDirector < mlpipeline.IDirector
 		  
  		function this = AbstractDirector(varargin)
  			%% ABSTRACTDIRECTOR
- 			%  @param builder is mlpipeline.IBuilder.
-            %  @param sessionData is mlxnat.Xnat.
+ 			%  @param required builder is mlpipeline.IBuilder.
+            %  @param sessionData is mlpipeline.ISessionData.
             %  @param xnat is mlxnat.Xnat.
  			
             ip = inputParser;
