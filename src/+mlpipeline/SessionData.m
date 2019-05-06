@@ -723,7 +723,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, this.subjectPath);
-        end        
+        end  
         function f    = tracerFolderWithAC(this, varargin)
             ip = inputParser;
             addOptional(ip, 'b', true, @islogical);            

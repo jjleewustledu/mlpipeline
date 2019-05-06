@@ -13,12 +13,6 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyHandle
         comments
     end
     
-    methods (Static)
-        function obj = instance(varargin)
-            obj = [];
-        end
-    end
-    
 	methods        
         
         %%
