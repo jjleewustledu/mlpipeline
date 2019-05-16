@@ -38,7 +38,7 @@ classdef StudyDataSingleton < handle & mlpipeline.StudyData
             %  @param [1] that is a mlpattern.CellComposite:  this replaces internal this.sessionDataComposite_ and returns.
             %  @param [1...N] that is a mlpipeline.SessionData:  
             %  this adds everything to this.sessionDataCompoaite_ and returns.
-            %  @param [1...N] that is a valid param for mlpipeline.IStudyHandle.assignSessionDataCompositeFromPaths:
+            %  @param [1...N] that is a valid param for mlpipeline.IStudyData.assignSessionDataCompositeFromPaths:
             %  this adds to this.sessionDataComposite_ according to assignSessionDataCompositeFromPaths.
             %  @returns this.
             
