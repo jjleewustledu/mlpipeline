@@ -20,8 +20,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         rawdataPath
         rawdataFolder % \in sessionFolder
         
-        tracerPath
-        tracerFolder % \in sessionFolder
+        scanPath
+        scanFolder % \in sessionFolder
         
         sessionPath
         sessionFolder % \in projectFolder
@@ -47,10 +47,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         pnumber
         region
         snumber
-        studyData
         taus
         times
         tracer
+        
+        studyData
+        subjectData
     end
 
     methods (Static)        
@@ -98,30 +100,30 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = 'rawdata';
         end
         
-        function g    = get.tracerPath(this)
-            g = fullfile(this.sessionPath, this.tracerFolder);
+        function g    = get.scanPath(this)
+            g = fullfile(this.sessionPath, this.scanFolder);
         end
-        function this = set.tracerPath(this, s)
+        function this = set.scanPath(this, s)
             assert(ischar(s));
-            [this.sessionPath,this.tracerFolder] = myfileparts(s);
+            [this.sessionPath,this.scanFolder] = myfileparts(s);
         end
-        function g    = get.tracerFolder(this)
-            if (~isempty(this.tracerFolder_))
-                g = this.tracerFolder_;
+        function g    = get.scanFolder(this)
+            if (~isempty(this.scanFolder_))
+                g = this.scanFolder_;
                 return
             end
-            assert(~isempty(this.tracer_),               'mlpipeline:AssertionError', 'SessionData.get.tracerFolder');
-            assert(~isempty(this.attenuationCorrected_), 'mlpipeline:AssertionError', 'SessionData.get.tracerFolder')
+            assert(~isempty(this.tracer_),               'mlpipeline:AssertionError', 'SessionData.get.scanFolder');
+            assert(~isempty(this.attenuationCorrected_), 'mlpipeline:AssertionError', 'SessionData.get.scanFolder')
             dtt = mlpet.DirToolTracer( ...
                 'tracer', fullfile(this.sessionPath, this.tracer_), ...
                 'ac', this.attenuationCorrected_);            
             assert(~isempty(dtt.dns));
             g = dtt.dns{1};
         end
-        function this = set.tracerFolder(this, s)
+        function this = set.scanFolder(this, s)
             assert(ischar(s));
-            this.tracerFolder_ = s;
-            this = this.adjustAttenuationCorrectedFromTracerFolder;
+            this.scanFolder_ = s;
+            this = this.adjustAttenuationCorrectedFromScanFolder;
         end
         
         function g    = get.sessionPath(this)
@@ -142,16 +144,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function g    = get.projectPath(this)
             g = fullfile(this.projectsPath, this.projectFolder);
         end
-        function this = set.projectPath(this, s)
-            assert(ischar(s));
-            [this.projectsPath,this.projectFolder] = fileparts(s);
-        end
         function g    = get.projectFolder(this)
-            g = this.projectFolder_;
-        end
-        function this = set.projectFolder(this, s)
-            assert(ischar(s));
-            this.projectFolder_ = s;
+            g = this.subjectData.getProjectFolder(this.sessionFolder);
         end
         
         function g    = get.projectsPath(this)
@@ -180,35 +174,35 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         
         function g    = get.subjectPath(this)
-            g = fullfile(this.subjectsPath, this.subjectFolder);
+            g = this.subjectData.subjectPath;
         end
         function this = set.subjectPath(this, s)
             assert(ischar(s));
-            [this.subjectsPath,this.subjectFolder] = fileparts(s);
+            this.subjectData.subjectPath = s;
         end
         function g    = get.subjectFolder(this)
-            g = this.subjectFolder_;
+            g = this.subjectData.subjectFolder;
         end        
         function this = set.subjectFolder(this, s)
             assert(ischar(s));
-            this.subjectFolder_ = s;            
+            this.subjectData.subjectFolder = s;            
         end
         
         function g    = get.subjectsPath(this)
-            g = this.studyData_.subjectsDir;
+            g = this.subjectsDir;
         end
         function this = set.subjectsPath(this, s)
+            this.subjectsDir = s;
+        end
+        function g    = get.subjectsDir(this)
+            g = this.studyData_.subjectsDir;
+        end
+        function this = set.subjectsDir(this, s)
             assert(ischar(s));
             this.studyData_.subjectsDir = s;
         end
-        function g    = get.subjectsDir(this)
-            g = this.subjectsPath;
-        end
-        function this = set.subjectsDir(this, s)
-            this.subjectsPath = s;
-        end
         function g    = get.subjectsFolder(this)
-            g = this.subjectsPath;
+            g = this.subjectsDir;
             if (strcmp(g(end), filesep))
                 g = g(1:end-1);
             end
@@ -216,10 +210,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function this = set.subjectsFolder(this, s)
             assert(ischar(s));
-            this.studyData_.subjectsDir = fullfile(fileparts(this.subjectsPath), s, '');            
+            this.studyData_.subjectsDir = fullfile(fileparts(this.subjectsDir), s, '');            
         end
-        
-        %% GET/GET
         
         function g    = get.absScatterCorrected(this)
             if (this.useNiftyPet)
@@ -241,14 +233,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 g = this.attenuationCorrected_;
                 return
             end
-            g = mlpet.DirToolTracer.folder2ac(this.tracerFolder);
+            g = mlpet.DirToolTracer.folder2ac(this.scanFolder);
         end
         function this = set.attenuationCorrected(this, s)
             assert(islogical(s));
             if (this.attenuationCorrected_ == s)
                 return
             end
-            this.tracerFolder_ = this.tracerFolderWithAC(s);
+            this.scanFolder_ = this.scanFolderWithAC(s);
             this.attenuationCorrected_ = s;
         end        
         function g    = get.frame(this)
@@ -304,13 +296,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             assert(isnumeric(s));
             this.snumber_ = s;
         end
-        function g    = get.studyData(this)
-            g = this.studyData_;
-        end
-        function this = set.studyData(this, s)
-            assert(~isempty(s));
-            this.studyData_ = s;
-        end
         function g    = get.taus(this)
             if (~isempty(this.taus_))
                 g = this.taus_;
@@ -337,7 +322,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end   
             % ask forgiveness not permission
             try
-                g = mlpet.DirToolTracer.folder2tracer(this.tracerFolder);
+                g = mlpet.DirToolTracer.folder2tracer(this.scanFolder);
             catch ME
                 handwarning(ME);
                 g = '';
@@ -346,9 +331,24 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.tracer(this, t)
             assert(ischar(t));
             if (~strcmpi(this.tracer_, t))
-                this.tracerFolder_ = '';
+                this.scanFolder_ = '';
             end
             this.tracer_ = t;
+        end
+        
+        function g    = get.studyData(this)
+            g = this.studyData_;
+        end
+        function this = set.studyData(this, s)
+            assert(isa(s, 'mlpipeline.IStudyData'));
+            this.studyData_ = s;
+        end
+        function g    = get.subjectData(this)
+            g = this.subjectData_;
+        end
+        function this = set.subjectData(this, s)
+            assert(isa(s, 'mlpipeline.ISubjectData'));
+            this.subjectData_ = s;
         end
                 
         %% IMRData
@@ -497,7 +497,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             obj = imagingType(ip.Results.typ, fqfn);
         end
         function dt   = datetime(this)
-            dt = mlpet.DirToolTracer.folder2datetime(this.tracerFolder);
+            dt = mlpet.DirToolTracer.folder2datetime(this.scanFolder);
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -639,8 +639,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
-            if (~isempty(this.tracerFolder_))
-                loc = locationType(ip.Results.typ, fullfile(this.tracerPath, 'Log', ''));
+            if (~isempty(this.scanFolder_))
+                loc = locationType(ip.Results.typ, fullfile(this.scanPath, 'Log', ''));
             else
                 loc = locationType(ip.Results.typ, fullfile(this.sessionPath, 'Log', ''));
             end
@@ -710,6 +710,29 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function loc  = regionLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
         end   
+        function f    = scanFolderWithAC(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'b', true, @islogical);            
+            parse(ip, varargin{:});
+            if (ip.Results.b)
+                if (this.attenuationCorrected_)
+                    f = this.scanFolder;
+                    return
+                end
+                fsplit = strsplit(this.scanFolder, '-NAC');
+                f = [fsplit{1} '-AC'];
+            else
+                if (~this.attenuationCorrected_)
+                    f = this.scanFolder;
+                    return
+                end
+                fsplit = strsplit(this.scanFolder, '-AC');
+                f = [fsplit{1} '-NAC'];
+            end
+        end
+        function f    = scanPathWithAC(this, varargin)
+            f = fullfile(this.sessionPath, this.scanFolderWithAC(varargin{:}));
+        end
         function loc  = sessionLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -724,34 +747,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             loc = locationType(ip.Results.typ, this.subjectPath);
         end  
-        function f    = tracerFolderWithAC(this, varargin)
-            ip = inputParser;
-            addOptional(ip, 'b', true, @islogical);            
-            parse(ip, varargin{:});
-            if (ip.Results.b)
-                if (this.attenuationCorrected_)
-                    f = this.tracerFolder;
-                    return
-                end
-                fsplit = strsplit(this.tracerFolder, '-NAC');
-                f = [fsplit{1} '-AC'];
-            else
-                if (~this.attenuationCorrected_)
-                    f = this.tracerFolder;
-                    return
-                end
-                fsplit = strsplit(this.tracerFolder, '-AC');
-                f = [fsplit{1} '-NAC'];
-            end
-        end
         function obj  = tracerListmodeBf(this, varargin)
-            dt   = mlsystem.DirTool(fullfile(this.tracerPath, 'LM', '*.bf'));
+            dt   = mlsystem.DirTool(fullfile(this.scanPath, 'LM', '*.bf'));
             assert(1 == length(dt.fqfns));
             fqfn = dt.fqfns{1};            
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
         function obj  = tracerListmodeDcm(this, varargin)
-            dt   = mlsystem.DirTool(fullfile(this.tracerPath, 'LM', '*.dcm'));
+            dt   = mlsystem.DirTool(fullfile(this.scanPath, 'LM', '*.dcm'));
             assert(1 == length(dt.fqfns));
             fqfn = dt.fqfns{1};            
             obj  = this.fqfilenameObject(fqfn, varargin{:});
@@ -766,25 +769,22 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
-            loc = locationType(ip.Results.typ, this.tracerPath);
+            loc = locationType(ip.Results.typ, this.scanPath);
         end
         function loc  = tracerOutputLocation(this, varargin)
             ipr = this.iprLocation(varargin{:});
             loc = locationType(ipr.typ, ...
-                fullfile(this.tracerPath, this.outfolder, ''));
+                fullfile(this.scanPath, this.outfolder, ''));
         end
         function loc  = tracerOutputPetLocation(this, varargin)
             ipr = this.iprLocation(varargin{:});
             loc = locationType(ipr.typ, ...
-                fullfile(this.tracerPath, this.outfolder, 'PET', ''));
+                fullfile(this.scanPath, this.outfolder, 'PET', ''));
         end
         function loc  = tracerOutputSingleFrameLocation(this, varargin)
             ipr = this.iprLocation(varargin{:});
             loc = locationType(ipr.typ, ...
-                fullfile(this.tracerPath, this.outfolder, 'PET', 'single-frame', ''));
-        end
-        function f    = tracerPathWithAC(this, varargin)
-            f = fullfile(this.sessionPath, this.tracerFolderWithAC(varargin{:}));
+                fullfile(this.scanPath, this.outfolder, 'PET', 'single-frame', ''));
         end
         function loc  = vallLocation(this, varargin)
             loc = this.subjectLocation(varargin{:});
@@ -796,20 +796,27 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             %         'abs'          is logical
             %         'ac'           is logical
             %         'frame'        is numeric
-            %         'projectFolder'
-            %         'projectPath'
-            %         'projectsDir'
             %         'pnumber'      is char
-            %         'sessionFolder'
-            %         'sessionPath'  is a path to the session data
             %         'snumber'      is numeric
-            %         'studyData'    is a mlpipeline.StudyData
-            %         'subjectFolder'
-            %         'subjectPath'
-            %         'subjectsDir'  is dir
             %         'tracer'       is char
-            %         'tracerFolder' is char
-            %         'tracerPath'
+            %
+            %         'studyData'    is a mlpipeline.IStudyData
+            %         'subjectsDir'  <-> env SUBJECTS_DIR
+            %         'projectsDir'  <-> env PROJECTS_DIR
+            %
+            %         'projectPath'
+            %         'projectFolder'
+            %
+            %         'subjectData'  is a mlpipeline.ISubjectData
+            %         'subjectPath'
+            %         'subjectFolder'
+            %
+            %         'sessionPath'
+            %         'sessionFolder'
+            %
+            %        ('scanData'     is a mlpipeline.IScanData)
+            %         'scanPath'
+            %         'scanFolder'
 
             ip = inputParser;
             ip.KeepUnmatched = true;
@@ -823,49 +830,65 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'sessionFolder', '', @ischar);
             addParameter(ip, 'sessionPath', '',   @ischar);
             addParameter(ip, 'snumber', nan,      @isnumeric);
-            addParameter(ip, 'studyData',         @(x) ~isempty(x));
+            addParameter(ip, 'studyData', []);
+            addParameter(ip, 'subjectData', []);
             addParameter(ip, 'subjectFolder', '', @ischar);
             addParameter(ip, 'subjectPath', '',   @ischar);
             addParameter(ip, 'subjectsDir', '',   @(x) isdir(x) || isempty(x));
             addParameter(ip, 'tracer', '',        @ischar);
-            addParameter(ip, 'tracerFolder', '',  @ischar);
-            addParameter(ip, 'tracerPath', '',    @ischar);
+            addParameter(ip, 'scanFolder', '',    @ischar);
+            addParameter(ip, 'scanPath', '',    @ischar);
             parse(ip, varargin{:});      
+            
             this.absScatterCorrected_ = ip.Results.abs;
             this.attenuationCorrected_ = ip.Results.ac;
-            this.frame_ = ip.Results.frame;
-            this.projectFolder_ = ip.Results.projectFolder;
-            if (~isempty(ip.Results.projectPath))
-                [~,this.projectFolder_] = fileparts(ip.Results.projectPath);
+            this.frame_ = ip.Results.frame;            
+            this.pnumber_ = ip.Results.pnumber;            
+            this.snumber_ = ip.Results.snumber;   
+            this.tracer_ = ip.Results.tracer;
+            
+            %% mlpipeline.StudyData, some kind of registry
+            
+            this.studyData_ = ip.Results.studyData;
+            if (~isempty(this.studyData_))
+                if (~isempty(ip.Results.projectsDir))
+                    this.studyData_.projectsDir = ip.Results.projectsDir;
+                end 
+                if (~isempty(ip.Results.subjectsDir))
+                    this.studyData_.subjectsDir = ip.Results.subjectsDir;
+                end 
             end
-            this.pnumber_ = ip.Results.pnumber;
+            
+            %% mlpipeline.SubjectData, implicitly mlpipeline.ProjectData
+            
+            this.subjectData_ = ip.Results.subjectData;
+            if (~isempty(this.subjectData_))  
+                if (~isempty(ip.Results.subjectFolder))
+                    this.subjectData_.subjectFolder = ip.Results.subjectFolder;
+                end
+                if (~isempty(ip.Results.subjectPath))
+                    this.subjectData_.subjectPath = ip.Results.subjectPath;
+                end
+            end
+            
+            %% mlpipeline.SessionData
+            
             this.sessionFolder_ = ip.Results.sessionFolder;
             if (~isempty(ip.Results.sessionPath))
                 [~,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
             end 
-            this.snumber_ = ip.Results.snumber;      
-            this.studyData_ = ip.Results.studyData;
-            this.subjectFolder_        = ip.Results.subjectFolder;
-            if (~isempty(ip.Results.subjectPath))
-                [~,this.subjectFolder_] = fileparts(ip.Results.subjectFolder);
-            end
-            this.tracer_               = ip.Results.tracer;
-            this.tracerFolder_         = ip.Results.tracerFolder;
-            if (~isempty(ip.Results.tracerPath))
-                [~,this.tracerFolder_] = fileparts(ip.Results.tracerPath);
-            end
-            this = this.adjustAttenuationCorrectedFromTracerFolder;
             
-            % studyData_, some kind of registry
-            if (~isempty(ip.Results.projectsDir))
-                this.studyData_.projectsDir = ip.Results.projectsDir;
-            end 
-            if (~isempty(ip.Results.subjectsDir))
-                this.studyData_.subjectsDir = ip.Results.subjectsDir;
-            end 
+            %% (mlpipeline.ScanData)
             
-            % taus_            
-            if (~isempty(this.tracerFolder_) && lexist(this.tracerListmodeJson, 'file'))
+            this.scanFolder_ = ip.Results.scanFolder;
+            if (~isempty(ip.Results.scanPath))
+                [~,this.scanFolder_] = fileparts(ip.Results.scanPath);
+            end
+            this = this.adjustAttenuationCorrectedFromScanFolder;            
+            
+            %% taus_
+            
+            if (~isempty(this.scanFolder_) && lexist(this.tracerListmodeJson, 'file'))
                 j = jsondecode(fileread(this.tracerListmodeJson));
                 this.taus_ = j.taus';
             end
@@ -881,13 +904,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         pnumber_
         projectFolder_
         region_
+        scanFolder_
         sessionFolder_
         studyData_
-        subjectFolder_
+        subjectData_
         snumber_
         taus_
         tracer_
-        tracerFolder_
     end
     
     methods (Static, Access = protected)
@@ -942,11 +965,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     end
     
     methods (Access = private)
-        function this = adjustAttenuationCorrectedFromTracerFolder(this)
-            if (contains(this.tracerFolder_, '-NAC'))
+        function this = adjustAttenuationCorrectedFromScanFolder(this)
+            if (contains(this.scanFolder_, '-NAC'))
                 this.attenuationCorrected_ = false;
             end
-            if (contains(this.tracerFolder_, '-AC'))
+            if (contains(this.scanFolder_, '-AC'))
                 this.attenuationCorrected_ = true;
             end
         end

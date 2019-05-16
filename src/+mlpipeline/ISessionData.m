@@ -19,8 +19,8 @@ classdef (Abstract) ISessionData
         rawdataPath
         rawdataFolder % \in sessionFolder
         
-        tracerPath
-        tracerFolder % \in sessionFolder
+        scanPath
+        scanFolder % \in sessionFolder
         
         sessionPath
         sessionFolder % \in projectFolder
@@ -44,9 +44,13 @@ classdef (Abstract) ISessionData
         frame
         isotope
         region
-        studyData
         tracer
         useNiftyPet  
+        
+        studyData
+        %projectData
+        subjectData
+        %scanDataList
     end
     
 	methods (Abstract)
