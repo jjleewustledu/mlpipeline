@@ -1,4 +1,4 @@
-classdef (Abstract) StudyData < handle & mlpipeline.IStudyHandle
+classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
 	%% STUDYDATA  
 
 	%  $Revision$
@@ -33,7 +33,7 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyHandle
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.subjectsDir, @isdir);
+            addOptional(ip, 'path', this.projectsDir, @isdir);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, sprintf('%s_workspace_%s.mat', mfilename, mydatetimestr(now)));
             save(loc);
