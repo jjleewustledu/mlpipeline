@@ -48,9 +48,8 @@ classdef (Abstract) ISessionData
         useNiftyPet  
         
         studyData
-        %projectData
+        projectData
         subjectData
-        %scanDataList
     end
     
 	methods (Abstract)

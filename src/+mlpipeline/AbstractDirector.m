@@ -64,6 +64,16 @@ classdef AbstractDirector < mlpipeline.IDirector
         builder_
         xnat_
     end
+    
+    %% HIDDEN
+    
+    methods (Hidden)
+        function this = setBuilder__(this, s)
+            %% for testing, debugging
+            
+            this.builder_ = s;
+        end
+    end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
     
