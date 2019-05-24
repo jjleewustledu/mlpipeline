@@ -44,6 +44,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         attenuationCorrected
         frame
         isotope
+        noclobber
         pnumber
         region
         snumber
@@ -52,6 +53,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         tracer
         
         studyData
+        projectData
         subjectData
     end
 
@@ -269,6 +271,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             error('mlpipeline:indeterminatePropertyValue', ...
                 'SessionData.isotope could not recognize tracer %s', this.sessionData.tracer);
         end
+        function g    = get.noclobber(this)
+            g = this.studyData.noclobber;
+        end
         function g    = get.pnumber(this)
             if (~isempty(this.pnumber_))
                 g = this.pnumber_;
@@ -342,6 +347,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.studyData(this, s)
             assert(isa(s, 'mlpipeline.IStudyData'));
             this.studyData_ = s;
+        end
+        function g    = get.projectData(this)
+            g = this.subjectData_.projectData;
         end
         function g    = get.subjectData(this)
             g = this.subjectData_;
@@ -759,10 +767,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             fqfn = dt.fqfns{1};            
             obj  = this.fqfilenameObject(fqfn, varargin{:});
         end
-        function f    = tracerListmodeJson(this)
-            dt = mlsystem.DirTool(fullfile(this.tracerOutputPetLocation, [upper(this.tracer) '_DT*.json']));
-            assert(1 == dt.length, [evalc('disp(dt)') '\n' evalc('disp(dt.fqfns)')]);
-            f = dt.fqfns{1};
+        function f    = tracerListmodeJson(this)            
+            glob_expr = fullfile(this.tracerOutputPetLocation, [upper(this.tracer) '_DT*.json']);
+            try
+                dt = mlsystem.DirTool(glob_expr);
+                assert(1 == dt.length, [evalc('disp(dt)') '\n' evalc('disp(dt.fqfns)')]);
+                f = dt.fqfns{1};
+            catch ME
+                warning('mlpipeline:RuntimeWarning', 'SessionData.tracerListmodeJson could not find %s', glob_expr);
+                handwarning(ME);
+                f = '';
+            end
         end
         function loc  = tracerLocation(this, varargin)
             ip = inputParser;
@@ -878,7 +893,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 [~,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
             end 
             
-            %% (mlpipeline.ScanData)
+            %% (proposing mlpipeline.ScanData)
             
             this.scanFolder_ = ip.Results.scanFolder;
             if (~isempty(ip.Results.scanPath))
