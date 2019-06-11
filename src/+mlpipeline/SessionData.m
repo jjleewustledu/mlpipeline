@@ -180,14 +180,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function this = set.subjectPath(this, s)
             assert(ischar(s));
-            this.subjectData.subjectPath = s;
+            this.subjectData_.subjectPath = s;
         end
         function g    = get.subjectFolder(this)
             g = this.subjectData.subjectFolder;
         end        
         function this = set.subjectFolder(this, s)
             assert(ischar(s));
-            this.subjectData.subjectFolder = s;            
+            this.subjectData_.subjectFolder = s;            
         end
         
         function g    = get.subjectsPath(this)
@@ -353,10 +353,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function g    = get.subjectData(this)
             g = this.subjectData_;
-        end
-        function this = set.subjectData(this, s)
-            assert(isa(s, 'mlpipeline.ISubjectData'));
-            this.subjectData_ = s;
         end
                 
         %% IMRData
