@@ -7,25 +7,14 @@ classdef (Abstract) ISubjectData
  	%% It was developed on Matlab 9.5.0.1067069 (R2018b) Update 4 for MACI64.  Copyright 2019 John Joowon Lee.
  	
 	properties (Abstract)
-        TRACERS
-        EXTS
+        projectData
+        projectsDir
         
+ 		subjectsStruct 
  		subjectFolder
         subjectPath
-        subjectsDir
- 		subjectsStruct 
-        
-        projectsDir
+        subjectsDir	
  	end
-
-	methods (Abstract)
-        
-        % XNAT -> BIDS
-        ses = experimentID_to_ses(this, eid)
-        fld = getProjectFolder(this, ses)
-        pth = getProjectPath(this, ses)
-        sub = subjectID_to_sub(this, sid) 
-  	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end

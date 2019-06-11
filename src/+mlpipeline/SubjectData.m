@@ -1,4 +1,4 @@
-classdef SubjectData 
+classdef SubjectData < mlpipeline.ISubjectData
 	%% SUBJECTDATA  
 
 	%  $Revision$

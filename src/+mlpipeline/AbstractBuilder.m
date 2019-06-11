@@ -243,7 +243,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
         end
         function tf   = receivedCtor(~, varargin)
             tf = (1 == length(varargin)) && ...
-                 isa(varargin{1}, 'mlpipeline.AbstractBuilder');
+                 isa(varargin{1}, 'mlpipeline.IBuilder');
         end
     end
     
