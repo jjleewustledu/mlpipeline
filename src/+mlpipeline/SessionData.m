@@ -815,7 +815,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             %         'snumber'      is numeric
             %         'tracer'       is char
             %
-            %         'studyData'    is a mlpipeline.IStudyData
+            %         'studyData'    is a mlpipeline.IStudyData; legacy support; prefer using subjectData
             %         'subjectsDir'  <-> env SUBJECTS_DIR
             %         'projectsDir'  <-> env PROJECTS_DIR
             %
@@ -840,64 +840,63 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'frame', nan,        @isnumeric);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
-            addParameter(ip, 'projectsDir', '',   @ischar);
+            addParameter(ip, 'projectsDir', '',   @(x) isdir(x) || isempty(x));
             addParameter(ip, 'pnumber', '',       @ischar);
             addParameter(ip, 'sessionFolder', '', @ischar);
             addParameter(ip, 'sessionPath', '',   @ischar);
             addParameter(ip, 'snumber', nan,      @isnumeric);
-            addParameter(ip, 'studyData', []);
+            addParameter(ip, 'studyData', []); 
             addParameter(ip, 'subjectData', []);
             addParameter(ip, 'subjectFolder', '', @ischar);
             addParameter(ip, 'subjectPath', '',   @ischar);
             addParameter(ip, 'subjectsDir', '',   @(x) isdir(x) || isempty(x));
             addParameter(ip, 'tracer', '',        @ischar);
             addParameter(ip, 'scanFolder', '',    @ischar);
-            addParameter(ip, 'scanPath', '',    @ischar);
-            parse(ip, varargin{:});      
+            addParameter(ip, 'scanPath', '',      @ischar);
+            parse(ip, varargin{:}); 
+            ipr = ip.Results;
             
-            this.absScatterCorrected_ = ip.Results.abs;
-            this.attenuationCorrected_ = ip.Results.ac;
-            this.frame_ = ip.Results.frame;            
-            this.pnumber_ = ip.Results.pnumber;            
-            this.snumber_ = ip.Results.snumber;   
-            this.tracer_ = ip.Results.tracer;
-            
-            %% mlpipeline.StudyData, some kind of registry
-            
-            this.studyData_ = ip.Results.studyData;
-            if (~isempty(this.studyData_))
-                if (~isempty(ip.Results.projectsDir))
-                    this.studyData_.projectsDir = ip.Results.projectsDir;
-                end 
-                if (~isempty(ip.Results.subjectsDir))
-                    this.studyData_.subjectsDir = ip.Results.subjectsDir;
-                end 
+            this.absScatterCorrected_ = ipr.abs;
+            this.attenuationCorrected_ = ipr.ac;
+            this.frame_ = ipr.frame;            
+            this.pnumber_ = ipr.pnumber;  
+            if ~isempty(ipr.projectsDir)
+                setenv('PROJECTS_DIR', ipr.projectsDir)
+            end          
+            this.snumber_ = ipr.snumber;   
+            if ~isempty(ipr.subjectsDir)
+                setenv('SUBJECTS_DIR', ipr.subjectsDir)
             end
+            this.tracer_ = ipr.tracer;
+            
+            %% mlpipeline.StudyData, some kind of registry; legacy support
+            
+            this.studyData_ = ipr.studyData;
             
             %% mlpipeline.SubjectData, implicitly mlpipeline.ProjectData
             
-            this.subjectData_ = ip.Results.subjectData;
+            this.subjectData_ = ipr.subjectData;
             if (~isempty(this.subjectData_))  
-                if (~isempty(ip.Results.subjectFolder))
-                    this.subjectData_.subjectFolder = ip.Results.subjectFolder;
+                if (~isempty(ipr.subjectFolder))
+                    this.subjectData_.subjectFolder = ipr.subjectFolder;
                 end
-                if (~isempty(ip.Results.subjectPath))
-                    this.subjectData_.subjectPath = ip.Results.subjectPath;
+                if (~isempty(ipr.subjectPath))
+                    this.subjectData_.subjectPath = ipr.subjectPath;
                 end
             end
             
             %% mlpipeline.SessionData
             
-            this.sessionFolder_ = ip.Results.sessionFolder;
-            if (~isempty(ip.Results.sessionPath))
-                [~,this.sessionFolder_] = fileparts(ip.Results.sessionPath);
+            this.sessionFolder_ = ipr.sessionFolder;
+            if (~isempty(ipr.sessionPath))
+                [~,this.sessionFolder_] = fileparts(ipr.sessionPath);
             end 
             
             %% (proposing mlpipeline.ScanData)
             
-            this.scanFolder_ = ip.Results.scanFolder;
-            if (~isempty(ip.Results.scanPath))
-                [~,this.scanFolder_] = fileparts(ip.Results.scanPath);
+            this.scanFolder_ = ipr.scanFolder;
+            if (~isempty(ipr.scanPath))
+                [~,this.scanFolder_] = fileparts(ipr.scanPath);
             end
             this = this.adjustAttenuationCorrectedFromScanFolder;            
             
@@ -921,7 +920,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         region_
         scanFolder_
         sessionFolder_
-        studyData_
+        studyData_ % legacy support
         subjectData_
         snumber_
         taus_
