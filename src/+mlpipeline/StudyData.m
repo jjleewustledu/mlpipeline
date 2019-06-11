@@ -12,6 +12,7 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         atlVoxelSize
         dicomExtension
         noclobber
+        referenceTracer
         
         rawdataDir
         projectsDir
@@ -36,6 +37,10 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         function g = get.noclobber(this)
             g = this.registryInstance.noclobber;
         end
+        function g = get.referenceTracer(this)
+            g = this.registryInstance.referenceTracer;
+        end
+        
         function g = get.rawdataDir(this)
             g = this.registryInstance.rawdataDir;
         end
@@ -85,7 +90,7 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
             addParameter(ip, 'YeoDir', '', @ischar);
             parse(ip, varargin{:});
             
-            this.registryInstance = mlraichle.RaichleRegistry.instance();
+            this.registryInstance = ip.Results.registry;
             if ~isempty(ip.Results.dicomExtension)
                 this.registryInstance.dicomExtension = ip.Results.dicomExtension;
             end
