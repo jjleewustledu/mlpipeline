@@ -9,15 +9,14 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
  	    
     properties (Dependent)
-        atlVoxelSize
-        dicomExtension
-        noclobber
-        referenceTracer
-        
         rawdataDir
         projectsDir
         subjectsDir
         YeoDir
+        
+        atlVoxelSize
+        noclobber
+        referenceTracer        
     end
     
     properties
@@ -28,31 +27,28 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         
         %% GET
         
-        function g = get.atlVoxelSize(this)
-            g = this.registryInstance.atlVoxelSize;            
-        end
-        function g = get.dicomExtension(this)
-            g = this.registryInstance.dicomExtension;
-        end
-        function g = get.noclobber(this)
-            g = this.registryInstance.noclobber;
-        end
-        function g = get.referenceTracer(this)
-            g = this.registryInstance.referenceTracer;
-        end
-        
         function g = get.rawdataDir(this)
-            g = this.registryInstance.rawdataDir;
+            g = this.registry_.rawdataDir;
         end
         function g = get.projectsDir(this)
-            g = this.registryInstance.projectsDir;
+            g = this.registry_.projectsDir;
         end
         function g = get.subjectsDir(this)
-            g = this.registryInstance.subjectsDir;
+            g = this.registry_.subjectsDir;
         end
         function g = get.YeoDir(this)
-            g = this.registryInstance.YeoDir;
-        end       
+            g = this.registry_.YeoDir;
+        end  
+        
+        function g = get.atlVoxelSize(this)
+            g = this.registry_.atlVoxelSize;            
+        end
+        function g = get.noclobber(this)
+            g = this.registry_.noclobber;
+        end
+        function g = get.referenceTracer(this)
+            g = this.registry_.referenceTracer;
+        end     
         
         %%
         
@@ -83,59 +79,15 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
  		function this = StudyData(varargin)
             ip = inputParser;
             addRequired( ip, 'registry')
-            addParameter(ip, 'dicomExtension', '', @ischar);
-            addParameter(ip, 'rawdataDir', '', @ischar);
-            addParameter(ip, 'projectsDir', '', @ischar);
-            addParameter(ip, 'subjectsDir', '', @ischar);
-            addParameter(ip, 'YeoDir', '', @ischar);
             parse(ip, varargin{:});
-            
-            this.registryInstance = ip.Results.registry;
-            if ~isempty(ip.Results.dicomExtension)
-                this.registryInstance.dicomExtension = ip.Results.dicomExtension;
-            end
-            if ~isempty(ip.Results.rawdataDir)
-                this.registryInstance.rawdataDir = ip.Results.rawdataDir;
-            end
-            if ~isempty(ip.Results.projectsDir)
-                this.registryInstance.projectsDir = ip.Results.projectsDir;
-            end
-            if ~isempty(ip.Results.subjectsDir)
-                this.registryInstance.subjectsDir = ip.Results.subjectsDir;
-            end
-            if ~isempty(ip.Results.YeoDir)
-                this.registryInstance.YeoDir = ip.Results.YeoDir;
-            end
+            this.registry_ = ip.Results.registry;
         end 
     end
     
     %% PROTECTED
     
     properties (Access = protected)
-        registryInstance
-    end
-    
-    %% HIDDEN LEGACY
-    
-    methods
-        function a    = seriesDicomAsterisk(this, fqdn)
-            assert(isdir(fqdn));
-            assert(isdir(fullfile(fqdn, 'DICOM')));
-            a = fullfile(fqdn, 'DICOM', ['*' this.dicomExtension]);
-        end        
-        function f    = subjectsDirFqdns(this)
-            if (isempty(this.subjectsDir))
-                f = {};
-                return
-            end            
-            dt = mlsystem.DirTools(this.subjectsDir);
-            f = {};
-            for di = 1:length(dt.dns)
-                if (strncmp(dt.dns{di}, 'sub-', 4))
-                    f = [f dt.fqdns(di)]; %#ok<AGROW>
-                end
-            end
-        end
+        registry_
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
