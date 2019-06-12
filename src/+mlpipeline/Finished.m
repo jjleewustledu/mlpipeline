@@ -46,7 +46,7 @@ classdef Finished < handle
             %  @param named path is a filesystem path.
             %  @param named tag is a string.
 
-            res = mlpet.Resources.instance;
+            res = mlpipeline.ResourcesRegistry.instance();
             ip = inputParser;
             addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IBuilder') || isa(x, 'mlpipeline.IHandleBuilder'));
             addParameter(ip, 'path', pwd, @isdir);

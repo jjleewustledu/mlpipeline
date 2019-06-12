@@ -32,7 +32,7 @@ classdef (Abstract) AbstractHandleBuilder < handle & matlab.mixin.Copyable & mlp
             g = this.finished_.ignoreFinishMark;
         end
         function g = get.keepForensics(~)
-            g = mlnipet.Resources.instance.keepForensics;
+            g = mlpipeline.ResourcesRegistry.instance().keepForensics;
         end
         function g = get.neverMarkFinished(this)
             g = this.finished_.neverMarkFinished;
@@ -59,7 +59,7 @@ classdef (Abstract) AbstractHandleBuilder < handle & matlab.mixin.Copyable & mlp
         end
         function set.keepForensics(~, s)
             assert(islogical(s));
-            inst = mlnipet.Resources.instance;
+            inst = mlpipeline.ResourcesRegistry.instance();
             inst.keepForensics = s;            
         end
         function set.neverMarkFinished(this, s)
