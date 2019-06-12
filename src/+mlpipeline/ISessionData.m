@@ -1,20 +1,20 @@
 classdef (Abstract) ISessionData
-	%% ISESSIONDATA  
+	%% ISESSIONDATA 
 
 	%  $Revision$
  	%  was created 28-Jan-2016 22:45:12
  	%  by jjlee,
  	%  last modified $LastChangedDate$
- 	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
+ 	%  and checked into repository /Users/jjlee/MATLAB-Drive/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
 	
 	properties (Abstract)
-        project
-        subject
-        session
-        scan
-        resources
-        assessors   
+        projectData
+        subjectData
+        %sessionData
+        %scanData
+        %assessorData
+        %resourceData
         
         rawdataPath
         rawdataFolder % \in sessionFolder
@@ -46,21 +46,17 @@ classdef (Abstract) ISessionData
         region
         tracer
         useNiftyPet  
-        
-        studyData
-        projectData
-        subjectData
     end
     
 	methods (Abstract)
-        obj = ctObject(this)
-        dt  = datetime(this)
-        obj = fqfilenameObject(this)
-        obj = freesurferObject(this)
-        tf  = isequal(this)
-        tf  = isequaln(this)
-        obj = mrObject(this)
-        obj = petObject(this)
+        obj  = ctObject(this)
+        obj  = mrObject(this)
+        obj  = petObject(this)
+        dt   = datetime(this)
+        obj  = fqfilenameObject(this)
+        obj  = freesurferObject(this)
+        tf   = isequal(this)
+        tf   = isequaln(this)
  	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

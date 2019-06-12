@@ -34,7 +34,6 @@ classdef (Abstract) DicomSorter
 	properties (Dependent)
  		buildVisitor
         dcmConverter
-        dicomExtension
         sessionData
         studyData
     end
@@ -48,9 +47,6 @@ classdef (Abstract) DicomSorter
         end
         function g    = get.dcmConverter(this)
             g = this.getDcmConverter;
-        end
-        function g    = get.dicomExtension(this)
-            g = this.studyData.dicomExtension;
         end
         function sd   = get.sessionData(this)
             sd = this.sessionData_;
@@ -97,7 +93,7 @@ classdef (Abstract) DicomSorter
                     infos  = cell(1, length(fqdns));
                     for iseries = 1:length(fqdns)
                         try
-                            dcms = DirTool(fullfile(fqdns{iseries}, 'DICOM', ['*' this.dicomExtension]));
+                            dcms = DirTool(fullfile(fqdns{iseries}, 'DICOM', ['*' mlpipeline.ResourcesRegistry.instance().dicomExtension]));
                             if (~isempty(dcms.fqfns))
                                 infos{iseries} = dicominfo(dcms.fqfns{1});
                             end

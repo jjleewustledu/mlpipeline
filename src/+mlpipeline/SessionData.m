@@ -9,13 +9,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
-	properties (Dependent) 
-        project
-        subject
-        session
-        scan
-        resources
-        assessors
+	properties (Dependent)
+        studyData % synonym for projectData
+        projectData
+        subjectData
+        sessionData
+        %scanData
+        %resourceData
+        %assessorData
         
         rawdataPath
         rawdataFolder % \in sessionFolder
@@ -51,10 +52,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         taus
         times
         tracer
-        
-        studyData
-        projectData
-        subjectData
     end
 
     methods (Static)        
@@ -75,25 +72,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     methods 
         
         %% GET/SET
-        
-        function g    = get.project(this)
-             g = this.projectFolder;
-        end
-        function g    = get.subject(this)
-             g = this.subjectFolder;
-        end
-        function g    = get.session(this)
-             g = this.sessionFolder;
-        end
-        function g    = get.scan(this)
-            g = this.tracerRevision('typ', 'fp');
-        end  
-        function g    = get.resources(~)
-             g = [];
-        end
-        function g    = get.assessors(~)
-             g = [];
-        end
                 
         function g    = get.rawdataPath(this)
             g = fullfile(this.sessionPath, this.rawdataFolder);
@@ -865,9 +843,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end
             this.tracer_ = ipr.tracer;
             
-            %% mlpipeline.StudyData, some kind of registry; legacy support
+            %% mlpipeline.StudyData, containing some kind of registry; legacy support
             
-            this.studyData_ = ipr.studyData;
+            if ~isempty(ipr.studyData)
+                this.studyData_ = ipr.studyData;
+            end
             
             %% mlpipeline.SubjectData, implicitly mlpipeline.ProjectData
             
