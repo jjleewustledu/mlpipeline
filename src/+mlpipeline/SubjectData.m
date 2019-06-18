@@ -7,15 +7,15 @@ classdef SubjectData < mlpipeline.ISubjectData
  	%% It was developed on Matlab 9.5.0.1067069 (R2018b) Update 4 for MACI64.  Copyright 2019 John Joowon Lee.
  	
 	properties (Dependent)
- 		subjectFolder
-        subjectPath
         subjectsDir
+        subjectPath
+ 		subjectFolder
  	end
 
 	methods 
         
         %% GET/SET
-        
+
         function g    = get.subjectFolder(this)
             g = this.subjectFolder_;
         end
@@ -29,15 +29,33 @@ classdef SubjectData < mlpipeline.ISubjectData
            assert(isdir(s)); 
            [this.subjectsDir,this.subjectFolder] = fileparts(s);
         end
-        function g    = get.subjectsDir(~)
-            g = getenv('SUBJECTS_DIR');
+        function g    = get.subjectsDir(this)
+            g = this.studyRegistry_.subjectsDir;
         end
         function this = set.subjectsDir(this, s)
             assert(isdir(s));
-            setenv('SUBJECTS_DIR', s);
+            this.studyRegistry_.subjectsDir = s;
         end
         
         %%
+        
+        function        diaryOff(~)
+            diary off;
+        end
+        function        diaryOn(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.subjectPath, @isdir);
+            parse(ip, varargin{:});
+            loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
+            diary(loc);
+        end
+        function loc  = saveWorkspace(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.subjectPath, @isdir);
+            parse(ip, varargin{:});
+            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
+            save(loc);
+        end
 		  
  		function this = SubjectData(varargin)
  			%% SUBJECTDATA
@@ -54,6 +72,7 @@ classdef SubjectData < mlpipeline.ISubjectData
     %% PROTECTED
     
     properties (Access = protected)
+        studyRegistry_
         subjectFolder_
     end
 

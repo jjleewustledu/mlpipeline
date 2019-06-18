@@ -57,28 +57,22 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         end
         function        diaryOn(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.subjectsDir, @isdir);
-            parse(ip, varargin{:});            
-            diary( ...
-                fullfile(ip.Results.path, sprintf('%s_diary_%s.log', mfilename, mydatetimestr(now))));
-        end
-        function tf   = isChpcHostname(~)
-            [~,hn] = hostname;
-            tf = lstrfind(hn, 'gpu') || lstrfind(hn, 'node') || lstrfind(hn, 'login') || lstrfind(hn, 'cluster');
+            addOptional(ip, 'path', this.projectsDir, @isdir);
+            parse(ip, varargin{:});
+            loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
+            diary(loc);
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
             addOptional(ip, 'path', this.projectsDir, @isdir);
             parse(ip, varargin{:});
-            loc = fullfile(ip.Results.path, sprintf('%s_workspace_%s.mat', mfilename, mydatetimestr(now)));
+            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
             save(loc);
         end
         
-        %%
-        
  		function this = StudyData(varargin)
             ip = inputParser;
-            addRequired( ip, 'registry')
+            addRequired(ip, 'registry')
             parse(ip, varargin{:});
             this.registry_ = ip.Results.registry;
         end 

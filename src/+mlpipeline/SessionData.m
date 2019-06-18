@@ -10,51 +10,41 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
 	properties (Dependent)
-        studyData % synonym for projectData
-        projectData
-        subjectData
-        sessionData
-        %scanData
-        %resourceData
-        %assessorData
-        
         rawdataPath
         rawdataFolder % \in sessionFolder
+        
+        studyData
+        
+        projectsDir % homolog of __Freesurfer__ subjectsDir
+        projectsPath
+        projectsFolder
+        projectData
+        projectPath
+        projectFolder % \in projectsFolder        
+        
+        subjectsDir % __Freesurfer__ convention
+        subjectsPath 
+        subjectsFolder 
+        subjectData
+        subjectPath
+        subjectFolder % \in subjectsFolder  
+        
+        sessionPath
+        sessionFolder % \in projectFolder        
         
         scanPath
         scanFolder % \in sessionFolder
         
-        sessionPath
-        sessionFolder % \in projectFolder
-        
-        projectPath
-        projectFolder % \in projectsFolder
-        
-        projectsPath
-        projectsDir % homolog of __Freesurfer__ subjectsDir
-        projectsFolder
-        
-        subjectPath
-        subjectFolder % \in subjectsFolder
-        
-        subjectsPath 
-        subjectsDir % __Freesurfer__ convention
-        subjectsFolder   
-        
-        absScatterCorrected
-        attenuationCorrected
         frame
-        isotope
         noclobber
         pnumber
         region
         snumber
         taus
         times
-        tracer
     end
 
-    methods (Static)        
+    methods (Static)
         function fn    = fslchfiletype(varargin)
             fn = mlfourdfp.AbstractBuilder.fslchfiletype(varargin{:});
         end
@@ -69,7 +59,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
     end
     
-    methods 
+    methods
         
         %% GET/SET
                 
@@ -80,31 +70,86 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = 'rawdata';
         end
         
-        function g    = get.scanPath(this)
-            g = fullfile(this.sessionPath, this.scanFolder);
+        function g    = get.studyData(this)
+            g = this.studyData_;
         end
-        function this = set.scanPath(this, s)
-            assert(ischar(s));
-            [this.sessionPath,this.scanFolder] = myfileparts(s);
-        end
-        function g    = get.scanFolder(this)
-            if (~isempty(this.scanFolder_))
-                g = this.scanFolder_;
+        function this = set.studyData(this, s)
+            assert(isa(s, 'mlpipeline.IStudyData'));
+            this.studyData_ = s;
+        end 
+        
+        function g    = get.projectsDir(this)
+            if ~isempty(this.studyData_)
+                g = this.studyData_.projectsDir;
                 return
             end
-            assert(~isempty(this.tracer_),               'mlpipeline:AssertionError', 'SessionData.get.scanFolder');
-            assert(~isempty(this.attenuationCorrected_), 'mlpipeline:AssertionError', 'SessionData.get.scanFolder')
-            dtt = mlpet.DirToolTracer( ...
-                'tracer', fullfile(this.sessionPath, this.tracer_), ...
-                'ac', this.attenuationCorrected_);            
-            assert(~isempty(dtt.dns));
-            g = dtt.dns{1};
+            if ~isempty(this.projectData_)
+                g = this.projectData_.projectsDir;
+                return
+            end
+            error('mlpipeline:RuntimeError', 'SessionData.get.projectsDir')
         end
-        function this = set.scanFolder(this, s)
+        function g    = get.projectsPath(this)
+            g = this.projectsDir;
+        end
+        function g    = get.projectsFolder(this)
+            g = this.projectsDir;
+            if (strcmp(g(end), filesep))
+                g = g(1:end-1);
+            end
+            g = mybasename(g);
+        end     
+        function g    = get.projectData(this)
+            g = this.projectData_;
+        end
+        function g    = get.projectPath(this)
+            g = fullfile(this.projectsPath, this.projectFolder);
+        end
+        function g    = get.projectFolder(this)
+            g = this.projectData.projectFolder;
+        end
+        
+        function g    = get.subjectsDir(this)
+            g = this.studyData_.subjectsDir;
+        end
+        function this = set.subjectsDir(this, s)
             assert(ischar(s));
-            this.scanFolder_ = s;
-            this = this.adjustAttenuationCorrectedFromScanFolder;
+            this.studyData_.subjectsDir = s;
         end
+        function g    = get.subjectsPath(this)
+            g = this.subjectsDir;
+        end
+        function this = set.subjectsPath(this, s)
+            this.subjectsDir = s;
+        end
+        function g    = get.subjectsFolder(this)
+            g = this.subjectsDir;
+            if (strcmp(g(end), filesep))
+                g = g(1:end-1);
+            end
+            g = mybasename(g);
+        end
+        function this = set.subjectsFolder(this, s)
+            assert(ischar(s));
+            this.studyData_.subjectsDir = fullfile(fileparts(this.subjectsDir), s, '');            
+        end
+        function g    = get.subjectData(this)
+            g = this.subjectData_;
+        end        
+        function g    = get.subjectPath(this)
+            g = this.subjectData.subjectPath;
+        end
+        function this = set.subjectPath(this, s)
+            assert(ischar(s));
+            this.subjectData_.subjectPath = s;
+        end
+        function g    = get.subjectFolder(this)
+            g = this.subjectData.subjectFolder;
+        end        
+        function this = set.subjectFolder(this, s)
+            assert(ischar(s));
+            this.subjectData_.subjectFolder = s;            
+        end    
         
         function g    = get.sessionPath(this)
             g = fullfile(this.projectPath, this.sessionFolder);
@@ -119,135 +164,28 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.sessionFolder(this, s)
             assert(ischar(s));
             this.sessionFolder_ = s;            
-        end
+        end    
         
-        function g    = get.projectPath(this)
-            g = fullfile(this.projectsPath, this.projectFolder);
+        function g    = get.scanPath(this)
+            g = fullfile(this.sessionPath, this.scanFolder);
         end
-        function g    = get.projectFolder(this)
-            g = this.subjectData.getProjectFolder(this.sessionFolder);
-        end
-        
-        function g    = get.projectsPath(this)
-            g = this.projectsDir;
-        end
-        function this = set.projectsPath(this, s)
-            this.projectsDir = s;
-        end
-        function g    = get.projectsDir(this)
-            g = this.studyData_.projectsDir;
-        end
-        function this = set.projectsDir(this, s)
+        function this = set.scanPath(this, s)
             assert(ischar(s));
-            this.studyData_.projectsDir = s;
+            [this.sessionPath,this.scanFolder] = myfileparts(s);
         end
-        function g    = get.projectsFolder(this)
-            g = this.projectsDir;
-            if (strcmp(g(end), filesep))
-                g = g(1:end-1);
-            end
-            g = mybasename(g);
+        function g    = get.scanFolder(this)
+            g = this.getScanFolder();
         end
-        function this = set.projectsFolder(this, s)
-            assert(ischar(s));
-            this.studyData_.projectsDir = fullfile(fileparts(this.projectsDir), s, '');
+        function this = set.scanFolder(this, s)
+            this = this.setScanFolder(s);
         end
-        
-        function g    = get.subjectPath(this)
-            g = this.subjectData.subjectPath;
-        end
-        function this = set.subjectPath(this, s)
-            assert(ischar(s));
-            this.subjectData_.subjectPath = s;
-        end
-        function g    = get.subjectFolder(this)
-            g = this.subjectData.subjectFolder;
-        end        
-        function this = set.subjectFolder(this, s)
-            assert(ischar(s));
-            this.subjectData_.subjectFolder = s;            
-        end
-        
-        function g    = get.subjectsPath(this)
-            g = this.subjectsDir;
-        end
-        function this = set.subjectsPath(this, s)
-            this.subjectsDir = s;
-        end
-        function g    = get.subjectsDir(this)
-            g = this.studyData_.subjectsDir;
-        end
-        function this = set.subjectsDir(this, s)
-            assert(ischar(s));
-            this.studyData_.subjectsDir = s;
-        end
-        function g    = get.subjectsFolder(this)
-            g = this.subjectsDir;
-            if (strcmp(g(end), filesep))
-                g = g(1:end-1);
-            end
-            g = mybasename(g);
-        end
-        function this = set.subjectsFolder(this, s)
-            assert(ischar(s));
-            this.studyData_.subjectsDir = fullfile(fileparts(this.subjectsDir), s, '');            
-        end
-        
-        function g    = get.absScatterCorrected(this)
-            if (this.useNiftyPet)
-                g = false;
-                return
-            end
-            if (strcmpi(this.tracer, 'OC') || strcmp(this.tracer, 'OO'))
-                g = true;
-                return
-            end
-            g = this.absScatterCorrected_;
-        end
-        function this = set.absScatterCorrected(this, s)
-            assert(islogical(s));
-            this.absScatterCorrected_ = s;
-        end
-        function g    = get.attenuationCorrected(this)
-            if (~isempty(this.attenuationCorrected_))
-                g = this.attenuationCorrected_;
-                return
-            end
-            g = mlpet.DirToolTracer.folder2ac(this.scanFolder);
-        end
-        function this = set.attenuationCorrected(this, s)
-            assert(islogical(s));
-            if (this.attenuationCorrected_ == s)
-                return
-            end
-            this.scanFolder_ = this.scanFolderWithAC(s);
-            this.attenuationCorrected_ = s;
-        end        
+              
         function g    = get.frame(this)
             g = this.frame_;
         end
         function this = set.frame(this, s)
             assert(isnumeric(s));
             this.frame_ = s;
-        end
-        function g    = get.isotope(this)
-            tr = lower(this.tracer);
-            
-            % N.B. order of testing by lstrfind
-            if (lstrfind(tr, {'ho' 'oo' 'oc' 'co'}))
-                g = '15O';
-                return
-            end
-            if (lstrfind(tr, 'fdg'))
-                g = '18F';
-                return
-            end 
-            if (lstrfind(tr, 'g'))
-                g = '11C';
-                return
-            end            
-            error('mlpipeline:indeterminatePropertyValue', ...
-                'SessionData.isotope could not recognize tracer %s', this.sessionData.tracer);
         end
         function g    = get.noclobber(this)
             g = this.studyData.noclobber;
@@ -284,8 +222,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 g = this.taus_;
                 return
             end
-            if (lexist(this.tracerListmodeJson, 'file'))
-                j = jsondecode(fileread(this.tracerListmodeJson));
+            if (lexist(this.jsonFilename, 'file'))
+                j = jsondecode(fileread(this.jsonFilename));
                 g = j.taus';
                 return
             end
@@ -298,43 +236,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 g(ig+1) = sum(t(1:ig));
             end
         end
-        function g    = get.tracer(this)
-            if (~isempty(this.tracer_))
-                g = this.tracer_;
-                return
-            end   
-            % ask forgiveness not permission
-            try
-                g = mlpet.DirToolTracer.folder2tracer(this.scanFolder);
-            catch ME
-                handwarning(ME);
-                g = '';
-            end
-        end
-        function this = set.tracer(this, t)
-            assert(ischar(t));
-            if (~strcmpi(this.tracer_, t))
-                this.scanFolder_ = '';
-            end
-            this.tracer_ = t;
-        end
-        
-        function g    = get.studyData(this)
-            g = this.studyData_;
-        end
-        function this = set.studyData(this, s)
-            assert(isa(s, 'mlpipeline.IStudyData'));
-            this.studyData_ = s;
-        end
-        function g    = get.projectData(this)
-            g = this.subjectData_.projectData;
-        end
-        function g    = get.subjectData(this)
-            g = this.subjectData_;
-        end
                 
         %% IMRData
         
+        function obj  = adc(this, varargin)
+            obj = this.mrObject('ep2d_diff_26D_lgfov_nopat_ADC', varargin{:});
+        end
         function obj = aparcA2009sAseg(this, varargin)
             obj = this.freesurferObject('aparc.a2009s+aseg', varargin{:});
         end
@@ -348,9 +255,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             ip = inputParser;
             addParameter(ip, 'desc', 'TRIO_Y_NDC', @ischar);
             addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'mlmr.MRImagingContext', @ischar);
+            addParameter(ip, 'typ', 'mlfourd.ImagingContext2', @ischar);
             parse(ip, varargin{:});
-            
+
             obj = imagingType(ip.Results.typ, ...
                 fullfile(getenv('REFDIR'), ...
                          sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
@@ -367,6 +274,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function obj = brainmask(this, varargin)
             obj = this.freesurferObject('brainmask', varargin{:});
         end
+        function obj = dwi(this, varargin)
+            obj = this.mrObject('ep2d_diff_26D_lgfov_nopat_TRACEW', varargin{:});
+        end
         function obj = fieldmap(this, varargin)
             obj = this.mrObject('FieldMapping', varargin{:});
         end
@@ -381,12 +291,31 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function obj = mprage(this, varargin)
             obj = this.mpr(varargin{:});
         end
+        function loc = mriLocation(this, varargin)
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+            
+            loc = locationType(ip.Results.typ, fullfile(this.freesurferLocation, 'mri', ''));
+        end
+        function obj = mrObject(this, varargin)
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addRequired( ip, 'desc', @ischar);
+            addParameter(ip, 'tag', '', @ischar);
+            addParameter(ip, 'typ', 'fqfp', @ischar);
+            parse(ip, varargin{:});
+            
+            obj = imagingType(ip.Results.typ, ...
+                fullfile(this.fslLocation, ...
+                         sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
+        end 
         function obj = orig(this, varargin)
             obj = this.freesurferObject('orig', varargin{:});
         end        
         function obj = perf(this, varargin)
             obj = this.mrObject('ep2d_perf', varargin{:});
-        end
+        end        
         function obj = T1(this, varargin)
             obj = this.freesurferObject('T1', varargin{:});
         end
@@ -408,78 +337,18 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function obj = zeroZeroOne(this, varargin)
             obj = this.freesurferObject('orig/001', varargin{:});
         end
-                        
-        %% IPETData
-        
-        function obj = cbf(this, varargin)
-            this.tracer = 'HO';
-            obj = this.petObject('cbf', varargin{:});
-        end
-        function obj = cbv(this, varargin)
-            this.tracer = 'OC';
-            obj = this.petObject('cbv', varargin{:});
-        end
-        function obj = cmro2(this, varargin)
-            this.tracer = 'OO';
-            obj = this.petObject('cmro2', varargin{:});
-        end
-        function obj = ct(this, varargin)
-            obj = this.ctObject('ct', varargin{:});
-        end
-        function obj = ctMasked(this, varargin)
-            obj = this.ctObject('ctMasked', varargin{:});
-        end
-        function obj = ctMask(this, varargin)
-            obj = this.ctObject('ctMask', varargin{:});
-        end
-        function obj = fdg(this, varargin)
-            this.tracer = 'FDG';
-            obj = this.petObject('fdg', varargin{:});
-        end
-        function obj = gluc(this, varargin)
-            obj = this.petObject('gluc', varargin{:});
-        end 
-        function obj = ho(this, varargin)
-            this.tracer = 'HO';
-            obj = this.petObject('ho', varargin{:});
-        end
-        function obj = oc(this, varargin)
-            this.tracer = 'OC';
-            obj = this.petObject('oc', varargin{:});
-        end
-        function obj = oef(this, varargin)
-            this.tracer = 'OO';
-            obj = this.petObject('oef', varargin{:});
-        end
-        function obj = oo(this, varargin)
-            this.tracer = 'OO';
-            obj = this.petObject('oo', varargin{:});
-        end
-        function [dt0_,date_] = readDatetime0(~)
-            dt0_ = NaT;
-            date_ = NaT;
-        end
-        function obj = tr(this, varargin)
-            %% transmission scan
-            obj = this.petObject('tr', varargin{:});
-        end     
     
-        %%  
+        %%
         
-        function obj  = ctObject(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'fqfp', @ischar);
-            parse(ip, varargin{:});
-            
-            fqfn = fullfile(this.sessionLocation, ...
-                            sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt));
-            obj = imagingType(ip.Results.typ, fqfn);
+        function        diaryOff(~)
+            diary off;
         end
-        function dt   = datetime(this)
-            dt = mlpet.DirToolTracer.folder2datetime(this.scanFolder);
+        function        diaryOn(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.sessionPath, @isdir);
+            parse(ip, varargin{:});
+            loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
+            diary(loc);
         end
         function fqfn = ensureNIFTI_GZ(this, obj)
             %% ENSURENIFTI_GZ ensures a .nii.gz file on the filesystem if at all possible.
@@ -576,13 +445,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             loc = locationType(ip.Results.typ, fullfile(this.sessionPath, 'fsl', ''));
         end
-        function loc  = hdrinfoLocation(this, varargin)
-            loc = this.sessionLocation(varargin{:});
-        end   
+        function g    = getScanFolder(this)
+            g = this.scanFolder_;
+        end
         function [ipr,this] = iprLocation(this, varargin)
             %% IPRLOCATION
-            %  @param named ac is the attenuation correction; is logical
-            %  @param named tracer is a string identifier.
             %  @param named frame is a frame identifier; is numeric.
             %  @param named rnumber is the revision number; is numeric.
             %  @param named snumber is the scan number; is numeric.
@@ -593,16 +460,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'ac',      this.attenuationCorrected, @islogical);
-            addParameter(ip, 'tracer',  this.tracer, @ischar);
             addParameter(ip, 'frame',   this.frame, @isnumeric);
             addParameter(ip, 'rnumber', this.rnumber, @isnumeric);
             addParameter(ip, 'snumber', this.snumber, @isnumeric);
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});            
             ipr = ip.Results;
-            this.attenuationCorrected_ = ip.Results.ac;
-            this.tracer_  = ip.Results.tracer; 
             this.rnumber  = ip.Results.rnumber;
             this.snumber_ = ip.Results.snumber;
             this.frame_   = ip.Results.frame;
@@ -617,6 +480,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 tf = this.fieldsequaln(obj);
             end
         end 
+        function f    = jsonFilename(~) %#ok<STOUT>
+            error('mlpipeline:NotImplementedError', 'SessionData.jsonFilename')
+        end
         function loc  = logLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -631,25 +497,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             obj = mlpipeline.Logger2(varargin{:});
             obj.filepath = this.logLocation;
         end  
-        function loc  = mriLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'typ', 'path', @ischar);
-            parse(ip, varargin{:});
-            
-            loc = locationType(ip.Results.typ, fullfile(this.freesurferLocation, 'mri', ''));
-        end
-        function obj  = mrObject(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addRequired( ip, 'desc', @ischar);
-            addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'fqfp', @ischar);
-            parse(ip, varargin{:});
-            
-            obj = imagingType(ip.Results.typ, ...
-                fullfile(this.fslLocation, ...
-                         sprintf('%s%s%s', ip.Results.desc, ip.Results.tag, this.filetypeExt)));
-        end 
         function loc  = onAtlasLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
@@ -663,24 +510,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, fullfile(this.subjectsDir, 'OpAtlas'));
-        end 
-        function loc  = petLocation(this, varargin)
-            loc = this.tracerLocation(varargin{:});
-        end
-        function obj  = petObject(this, varargin)
-            ip = inputParser;
-            ip.KeepUnmatched = true;
-            addRequired( ip, 'tracer', @ischar);
-            addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'typ', 'fqfp', @ischar);
-            parse(ip, varargin{:});
-            suff = ip.Results.tag;
-            if (~isempty(suff) && ~strcmp(suff(1),'_'))
-                suff = ['_' suff];
-            end
-            fqfn = fullfile(this.petLocation, ...
-                   sprintf('%sr%i%s%s', ip.Results.tracer, this.rnumber, suff, this.filetypeExt));
-            obj = imagingType(ip.Results.typ, fqfn);
         end    
         function loc  = projectLocation(this, varargin)
             ip = inputParser;
@@ -692,28 +521,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function loc  = regionLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
         end   
-        function f    = scanFolderWithAC(this, varargin)
+        function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'b', true, @islogical);            
+            addOptional(ip, 'path', this.sessionPath, @isdir);
             parse(ip, varargin{:});
-            if (ip.Results.b)
-                if (this.attenuationCorrected_)
-                    f = this.scanFolder;
-                    return
-                end
-                fsplit = strsplit(this.scanFolder, '-NAC');
-                f = [fsplit{1} '-AC'];
-            else
-                if (~this.attenuationCorrected_)
-                    f = this.scanFolder;
-                    return
-                end
-                fsplit = strsplit(this.scanFolder, '-AC');
-                f = [fsplit{1} '-NAC'];
-            end
-        end
-        function f    = scanPathWithAC(this, varargin)
-            f = fullfile(this.sessionPath, this.scanFolderWithAC(varargin{:}));
+            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
+            save(loc);
         end
         function loc  = sessionLocation(this, varargin)
             ip = inputParser;
@@ -722,59 +535,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             loc = locationType(ip.Results.typ, this.sessionPath);
         end
+        function this = setScanFolder(this, s)
+            assert(ischar(s));
+            this.scanFolder_ = s;
+        end
         function loc  = subjectLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, this.subjectPath);
-        end  
-        function obj  = tracerListmodeBf(this, varargin)
-            dt   = mlsystem.DirTool(fullfile(this.scanPath, 'LM', '*.bf'));
-            assert(1 == length(dt.fqfns));
-            fqfn = dt.fqfns{1};            
-            obj  = this.fqfilenameObject(fqfn, varargin{:});
-        end
-        function obj  = tracerListmodeDcm(this, varargin)
-            dt   = mlsystem.DirTool(fullfile(this.scanPath, 'LM', '*.dcm'));
-            assert(1 == length(dt.fqfns));
-            fqfn = dt.fqfns{1};            
-            obj  = this.fqfilenameObject(fqfn, varargin{:});
-        end
-        function f    = tracerListmodeJson(this)            
-            glob_expr = fullfile(this.tracerOutputPetLocation, [upper(this.tracer) '_DT*.json']);
-            try
-                dt = mlsystem.DirTool(glob_expr);
-                assert(1 == dt.length, [evalc('disp(dt)') '\n' evalc('disp(dt.fqfns)')]);
-                f = dt.fqfns{1};
-            catch ME
-                warning('mlpipeline:RuntimeWarning', 'SessionData.tracerListmodeJson could not find %s', glob_expr);
-                handwarning(ME);
-                f = '';
-            end
-        end
-        function loc  = tracerLocation(this, varargin)
-            ip = inputParser;
-            addParameter(ip, 'typ', 'path', @ischar);
-            parse(ip, varargin{:});
-            
-            loc = locationType(ip.Results.typ, this.scanPath);
-        end
-        function loc  = tracerOutputLocation(this, varargin)
-            ipr = this.iprLocation(varargin{:});
-            loc = locationType(ipr.typ, ...
-                fullfile(this.scanPath, this.outfolder, ''));
-        end
-        function loc  = tracerOutputPetLocation(this, varargin)
-            ipr = this.iprLocation(varargin{:});
-            loc = locationType(ipr.typ, ...
-                fullfile(this.scanPath, this.outfolder, 'PET', ''));
-        end
-        function loc  = tracerOutputSingleFrameLocation(this, varargin)
-            ipr = this.iprLocation(varargin{:});
-            loc = locationType(ipr.typ, ...
-                fullfile(this.scanPath, this.outfolder, 'PET', 'single-frame', ''));
-        end
+        end          
         function loc  = vallLocation(this, varargin)
             loc = this.subjectLocation(varargin{:});
         end 
@@ -782,20 +553,15 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  		function this = SessionData(varargin)
  			%% SESSIONDATA
  			%  @param [param-name, param-value[, ...]]
-            %         'abs'          is logical
-            %         'ac'           is logical
-            %         'frame'        is numeric
-            %         'pnumber'      is char
-            %         'snumber'      is numeric
-            %         'tracer'       is char
             %
-            %         'studyData'    is a mlpipeline.IStudyData; legacy support; prefer using subjectData
-            %         'subjectsDir'  <-> env SUBJECTS_DIR
+            %         'studyData'    is a mlpipeline.IStudyData, simpler than projectData
+            %
             %         'projectsDir'  <-> env PROJECTS_DIR
-            %
+            %         'projectData'  is a mlpipeline.IProjectData
             %         'projectPath'
             %         'projectFolder'
             %
+            %         'subjectsDir'  <-> env SUBJECTS_DIR
             %         'subjectData'  is a mlpipeline.ISubjectData
             %         'subjectPath'
             %         'subjectFolder'
@@ -803,19 +569,25 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             %         'sessionPath'
             %         'sessionFolder'
             %
-            %        ('scanData'     is a mlpipeline.IScanData)
             %         'scanPath'
             %         'scanFolder'
+            %
+            %         'frame'        is numeric
+            %         'pnumber'      is char
+            %         'snumber'      is numeric
+            %         'tauIndices'
+            %         'tauMultiplier'
 
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'abs', false,        @islogical);
-            addParameter(ip, 'ac', false,         @islogical);
             addParameter(ip, 'frame', nan,        @isnumeric);
+            addParameter(ip, 'projectData', []);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
             addParameter(ip, 'projectsDir', '',   @(x) isdir(x) || isempty(x));
             addParameter(ip, 'pnumber', '',       @ischar);
+            addParameter(ip, 'scanFolder', '',    @ischar);
+            addParameter(ip, 'scanPath', '',      @ischar);
             addParameter(ip, 'sessionFolder', '', @ischar);
             addParameter(ip, 'sessionPath', '',   @ischar);
             addParameter(ip, 'snumber', nan,      @isnumeric);
@@ -824,14 +596,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'subjectFolder', '', @ischar);
             addParameter(ip, 'subjectPath', '',   @ischar);
             addParameter(ip, 'subjectsDir', '',   @(x) isdir(x) || isempty(x));
-            addParameter(ip, 'tracer', '',        @ischar);
-            addParameter(ip, 'scanFolder', '',    @ischar);
-            addParameter(ip, 'scanPath', '',      @ischar);
+            addParameter(ip, 'tauIndices', [], @isnumeric);
+            addParameter(ip, 'tauMultiplier', 1, @(x) isnumeric(x) && x >= 1);
             parse(ip, varargin{:}); 
             ipr = ip.Results;
             
-            this.absScatterCorrected_ = ipr.abs;
-            this.attenuationCorrected_ = ipr.ac;
             this.frame_ = ipr.frame;            
             this.pnumber_ = ipr.pnumber;  
             if ~isempty(ipr.projectsDir)
@@ -841,16 +610,22 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if ~isempty(ipr.subjectsDir)
                 setenv('SUBJECTS_DIR', ipr.subjectsDir)
             end
-            this.tracer_ = ipr.tracer;
             
             %% mlpipeline.StudyData, containing some kind of registry; legacy support
+            this.studyData_ = ipr.studyData;
             
-            if ~isempty(ipr.studyData)
-                this.studyData_ = ipr.studyData;
+            %% mlpipeline.ProjectData
+            this.projectData_ = ipr.projectData;
+            if (~isempty(this.projectData_))  
+                if (~isempty(ipr.projectFolder))
+                    this.projectData_.projectFolder = ipr.projectFolder;
+                end
+                if (~isempty(ipr.projectPath))
+                    this.projectData_.projectPath = ipr.projectPath;
+                end
             end
             
-            %% mlpipeline.SubjectData, implicitly mlpipeline.ProjectData
-            
+            %% mlpipeline.SubjectData
             this.subjectData_ = ipr.subjectData;
             if (~isempty(this.subjectData_))  
                 if (~isempty(ipr.subjectFolder))
@@ -874,36 +649,54 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if (~isempty(ipr.scanPath))
                 [~,this.scanFolder_] = fileparts(ipr.scanPath);
             end
-            this = this.adjustAttenuationCorrectedFromScanFolder;            
             
-            %% taus_
+            %% taus
             
-            if (~isempty(this.scanFolder_) && lexist(this.tracerListmodeJson, 'file'))
-                j = jsondecode(fileread(this.tracerListmodeJson));
+            if (~isempty(this.scanFolder_) && lexist(this.jsonFilename, 'file'))
+                j = jsondecode(fileread(this.jsonFilename));
                 this.taus_ = j.taus';
             end
+            this.tauIndices_ = ip.Results.tauIndices;
+            this.tauMultiplier_ = ip.Results.tauMultiplier;
         end
     end
 
     %% PROTECTED
     
     properties (Access = protected)
-        absScatterCorrected_
-        attenuationCorrected_
+        builder_
         frame_
         pnumber_
+        projectData_
         projectFolder_
         region_
         scanFolder_
         sessionFolder_
-        studyData_ % legacy support
+        studyData_
         subjectData_
         snumber_
+        tauIndices_
+        tauMultiplier_
         taus_
-        tracer_
     end
     
     methods (Static, Access = protected)
+        function [tf,msg] = checkFields(obj1, obj2)
+            tf = true; 
+            msg = '';
+            flds = fieldnames(obj1);
+            for f = 1:length(flds)
+                try
+                    if (~isequaln(obj1.(flds{f}), obj2.(flds{f})))
+                        tf = false;
+                        msg = sprintf('SessionData.checkFields:  mismatch at field %s.', flds{f});
+                        return
+                    end
+                catch ME %#ok<NASGU>
+                    dispwarning('mlpipelinen:RuntimeWarning', 'SessionData.checkFields will ignore %s', flds{f});
+                end
+            end
+        end 
         function f  = fullfile(~, varargin)
             assert(~isempty(varargin));
             if (1 == length(varargin))
@@ -928,40 +721,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     end
     
     methods (Access = protected)
-        function alternativeTaus(~) 
+        function alternativeTaus(~)
             error('mlpipeline:NotImplementedError', 'SessionData.alternativeTaus');
-        end
-    end
-    
-    %% PRIVATE
-    
-    methods (Static, Access = private)
-        function [tf,msg] = checkFields(obj1, obj2)
-            tf = true; 
-            msg = '';
-            flds = fieldnames(obj1);
-            for f = 1:length(flds)
-                try
-                    if (~isequaln(obj1.(flds{f}), obj2.(flds{f})))
-                        tf = false;
-                        msg = sprintf('SessionData.checkFields:  mismatch at field %s.', flds{f});
-                        return
-                    end
-                catch ME %#ok<NASGU>
-                    dispwarning('mlpipelinen:RuntimeWarning', 'SessionData.checkFields will ignore %s', flds{f});
-                end
-            end
-        end 
-    end
-    
-    methods (Access = private)
-        function this = adjustAttenuationCorrectedFromScanFolder(this)
-            if (contains(this.scanFolder_, '-NAC'))
-                this.attenuationCorrected_ = false;
-            end
-            if (contains(this.scanFolder_, '-AC'))
-                this.attenuationCorrected_ = true;
-            end
         end
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
@@ -973,9 +734,91 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if (~tf)
                 warning('mlpipeline:isequal:mismatchedClass', msg);
             end
-        end        
+        end    
+        function fqfn = ensureOrientation(this, fqfn, orient)
+            assert(lstrcmp({'sagittal' 'transverse' 'coronal' ''}, orient)); 
+            [pth,fp,ext] = myfileparts(fqfn);
+            fqfp = fullfile(pth, fp);   
+            orient0 = this.readOrientation(fqfp);
+            fv = mlfourdfp.FourdfpVisitor;             
+
+            if (isempty(orient))
+                return
+            end     
+            if (strcmp(orient0, orient))
+                return
+            end       
+            if (lexist([this.orientedFileprefix(fqfp, orient) ext]))
+                fqfn = [this.orientedFileprefix(fqfp, orient) ext];
+                return
+            end
+
+            pwd0 = pushd(pth);
+            switch (orient0)
+                case 'sagittal'
+                    switch (orient)
+                        case 'transverse'
+                            fv.S2T_4dfp(fp, [fp 'T']);
+                            fqfn = [fqfp 'T' ext];
+                        case 'coronal'
+                            fv.S2C_4dfp(fp, [fp 'C']);
+                            fqfn = [fqfp 'C' ext];
+                    end
+                case 'transverse'
+                    switch (orient)
+                        case 'sagittal'
+                            fv.T2S_4dfp(fp, [fp 'S']);
+                            fqfn = [fqfp 'S' ext];
+                        case 'coronal'
+                            fv.T2C_4dfp(fp, [fp 'C']);
+                            fqfn = [fqfp 'C' ext];
+                    end
+                case 'coronal'
+                    switch (orient)
+                        case 'sagittal'
+                            fv.C2S_4dfp(fp, [fp 'S']);
+                            fqfn = [fqfp 'S' ext];
+                        case 'transverse'
+                            fv.C2T_4dfp(fp, [fp 'T']);
+                            fqfn = [fqfp 'T' ext];
+                    end
+            end
+            popd(pwd0);
+        end    
         function [tf,msg] = fieldsequaln(this, obj)
             [tf,msg] = mlpipeline.SessionData.checkFields(this, obj);
+        end
+        function fqfp = orientedFileprefix(~, fqfp, orient)
+            assert(mlfourdfp.FourdfpVisitor.lexist_4dfp(fqfp));
+            switch (orient)
+                case 'sagittal'
+                    fqfp = [fqfp 'S'];
+                case 'transverse'
+                    fqfp = [fqfp 'T'];
+                case 'coronal'
+                    fqfp = [fqfp 'C'];
+                otherwise
+                    error('mlnipet:switchCaseNotSupported', ...
+                          'SesssionData.orientedFileprefix.orient -> %s', orient);
+            end
+        end
+        function o    = readOrientation(this, varargin)
+            ip = inputParser;
+            addRequired(ip, 'fqfp', @mlfourdfp.FourdfpVisitor.lexist_4dfp);
+            parse(ip, varargin{:});
+
+            [~,o] = mlbash(sprintf('awk ''/orientation/{print $NF}'' %s%s', ip.Results.fqfp, this.filetypeExt));
+            switch (strtrim(o))
+                case '2'
+                    o = 'transverse';
+                case '3'
+                    o = 'coronal';
+                case '4'
+                    o = 'sagittal';
+                otherwise
+                    error('mlnipet:switchCaseNotSupported', ...
+                          'SessionData.readOrientation.o -> %s', o);
+            end
         end
     end
     

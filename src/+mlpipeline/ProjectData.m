@@ -7,31 +7,57 @@ classdef ProjectData < mlpipeline.IProjectData
  	%% It was developed on Matlab 9.5.0.1067069 (R2018b) Update 4 for MACI64.  Copyright 2019 John Joowon Lee.
  	
 	properties (Dependent)
-        projectsDir 		
- 	end
-
+        projectPath
+        projectFolder
+    end
+    
 	methods 
         
         %% GET
         
-        function g = get.projectsDir(~)
-            g = getenv('PROJECTS_DIR');
+        function g    = get.projectPath(this)
+            g = fullfile(this.projectsDir, this.projectFolder, '');
+        end
+        function g    = get.projectFolder(this)
+            g = this.projectFolder_;
         end
         
         %%
         
-        function g = getProjectFolder(varargin)
-            g = '';
+        function        diaryOff(~)
+            diary off;
         end
-        function g = getProjectPath(this, s)
-            g = fullfile(this.projectsDir, this.getProjectFolder(s), '');
+        function        diaryOn(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.projectsDir, @isdir);
+            parse(ip, varargin{:});
+            loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
+            diary(loc);
+        end
+        function loc  = saveWorkspace(this, varargin)
+            ip = inputParser;
+            addOptional(ip, 'path', this.projectsDir, @isdir);
+            parse(ip, varargin{:});
+            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
+            save(loc);
         end
 		  
  		function this = ProjectData(varargin)
- 			%% PROJECTDATA
- 			%  @param .
+            %  @param projectFolder is char.
+            
+            ip = inputParser;
+            ip.KeepUnmatched = true;
+            addParameter(ip, 'projectFolder', '', @ischar)
+            parse(ip, varargin{:})
+            this.projectFolder_ = ip.Results.projectFolder;
  		end
- 	end 
+    end 
+    
+    %% PROTECTED
+    
+    properties (Access = protected)
+        projectFolder_
+    end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end
