@@ -26,9 +26,6 @@ classdef IStudyDataSingleton
     
     methods (Abstract)
         iter = createIteratorForSessionData(this)
-               diaryOff(this)
-               diaryOn(this)
-               saveWorkspace(this)
         sess = sessionData(~)
     end
 

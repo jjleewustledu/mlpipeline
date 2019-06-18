@@ -8,36 +8,31 @@ classdef (Abstract) ISessionData
  	%  and checked into repository /Users/jjlee/MATLAB-Drive/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
 	
-	properties (Abstract)
-        projectData
-        subjectData
-        %sessionData
-        %scanData
-        %assessorData
-        %resourceData
-        
+	properties (Abstract)        
         rawdataPath
         rawdataFolder % \in sessionFolder
         
-        scanPath
-        scanFolder % \in sessionFolder
+        studyData
+        
+        projectsDir % homolog of __Freesurfer__ subjectsDir
+        projectsPath
+        projectsFolder
+        projectData
+        projectPath
+        projectFolder % \in projectsFolder
+        
+        subjectsDir % __Freesurfer__ convention
+        subjectsPath
+        subjectsFolder
+        subjectData
+        subjectPath
+        subjectFolder % \in subjectsFolder
         
         sessionPath
         sessionFolder % \in projectFolder
         
-        projectPath
-        projectFolder % \in projectsFolder
-        
-        projectsPath
-        projectsDir % homolog of __Freesurfer__ subjectsDir
-        projectsFolder
-        
-        subjectPath
-        subjectFolder % \in subjectsFolder
-        
-        subjectsPath
-        subjectsDir % __Freesurfer__ convention
-        subjectsFolder  
+        scanPath
+        scanFolder % \in sessionFolder
         
         absScatterCorrected
         attenuationCorrected
@@ -45,11 +40,12 @@ classdef (Abstract) ISessionData
         isotope
         region
         tracer
-        useNiftyPet  
     end
     
 	methods (Abstract)
         obj  = ctObject(this)
+               diaryOff(this)
+               diaryOn(this)
         obj  = mrObject(this)
         obj  = petObject(this)
         dt   = datetime(this)
@@ -57,7 +53,8 @@ classdef (Abstract) ISessionData
         obj  = freesurferObject(this)
         tf   = isequal(this)
         tf   = isequaln(this)
- 	end 
+        loc  = saveWorkspace(this)
+    end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
     

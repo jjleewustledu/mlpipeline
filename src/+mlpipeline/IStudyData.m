@@ -11,7 +11,13 @@ classdef (Abstract) IStudyData < handle
         projectsDir
         subjectsDir
         YeoDir
- 	end
+    end
+    
+    methods (Abstract)
+        diaryOff(this)
+        diaryOn(this)
+        loc = saveWorkspace(this)
+    end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
  end
