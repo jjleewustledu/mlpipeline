@@ -650,14 +650,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 [~,this.scanFolder_] = fileparts(ipr.scanPath);
             end
             
-            %% taus
+            %% taus 
             
-            if (~isempty(this.scanFolder_) && lexist(this.jsonFilename, 'file'))
-                j = jsondecode(fileread(this.jsonFilename));
-                this.taus_ = j.taus';
-            end
-            this.tauIndices_ = ip.Results.tauIndices;
-            this.tauMultiplier_ = ip.Results.tauMultiplier;
+            this.tauIndices_ = ipr.tauIndices;
+            this.tauMultiplier_ = ipr.tauMultiplier;
         end
     end
 
