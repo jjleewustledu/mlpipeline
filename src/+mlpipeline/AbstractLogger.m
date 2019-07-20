@@ -80,18 +80,22 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             %  If this.includeTimeStamp it stamps the beginning of each add().  It always adds '\n', so additional
             %  '\n' in varargin will create line breaks in logs.
             
-            if (this.echoToCommandWindow)
-                fprintf(varargin{:}); fprintf('\n');
+            try
+                if (this.echoToCommandWindow)
+                    fprintf(varargin{:}); fprintf('\n');
+                end
+                if (isempty(this.cellArrayList_))
+                    this.cellArrayList_ = mlpatterns.CellArrayList;
+                end
+                if (this.includeTimeStamp)
+                    s = sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT));
+                    this.cellArrayList_.add([s sprintf(varargin{:})]);
+                    return
+                end
+                this.cellArrayList_.add(sprintf(varargin{:}));
+            catch ME
+                handwarning(ME)
             end
-            if (isempty(this.cellArrayList_))
-                this.cellArrayList_ = mlpatterns.CellArrayList;
-            end
-            if (this.includeTimeStamp)
-                s = sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT));
-                this.cellArrayList_.add([s sprintf(varargin{:})]);
-                return
-            end
-            this.cellArrayList_.add(sprintf(varargin{:}));
         end
         function           addNoEcho(this, varargin) 
             %% ADDNOECHO understands argument conventions of sprintf.  If this.echoToCommandWindow it echos.
