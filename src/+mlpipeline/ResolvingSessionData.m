@@ -14,6 +14,7 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
         ignoreFinishMark = false
         itr = 4
         outfolder = 'output'
+        reconstructionMethod = 'NiftyPET'
     end
     
     properties (Dependent)
