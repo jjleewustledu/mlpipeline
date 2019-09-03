@@ -12,7 +12,6 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
         filetypeExt = '.4dfp.hdr'
         frameAlignMethod = 'align_2051'
         ignoreFinishMark = false
-        itr = 4
         outfolder = 'output'
         reconstructionMethod = 'NiftyPET'
     end
