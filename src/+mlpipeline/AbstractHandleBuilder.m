@@ -127,7 +127,7 @@ classdef (Abstract) AbstractHandleBuilder < handle & matlab.mixin.Copyable & mlp
             %  @return property this.finished instantiated with path, tags, the booleans.
             
             ip = inputParser;
-            addParameter(ip, 'path', this.getLogPath, @isdir);
+            addParameter(ip, 'path', this.getLogPath, @isfolder);
             addParameter(ip, 'tag', this.productTag, @ischar);
             parse(ip, varargin{:});
             

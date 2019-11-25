@@ -74,7 +74,7 @@ classdef (Abstract) DicomSorter
             %  @returns fqdns, a cell array containing /path/to/DICOM.
             
             ip = inputParser;
-            addOptional(ip, 'srcPath', pwd, @isdir); % top-level folder, not 'SCANS'
+            addOptional(ip, 'srcPath', pwd, @isfolder); % top-level folder, not 'SCANS'
             parse(ip, varargin{:});
             
             import mlsystem.* mlio.*;
@@ -150,14 +150,14 @@ classdef (Abstract) DicomSorter
         function this          = sessionDcmConvert(this, varargin)
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addRequired( ip, 'srcPath',            @isdir); % top-level folder for session raw data
+            addRequired( ip, 'srcPath',            @isfolder); % top-level folder for session raw data
             addOptional( ip, 'destPath', pwd,      @ischar);
             addParameter(ip, 'sessionData', [],      @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'seriesFilter', {[]}, @(x) iscell(x) || ischar(x));
             addParameter(ip, 'preferredInfoFields', {'SeriesDescription'}, @iscell);
             addParameter(ip, 'preferredName', 'unknown', @ischar);
             parse(ip, varargin{:});            
-            if (~isdir(ip.Results.destPath))
+            if (~isfolder(ip.Results.destPath))
                 mkdir(ip.Results.destPath);
             end
             
@@ -189,7 +189,7 @@ classdef (Abstract) DicomSorter
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'srcPath',       @isdir); % top-level folder for session raw data
+            addParameter(ip, 'srcPath',       @isfolder); % top-level folder for session raw data
             addParameter(ip, 'destPath', pwd, @ischar);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'ct', false, @islogical);

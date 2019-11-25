@@ -49,7 +49,7 @@ classdef Finished < handle
             res = mlpipeline.ResourcesRegistry.instance();
             ip = inputParser;
             addRequired( ip, 'builder', @(x) isa(x, 'mlpipeline.IBuilder') || isa(x, 'mlpipeline.IHandleBuilder'));
-            addParameter(ip, 'path', pwd, @isdir);
+            addParameter(ip, 'path', pwd, @isfolder);
             addParameter(ip, 'tag', 'unknown_context_of', @ischar);
             addParameter(ip, 'neverMarkFinished', res.neverMarkFinished, @islogical);
             addParameter(ip, 'ignoreFinishMark', res.ignoreFinishMark, @islogical);
@@ -71,7 +71,7 @@ classdef Finished < handle
             %  @param named tag is a string.
             
             ip = inputParser;
-            addParameter(ip, 'path', this.path_, @isdir);
+            addParameter(ip, 'path', this.path_, @isfolder);
             addParameter(ip, 'tag', this.tag_, @ischar);
             parse(ip, varargin{:});
             

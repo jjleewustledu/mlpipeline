@@ -127,7 +127,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             %  @return property this.finished instantiated with path, tags, the booleans.
             
             ip = inputParser;
-            addParameter(ip, 'path', this.getLogPath, @isdir);
+            addParameter(ip, 'path', this.getLogPath, @isfolder);
             addParameter(ip, 'tag', this.productTag, @ischar);
             parse(ip, varargin{:});
             
