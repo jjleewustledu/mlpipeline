@@ -57,14 +57,14 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         end
         function        diaryOn(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.projectsDir, @isdir);
+            addOptional(ip, 'path', this.projectsDir, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
             diary(loc);
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.projectsDir, @isdir);
+            addOptional(ip, 'path', this.projectsDir, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
             save(loc);

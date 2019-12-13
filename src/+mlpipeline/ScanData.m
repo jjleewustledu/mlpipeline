@@ -16,14 +16,14 @@ classdef ScanData < mlpipeline.IScanData
         end
         function        diaryOn(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.scanPath, @isdir);
+            addOptional(ip, 'path', this.scanPath, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
             diary(loc);
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.scanPath, @isdir);
+            addOptional(ip, 'path', this.scanPath, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
             save(loc);

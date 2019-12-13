@@ -26,14 +26,14 @@ classdef SubjectData < mlpipeline.ISubjectData
             g = fullfile(this.subjectsDir, this.subjectFolder, '');
         end
         function this = set.subjectPath(this, s)
-           assert(isdir(s)); 
+           assert(isfolder(s)); 
            [this.subjectsDir,this.subjectFolder] = fileparts(s);
         end
         function g    = get.subjectsDir(this)
             g = this.studyRegistry_.subjectsDir;
         end
         function this = set.subjectsDir(this, s)
-            assert(isdir(s));
+            assert(isfolder(s));
             this.studyRegistry_.subjectsDir = s;
         end
         
@@ -44,14 +44,14 @@ classdef SubjectData < mlpipeline.ISubjectData
         end
         function        diaryOn(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.subjectPath, @isdir);
+            addOptional(ip, 'path', this.subjectPath, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
             diary(loc);
         end
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.subjectPath, @isdir);
+            addOptional(ip, 'path', this.subjectPath, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
             save(loc);

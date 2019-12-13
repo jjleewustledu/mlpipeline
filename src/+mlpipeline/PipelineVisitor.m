@@ -135,7 +135,7 @@ classdef PipelineVisitor
             %  @returns nameStruct updated
             
             if (~isempty(nameStruct.path))
-                assert(isdir(nameStruct.path)); 
+                assert(isfolder(nameStruct.path)); 
             end
             nameStruct.pre  = fileprefix(nameStruct.pre);
             nameStruct.post = fileprefix(nameStruct.post);

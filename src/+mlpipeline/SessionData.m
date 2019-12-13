@@ -345,7 +345,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function        diaryOn(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.sessionPath, @isdir);
+            addOptional(ip, 'path', this.sessionPath, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
             diary(loc);
@@ -523,7 +523,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end   
         function loc  = saveWorkspace(this, varargin)
             ip = inputParser;
-            addOptional(ip, 'path', this.sessionPath, @isdir);
+            addOptional(ip, 'path', this.sessionPath, @isfolder);
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
             save(loc);
@@ -584,7 +584,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'projectData', []);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
-            addParameter(ip, 'projectsDir', '',   @(x) isdir(x) || isempty(x));
+            addParameter(ip, 'projectsDir', '',   @(x) isfolder(x) || isempty(x));
             addParameter(ip, 'pnumber', '',       @ischar);
             addParameter(ip, 'scanFolder', '',    @ischar);
             addParameter(ip, 'scanPath', '',      @ischar);
@@ -595,7 +595,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'subjectData', []);
             addParameter(ip, 'subjectFolder', '', @ischar);
             addParameter(ip, 'subjectPath', '',   @ischar);
-            addParameter(ip, 'subjectsDir', '',   @(x) isdir(x) || isempty(x));
+            addParameter(ip, 'subjectsDir', '',   @(x) isfolder(x) || isempty(x));
             addParameter(ip, 'tauIndices', [], @isnumeric);
             addParameter(ip, 'tauMultiplier', 1, @(x) isnumeric(x) && x >= 1);
             parse(ip, varargin{:}); 
@@ -700,7 +700,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 return
             end
             path = fullfile(varargin{1:end-1});
-            assert(isdir(path));
+            assert(isfolder(path));
             assert(ischar(varargin{end}));
             
             f = fullfile(path,                           varargin{end});

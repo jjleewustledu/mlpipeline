@@ -45,7 +45,7 @@ classdef DataExplorer
         end 
         function this = oneSeries(this, varargin)
             p = inputParser;
-            addParamValue(p, 'fqfilename', @isdir);
+            addParamValue(p, 'fqfilename', @isfolder);
             parse(p, varargin{:});
             dr = mlfourd.FslDirector.createFromFilename(p.Results.fqfilename);
         end
