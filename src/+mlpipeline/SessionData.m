@@ -42,6 +42,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         snumber
         taus
         times
+        version
     end
 
     methods (Static)
@@ -235,6 +236,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             for ig = 1:length(t)-1
                 g(ig+1) = sum(t(1:ig));
             end
+        end
+        function g    = get.version(this)
+            g = this.version_;
         end
                 
         %% IMRData
@@ -598,6 +602,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'subjectsDir', '',   @(x) isfolder(x) || isempty(x));
             addParameter(ip, 'tauIndices', [], @isnumeric);
             addParameter(ip, 'tauMultiplier', 1, @(x) isnumeric(x) && x >= 1);
+            addParameter(ip, 'version', '20200102', @ischar);
             parse(ip, varargin{:}); 
             ipr = ip.Results;
             
@@ -610,6 +615,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             if ~isempty(ipr.subjectsDir)
                 setenv('SUBJECTS_DIR', ipr.subjectsDir)
             end
+            this.version_ = ipr.version;
             
             %% mlpipeline.StudyData, containing some kind of registry; legacy support
             this.studyData_ = ipr.studyData;
@@ -674,6 +680,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         tauIndices_
         tauMultiplier_
         taus_
+        version_
     end
     
     methods (Static, Access = protected)
@@ -814,6 +821,19 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 otherwise
                     error('mlnipet:switchCaseNotSupported', ...
                           'SessionData.readOrientation.o -> %s', o);
+            end
+        end
+        function tf   = useDeprecatedVersion(this)
+            try
+                if datetime(this.version, 'InputFormat', 'yyyyMMdd') < ...
+                   datetime('20200101', 'InputFormat', 'yyyyMMdd')
+                    tf = true;
+                else
+                    tf = false;
+                end
+            catch %#ok<CTCH>
+                warning('mlpipeline:RuntimeWarning', 'useDeprecatedVersion.version -> %s', this.version)
+                tf = false;
             end
         end
     end
