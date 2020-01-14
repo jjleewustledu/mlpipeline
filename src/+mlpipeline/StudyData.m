@@ -9,14 +9,14 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
  	    
     properties (Dependent)
-        rawdataDir
         projectsDir
         subjectsDir
+        subjectsFolder
         YeoDir
         
         atlVoxelSize
         noclobber
-        referenceTracer        
+        referenceTracer
     end
     
     properties
@@ -27,14 +27,14 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         
         %% GET
         
-        function g = get.rawdataDir(this)
-            g = this.registry_.rawdataDir;
-        end
         function g = get.projectsDir(this)
             g = this.registry_.projectsDir;
         end
         function g = get.subjectsDir(this)
             g = this.registry_.subjectsDir;
+        end
+        function g = get.subjectsFolder(this)
+            g = basename(this.subjectsDir);
         end
         function g = get.YeoDir(this)
             g = this.registry_.YeoDir;
@@ -48,7 +48,11 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         end
         function g = get.referenceTracer(this)
             g = this.registry_.referenceTracer;
-        end     
+        end
+        function     set.referenceTracer(this, s)
+            assert(ischar(s));
+            this.registry_.referenceTracer = s;
+        end
         
         %%
         
