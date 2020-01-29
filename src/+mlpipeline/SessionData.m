@@ -75,6 +75,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = this.studyData_;
         end
         function this = set.studyData(this, s)
+            warning('mlpipeline:RuntimeWarning', 'SessionData.set.studyData is DEPRECATED')
             assert(isa(s, 'mlpipeline.IStudyData'));
             this.studyData_ = s;
         end 
@@ -136,7 +137,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         end
         function g    = get.subjectData(this)
             g = this.subjectData_;
-        end        
+        end     
         function g    = get.subjectPath(this)
             g = this.subjectData.subjectPath;
         end
@@ -231,11 +232,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = this.alternativeTaus;
         end
         function g    = get.times(this)
-            t = this.taus;
-            g = zeros(size(t));
-            for ig = 1:length(t)-1
-                g(ig+1) = sum(t(1:ig));
-            end
+            g = cumsum(this.taus);
         end
         function g    = get.version(this)
             g = this.version_;
