@@ -20,6 +20,7 @@ classdef SubjectData < mlpipeline.ISubjectData
             g = this.subjectFolder_;
         end
         function this = set.subjectFolder(this, s)
+            assert(ischar(s));
             this.subjectFolder_ = s;
         end
         function g    = get.subjectPath(this)
