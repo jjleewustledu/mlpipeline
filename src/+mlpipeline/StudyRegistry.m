@@ -10,6 +10,7 @@ classdef (Abstract) StudyRegistry < handle & mlpatterns.Singleton2
         atlVoxelSize = 333   
         comments = ''
         noclobber = true
+        useParfor = false
     end
     
 	properties (Dependent)
