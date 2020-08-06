@@ -9,6 +9,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
+    properties
+        parcellation
+    end
+    
 	properties (Dependent)
         rawdataPath
         rawdataFolder % \in sessionFolder
@@ -833,13 +837,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 tf = false;
             end
         end
-    end
-    
-    %% HIDDEN
-    %  @deprecated
-    
-    properties (Hidden)
-        parcellation
     end
     
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
