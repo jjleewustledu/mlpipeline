@@ -586,6 +586,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'frame', nan,        @isnumeric);
+            addParameter(ip, 'parcellation', '',  @ischar)
             addParameter(ip, 'projectData', []);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
@@ -661,6 +662,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             this.tauIndices_ = ipr.tauIndices;
             this.tauMultiplier_ = ipr.tauMultiplier;
+            
+            this.parcellation = ipr.parcellation;
         end
     end
 
