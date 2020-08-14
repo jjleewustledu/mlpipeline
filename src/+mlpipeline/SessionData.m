@@ -9,10 +9,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
-    properties
-        parcellation
-    end
-    
 	properties (Dependent)
         rawdataPath
         rawdataFolder % \in sessionFolder
@@ -41,6 +37,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         
         frame
         noclobber
+        parcellation
         pnumber
         region
         snumber
@@ -196,6 +193,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function g    = get.noclobber(this)
             g = this.studyData.noclobber;
         end
+        function g    = get.parcellation(this)
+            g = this.region;
+        end
+        function this = set.parcellation(this, s)
+           this.region = s; 
+        end
         function g    = get.pnumber(this)
             if (~isempty(this.pnumber_))
                 g = this.pnumber_;
@@ -213,7 +216,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = this.region_;
         end
         function this = set.region(this, s)
-            assert(isa(s, 'mlfourd.ImagingContext2'));
             this.region_ = s;
         end
         function g    = get.snumber(this)
@@ -592,6 +594,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'projectPath', '',   @ischar);
             addParameter(ip, 'projectsDir', '',   @(x) isfolder(x) || isempty(x));
             addParameter(ip, 'pnumber', '',       @ischar);
+            addParameter(ip, 'region', '',        @ischar);
             addParameter(ip, 'scanFolder', '',    @ischar);
             addParameter(ip, 'scanPath', '',      @ischar);
             addParameter(ip, 'sessionFolder', '', @ischar);
@@ -663,7 +666,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             this.tauIndices_ = ipr.tauIndices;
             this.tauMultiplier_ = ipr.tauMultiplier;
             
-            this.parcellation = ipr.parcellation;
+            %%
+            
+            this.region_ = ipr.parcellation;
+            this.region_ = ipr.region;
         end
     end
 
