@@ -21,6 +21,7 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
         epochTag
         frameTag
         maxLengthEpoch
+        metricTag
         parcellationTag % alias of regionTag
         regionTag
         resolveTag
@@ -66,6 +67,18 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
             end 
             g = 16;
         end
+        function g    = get.metricTag(this)
+            if isempty(this.metric)
+                g = '';
+                return
+            end
+            if ischar(this.metric)
+                g = sprintf('_%s', this.metric);
+                return
+            end
+            error('mlpipeline:TypeError', ...
+                'ResolvingSessionData.get.metricTag');            
+        end
         function g    = get.parcellationTag(this)
             g = this.regionTag;
         end
@@ -84,6 +97,7 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
             end
             if isa(this.region, 'mlfourd.ImagingContext2') || isa(x, 'mlfourd.ImagingFormatContext')
                 g = sprintf('_%s', this.region.fileprefix);
+                return
             end
             error('mlpipeline:TypeError', ...
                 'ResolvingSessionData.get.regionTag');
@@ -136,8 +150,10 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
             addParameter(ip, 'resolveTag', '', @ischar);
             addParameter(ip, 'rnumber', 1, @isnumeric);
             parse(ip, varargin{:});
-            this.resolveTag_ = ip.Results.resolveTag;
-            this.rnumber_ = ip.Results.rnumber;
+            ipr = ip.Results;
+            
+            this.resolveTag_ = ipr.resolveTag;
+            this.rnumber_ = ipr.rnumber;
  		end
  	end 
     

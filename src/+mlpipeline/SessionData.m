@@ -36,6 +36,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         scanFolder % \in sessionFolder
         
         frame
+        metric
         noclobber
         parcellation
         pnumber
@@ -189,6 +190,13 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.frame(this, s)
             assert(isnumeric(s));
             this.frame_ = s;
+        end
+        function g    = get.metric(this)
+            g = this.metric_;
+        end
+        function this = set.metric(this, s)
+            assert(ischar(s))
+            this.metric_ = s;
         end
         function g    = get.noclobber(this)
             g = this.studyData.noclobber;
@@ -588,7 +596,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'frame', nan,        @isnumeric);
-            addParameter(ip, 'parcellation', '',  @ischar)
+            addParameter(ip, 'metric', '',        @ischar);
+            addParameter(ip, 'parcellation', '',  @ischar);
             addParameter(ip, 'projectData', []);
             addParameter(ip, 'projectFolder', '', @ischar);
             addParameter(ip, 'projectPath', '',   @ischar);
@@ -668,6 +677,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             
             %%
             
+            this.metric_ = ipr.metric;
             this.region_ = ipr.parcellation;
             this.region_ = ipr.region;
         end
@@ -678,6 +688,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     properties (Access = protected)
         builder_
         frame_
+        metric_
         pnumber_
         projectData_
         projectFolder_
