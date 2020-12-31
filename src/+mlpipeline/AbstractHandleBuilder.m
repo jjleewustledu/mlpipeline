@@ -11,9 +11,9 @@ classdef (Abstract) AbstractHandleBuilder < handle & matlab.mixin.Copyable & mlp
     properties (Dependent)
         buildVisitor
         finished
-        ignoreFinishMark
+        ignoreFinishMark % KLUDGE
         keepForensics
-        neverMarkFinished
+        neverMarkFinished % KLUDGE
         logger
         product        
  	end
@@ -214,7 +214,12 @@ classdef (Abstract) AbstractHandleBuilder < handle & matlab.mixin.Copyable & mlp
             %%  See also web(fullfile(docroot, 'matlab/ref/matlab.mixin.copyable-class.html'))
             
             that = copyElement@matlab.mixin.Copyable(this);
-            that.logger_ = copy(this.logger_);
+            if ishandle(this.logger_)
+                that.logger_ = copy(this.logger_);
+            end
+            if ishandle(this.product_)
+                this.product_ = copy(this.product_);
+            end
         end
         function this = prepareLogger(this, ipr)
             this.logger_ = ipr.logger;

@@ -1,5 +1,6 @@
-classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuilder
-	%% ABSTRACTBUILDER  
+classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
+	%% ABSTRACTBUILDER implements interface IBuilder, adding utilities for checking object equivalence,
+    %  assessing whether building is finished, and packaging the built product.
 
 	%  $Revision$
  	%  was created 01-Feb-2017 22:41:34
@@ -193,10 +194,6 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
             addParameter(ip, 'product', []);
             parse(ip, varargin{:});
             
-            if (this.receivedCtor(varargin{:}))
-                this = this.copyCtor(varargin{:});
-                return
-            end
             this.buildVisitor_ = ip.Results.buildVisitor;
             this               = this.prepareLogger(ip.Results);
             this.product_      = ip.Results.product;            
@@ -214,13 +211,6 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
     end
     
     methods (Access = protected)
-        function this = copyCtor(this, varargin)
-            aCopy = varargin{1};
-            this.buildVisitor_ = aCopy.buildVisitor_;
-            this.finished_ = aCopy.finished;
-            this.logger_ = aCopy.logger;
-            this.product_ = aCopy.product_;
-        end
         function this = prepareLogger(this, ipr)
             this.logger_ = ipr.logger;
             ensuredir(ipr.logPath);
@@ -240,10 +230,6 @@ classdef (Abstract) AbstractBuilder < mlpipeline.RootBuilder & mlpipeline.IBuild
                 return
             end
             t = [t '_' p.fileprefix];
-        end
-        function tf   = receivedCtor(~, varargin)
-            tf = (1 == length(varargin)) && ...
-                 isa(varargin{1}, 'mlpipeline.IBuilder');
         end
     end
     
