@@ -355,6 +355,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     
         %%
         
+        function        alternativeTaus(~)
+            error('mlpipeline:NotImplementedError', 'SessionData.alternativeTaus');
+        end
         function        diaryOff(~)
             diary off;
         end
@@ -745,9 +748,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     end
     
     methods (Access = protected)
-        function alternativeTaus(~)
-            error('mlpipeline:NotImplementedError', 'SessionData.alternativeTaus');
-        end
         function [tf,msg] = classesequal(this, c)
             tf  = true; 
             msg = '';
