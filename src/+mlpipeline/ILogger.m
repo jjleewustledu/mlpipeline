@@ -1,4 +1,4 @@
-classdef (Abstract) ILogger < handle & matlab.mixin.Copyable & mlpatterns.List
+classdef (Abstract) ILogger < handle & mlpatterns.List
 	%% ILOGGER  
 
 	%  $Revision$
