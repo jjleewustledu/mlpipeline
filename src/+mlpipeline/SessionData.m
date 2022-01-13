@@ -511,10 +511,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 loc = locationType(ip.Results.typ, fullfile(this.sessionPath, 'Log', ''));
             end
         end
-        function obj  = logObject(this, varargin)
-            obj = mlpipeline.Logger2(varargin{:});
-            obj.filepath = this.logLocation;
-        end  
         function loc  = onAtlasLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);
