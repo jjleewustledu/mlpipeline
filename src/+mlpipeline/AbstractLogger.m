@@ -1,4 +1,4 @@
-classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline.ILogger
+classdef (Abstract) AbstractLogger < handle & matlab.mixin.Heterogeneous & matlab.mixin.Copyable & mlpipeline.ILogger & mlio.AbstractHandleIO
 	%% ABSTRACTLOGGER accumulates logging strings in a CellArrayList.  It is a handle class.
     
     %  Version $Revision: 2647 $ was created $Date: 2013-09-21 17:59:08 -0500 (Sat, 21 Sep 2013) $ by $Author: jjlee $,
@@ -63,7 +63,7 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             end
             this = this.ensureExtension;
             ensuredir(this.filepath);
-            mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
+            mlio.FilesystemRegistry.cellArrayListToTextfile( ...
                 this.cellArrayList_, this.fqfilename, varargin{:});
         end
         
@@ -138,7 +138,7 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             %  @param optional 'callerid' is char, identifying the client requesting logging; 
             %         an object is replaced with its classname.
             %  @param named 'tag' is char to augment a constructed filename; '_' is prepended as needed.
-            %  @param named 'echoToCommandWindow' is logical (default true).
+            %  @param named 'echoToCommandWindow' is logical.  Default := ~isempty(getenv('DEBUG')).
             %  @param instance of mlpipeline.AbstractLogger, by itself, will construct a deep copy.
             %  @return this
 
@@ -149,10 +149,10 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional( ip, 'fqfileprefix', '', @ischar);
+            addOptional( ip, 'fqfileprefix', '', @istext);
             addOptional( ip, 'callerid', this);
             addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'echoToCommandWindow', true, @islogical);
+            addParameter(ip, 'echoToCommandWindow', ~isempty(getenv('DEBUG')), @islogical);
             parse(ip, varargin{:});            
             this.callerid_           = this.callerid2str(ip.Results.callerid);
             this.tag_                = this.aufbauTag(ip.Results.tag);
@@ -237,7 +237,7 @@ classdef (Abstract) AbstractLogger < handle & mlio.AbstractHandleIO & mlpipeline
             end
             this.setFileprefix_@mlio.AbstractHandleIO(fp);
         end
-        function        setFilesuffix_(this, fs)            
+        function        setFilesuffix_(this, fs)
             if (~isempty(this.filepath_))
                 this.add(sprintf('AbstractLogger.setFilesuffix_(''%s'')', fs));
             end

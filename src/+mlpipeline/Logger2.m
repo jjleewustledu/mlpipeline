@@ -1,4 +1,4 @@
-classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpatterns.List & mlpipeline.ILogger
+classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & mlio.AbstractHandleIO
 	%% LOGGER2 accumulates logging strings using mlpatterns.List. 
     
 	%  $Revision$
@@ -9,19 +9,39 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
     properties (Constant)
         FILETYPE = 'mlpipeline.Logger2'
         FILETYPE_EXT = '.log'
-        DATESTR_FORMAT = 'ddd mmm dd HH:MM:SS yyyy'
-        TIMESTR_FORMAT = 'ddd mmm dd HH:MM:SS:FFF yyyy' 
+        DATESTR_FORMAT = 'yyyy mmm dd HH:MM:SS'
+        TIMESTR_FORMAT = 'yyyy mmm dd HH:MM:SS:FFF' 
     end    
     
     properties (Dependent)
         callerid
         contents % @return cell of char-arrays.  Use char(this) for single char-array.
         creationDate
-        echoToCommandWindow
+        echoToCommandWindow % logical
         hostname
         id % user id
         includeTimeStamp
         uname % machine id
+    end
+
+    methods (Static)
+        function this = createFromFilename(fn, varargin)
+            %% CREATEFROMFILENAME creates a Logger2, then imports any existing logs.
+            %  @param required 'fn' is char; any trailing this.FILETYPE_EXT is dropped.
+            %  @param optional 'callerid' is char, identifying the client requesting logging | 
+            %                  'callerid' is an object to be replaced with its classname.
+            %  @param 'tag' is char to augment fileprefixes; '_' is prepended as needed.
+            %  @param 'echoToCommandWindow' is logical; default := non-empty getenv('DEBUG').
+            %  @param 'includeTimeStamp' is logical; default := true.
+            %  @return this   
+            fqfp = myfileprefix(fn);
+            fqfn = [convertStringsToChars(fqfp) '.log'];
+            this = mlpipeline.Logger2(fqfp);
+            if isfile(fqfn)
+                this.cellArrayList_ = mlio.FilesystemRegistry.textfileToCellArrayList(fqfn);
+            end
+
+        end
     end
     
     methods
@@ -32,7 +52,7 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
             g = this.callerid_;
         end
         function g = get.contents(this)
-            g = this.cellArrayList_;
+            g = clone(this.cellArrayList_);
         end
         function g = get.creationDate(this)
             g = this.creationDate_;
@@ -42,6 +62,10 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
         end
         function g = get.hostname(this)
             g = this.hostname_;
+        end
+        function     set.includeTimeStamp(this, s)
+            assert(islogical(s))
+            this.includeTimeStamp_ = s;
         end
         function g = get.includeTimeStamp(this)
             g = this.includeTimeStamp_;
@@ -60,14 +84,14 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
             %  If this.noclobber == true,  this will never overwrite files.
             %  If this.noclobber == false, this may overwrite files. 
             %  @param perm are string file permission passed to fopen.  See also:  fopen.
-            %  @return saves this AbstractLogger2 to this.fqfilename.  
+            %  @return saves this to this.fqfilename.  
             %  @throws mlpipeline.IOError:noclobberPreventedSaving
             
-            if (~isempty(this.footer))
+            if strlength(this.footer) > 0
                 this.cellArrayList_.add(this.footer);
             end
             this = this.ensureExtension;
-            mlsystem.FilesystemRegistry.cellArrayListToTextfile( ...
+            mlio.FilesystemRegistry.cellArrayListToTextfile( ...
                 this.cellArrayList_, this.fqfilename, varargin{:});
         end
         
@@ -84,8 +108,9 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
                 fprintf(varargin{:}); fprintf('\n');
             end
             if (this.includeTimeStamp)
-                s = sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT));
-                this.cellArrayList_.add([s sprintf(varargin{:})]);
+                s1 = string(sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT)));
+                s2 = string(sprintf(varargin{:}));
+                this.cellArrayList_.add(strcat(s1, s2));
                 return
             end
             this.cellArrayList_.add(sprintf(varargin{:}));
@@ -100,7 +125,7 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
             locs = this.cellArrayList_.locationsOf(elt);
         end
         function str     = char(this)
-            str = this.cellArrayList_.char;
+            str = strtrim(char(this.cellArrayList_));
         end
         function iter    = createIterator(this)
             iter = this.cellArrayList_.createIterator;
@@ -108,47 +133,51 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
         function elts    = remove(~, ~)
             elts = [];
         end
+        function str     = string(this)
+            str = convertCharsToStrings(this.cellArrayList_);
+        end
         
         %%
         
         function this = Logger2(varargin) 
             %% LOGGER2 provides copy-construction for its handle.  
             %  Its interface is simplified compared to mlpipeline.Logger.
+            %  @param optional 'fqfileprefix' is char; any trailing this.FILETYPE_EXT is dropped.
             %  @param optional 'callerid' is char, identifying the client requesting logging | 
             %                  'callerid' is an object to be replaced with its classname.
-            %  @param 'fileprefix' is char; any trailing this.FILETYPE_EXT is dropped.
             %  @param 'tag' is char to augment fileprefixes; '_' is prepended as needed.
-            %  @param 'echoToCommandWindow' is logical; default := true.
+            %  @param 'echoToCommandWindow' is logical; default := non-empty getenv('DEBUG').
             %  @param 'includeTimeStamp' is logical; default := true.
-            %  @param instance of mlpipeline.AbstractLogger2 by itself will construct a deep copy.
+            %  @param instance of mlpipeline.Logger2 by itself will construct a deep copy.
             %  @return this            
 
-            if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger2')) 
+            if (1 == nargin && isa(varargin{1}, 'mlpipeline.Logger2'))
                 this = copy(varargin{1});
                 return
             end
             
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addOptional( ip, 'callerid', this);
-            addParameter(ip, 'fileprefix', '', @ischar);
-            addParameter(ip, 'tag', '', @ischar);
-            addParameter(ip, 'echoToCommandWindow', true, @islogical);
+            addOptional(ip, 'fqfileprefix', tempname, @istext);
+            addOptional(ip, 'callerid', this);
+            addParameter(ip, 'tag', '', @istext);
+            addParameter(ip, 'echoToCommandWindow', ~isempty(getenv('DEBUG')), @islogical);
             addParameter(ip, 'includeTimeStamp', true, @islogical);
-            parse(ip, varargin{:});            
-            this.callerid_            = this.callerid2str(ip.Results.callerid);
-            this.tag_                 = this.aufbauTag(ip.Results.tag); % dependency
-            this.fqfileprefix         = this.aufbauFqfileprefix(ip.Results.fileprefix);
+            parse(ip, varargin{:});  
+            ipr = ip.Results;
+            this.fqfileprefix         = this.aufbauFqfileprefix(ipr.fqfileprefix);
+            this.callerid_            = this.callerid2str(ipr.callerid);
+            this.tag_                 = this.aufbauTag(ipr.tag); % dependency
             this.filesuffix           = this.FILETYPE_EXT;
-            this.echoToCommandWindow_ = ip.Results.echoToCommandWindow;
-            this.includeTimeStamp_    = ip.Results.includeTimeStamp;
+            this.echoToCommandWindow_ = ipr.echoToCommandWindow;
+            this.includeTimeStamp_    = ipr.includeTimeStamp;
             
             this.creationDate_  = datestr(now, this.DATESTR_FORMAT);
             this.hostname_      = hostname;
             [~,this.id_]        = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
             [~,this.uname_]     = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
             this.cellArrayList_ = mlpatterns.CellArrayList;
-            if (~isempty(this.header))
+            if strlength(this.header) > 0
                 this.cellArrayList_.add(this.header);
             end                   
         end 
@@ -173,7 +202,7 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
     
     methods (Access = 'protected')
         function fqfp = aufbauFqfileprefix(this, fqfp)
-            if (~isempty(fqfp))
+            if strlength(fqfp) > 0
                 fqfp = strexcise(fqfp, this.FILETYPE_EXT);
                 return
             end            
@@ -182,16 +211,16 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
                 sprintf('%s%s_%s', this.callerid_, this.tag_, mydatetimestr(now)));
         end
         function t    = aufbauTag(~, t)
-            t = char(t);
-            if (isempty(t))
+            t = convertStringsToChars(t);
+            if 0 == strlength(t)
                 return
             end
-            if (~strcmp(t(1), '_'))
-                t = ['_' t];
+            if ~strncmp(t, '_', 1)
+                t = strcat('_', t);
             end
         end
         function cid  = callerid2str(~, cid)
-            if (~ischar(cid))
+            if ~istext(cid)
                 cid = class(cid);
             end            
         end
@@ -202,7 +231,7 @@ classdef Logger2 < handle & matlab.mixin.Copyable & mlio.AbstractHandleIO & mlpa
             that.cellArrayList_ = copy(this.cellArrayList_);
         end
         function this = ensureExtension(this)
-            if (isempty(this.filesuffix))
+            if 0 == strlength(this.filesuffix)
                 this.filesuffix = this.FILETYPE_EXT;
             end
         end

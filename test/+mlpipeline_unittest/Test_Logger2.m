@@ -36,7 +36,7 @@ classdef Test_Logger2 < matlab.unittest.TestCase
             this.verifyEqual(this.testObj.callerid, 'mlpipeline.Logger2');
             c = this.testObj.contents.char;
             this.verifyEqual(c(end-20:end), 'testing log element 2');
-            this.verifyEqual(this.testObj.hostname(1:10), 'ophthalmic');
+            this.verifyEqual(this.testObj.hostname, hostname);
             this.verifyEqual(this.testObj.id, 'jjlee');
             this.verifyEqual(this.testObj.filename, 'Test_Logger2.log');
         end
@@ -45,19 +45,19 @@ classdef Test_Logger2 < matlab.unittest.TestCase
             tobj = Logger2;
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger2('fileprefix', 'test_ctor_fqfn');
+            tobj = Logger2('test_ctor_fqfn');
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger2('fileprefix', fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn'));
+            tobj = Logger2(fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn'));
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger2('fileprefix', fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn.log'));
+            tobj = Logger2(fullfile(getenv('HOME'), 'Tmp', 'test_ctor_fqfn.log'));
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger2('fileprefix', fullfile(getenv('HOME'), 'Tmp', 'NonexistentDir', 'test_ctor_fqfn.log'));
+            tobj = Logger2(fullfile(getenv('HOME'), 'Tmp', 'NonexistentDir', 'test_ctor_fqfn.log'));
             fprintf('%s\n', tobj.fqfn);
             
-            tobj = Logger2(this, 'tag', 'test_ctor_fqfn');
+            tobj = Logger2(tempname, this, 'tag', 'test_ctor_fqfn');
             fprintf('%s\n', tobj.fqfn);
         end
         
@@ -102,21 +102,21 @@ classdef Test_Logger2 < matlab.unittest.TestCase
         function test_save(this) 
             this.testObj.save;
             this.verifyTrue(lexist(this.testObj.fqfilename, 'file'));
-            c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
+            c = mlio.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
         function test_saveas(this)
             FQFP = fullfile(this.workPath, 'Test_Logger2_test_saveas');
             this.testObj.saveas(FQFP);            
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
-            c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
+            c = mlio.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
  	end
 
  	methods (TestClassSetup)
  		function setupLogger2(this)
-            this.sessionPath = fullfile('/data', 'cvl', 'np755', 'mm01-020_p7377_2009feb5', '');
+            this.sessionPath = fullfile(getenv('SINGULARITY_HOME'), 'cvl', 'np755', 'mm01-007_p7267_2008jun16', '');
             this.workPath    = fullfile(this.sessionPath, 'fsl', '');
             this.test_fqfn   = fullfile(this.workPath, 'Test_Logger2.log');
  		end
@@ -125,12 +125,12 @@ classdef Test_Logger2 < matlab.unittest.TestCase
  	methods (TestMethodSetup)
         function setupMethods(this)
             this.testObj = mlpipeline.Logger2( ...
-                'fileprefix', fullfile(this.workPath, 'p7377ho1.img.rec'));
+                fullfile(this.workPath, 'p7267ho1.img.rec'));
             this.testObj.add('testing log element 1');
             this.testObj.add('testing log element 2');
             this.testObj.fqfilename = this.test_fqfn;
             this.testNoStamp = mlpipeline.Logger2( ...
-                'fileprefix', fullfile(this.workPath, 'p7377ho1.img.rec'), 'includeTimeStamp', false);
+                fullfile(this.workPath, 'p7267ho1.img.rec'), this.testObj, 'includeTimeStamp', false);
             this.testNoStamp.add('testing log element 1');
             this.testNoStamp.add('testing log element 2');
             this.testNoStamp.fqfilename = this.test_fqfn;            
