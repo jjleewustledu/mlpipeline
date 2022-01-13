@@ -102,14 +102,14 @@ classdef Test_Logger < matlab.unittest.TestCase
         function test_save(this) 
             this.testObj.save;
             this.verifyTrue(lexist(this.testObj.fqfilename, 'file'));
-            c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
+            c = mlio.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
         function test_saveas(this)
             FQFP = fullfile(this.workPath, 'Test_Logger_test_saveas');
             this.testObj.saveas(FQFP);            
             this.verifyTrue(lexist([FQFP '.log'], 'file'));
-            c = mlsystem.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
+            c = mlio.FilesystemRegistry.textfileToCell(this.testObj.fqfilename);
             this.verifyEqual(c{end}(end-20:end), 'testing log element 2');
         end
  	end
