@@ -8,6 +8,7 @@ classdef (Sealed) ResourcesRegistry < handle & mlpatterns.Singleton2
  	
 	properties 	
         dicomExtension = '.dcm'	
+        imagingContextCompatibility = false
         keepForensics = true 
         preferredTimeZone = 'America/Chicago'
     end
