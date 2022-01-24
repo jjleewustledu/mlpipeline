@@ -50,13 +50,6 @@ classdef SubjectData < mlpipeline.ISubjectData
             loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
             diary(loc);
         end
-        function loc  = saveWorkspace(this, varargin)
-            ip = inputParser;
-            addOptional(ip, 'path', this.subjectPath, @isfolder);
-            parse(ip, varargin{:});
-            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
-            save(loc);
-        end
 		  
  		function this = SubjectData(varargin)
  			%% SUBJECTDATA

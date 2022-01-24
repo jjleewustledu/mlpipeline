@@ -12,9 +12,7 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         projectsDir
         subjectsDir
         subjectsFolder
-        YeoDir
         
-        atlVoxelSize
         noclobber
         referenceTracer
     end
@@ -36,13 +34,7 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
         function g = get.subjectsFolder(this)
             g = basename(this.subjectsDir);
         end
-        function g = get.YeoDir(this)
-            g = this.registry_.YeoDir;
-        end  
         
-        function g = get.atlVoxelSize(this)
-            g = this.registry_.atlVoxelSize;            
-        end
         function g = get.noclobber(this)
             g = this.registry_.noclobber;
         end
@@ -65,13 +57,6 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
             parse(ip, varargin{:});
             loc = fullfile(ip.Results.path, diaryfilename('obj', class(this)));
             diary(loc);
-        end
-        function loc  = saveWorkspace(this, varargin)
-            ip = inputParser;
-            addOptional(ip, 'path', this.projectsDir, @isfolder);
-            parse(ip, varargin{:});
-            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
-            save(loc);
         end
         
  		function this = StudyData(varargin)

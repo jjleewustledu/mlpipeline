@@ -14,9 +14,8 @@ classdef (Abstract) IProjectData
  	end
 
 	methods (Abstract)
-              diaryOff(this)
-              diaryOn(this)
-        loc = saveWorkspace(this)
+        diaryOff(this)
+        diaryOn(this)
   	end 
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

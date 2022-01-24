@@ -535,13 +535,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function loc  = regionLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
         end   
-        function loc  = saveWorkspace(this, varargin)
-            ip = inputParser;
-            addOptional(ip, 'path', this.sessionPath, @isfolder);
-            parse(ip, varargin{:});
-            loc = fullfile(ip.Results.path, matfilename('obj', class(this)));
-            save(loc);
-        end
         function loc  = sessionLocation(this, varargin)
             ip = inputParser;
             addParameter(ip, 'typ', 'path', @ischar);

@@ -10,13 +10,11 @@ classdef (Abstract) IStudyData < handle
         rawdataDir 	
         projectsDir
         subjectsDir
-        YeoDir
     end
     
     methods (Abstract)
         diaryOff(this)
         diaryOn(this)
-        loc = saveWorkspace(this)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy

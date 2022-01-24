@@ -1,5 +1,5 @@
 classdef (Sealed) ResourcesRegistry < handle & mlpatterns.Singleton2
-	%% RESOURCESREGISTRY provides global settings for mlpipeline, mlfourdfp, mlfourd, mlnipet.
+	%% RESOURCESREGISTRY support mlfourdfp, mlfourd
 
 	%  $Revision$
  	%  was created 11-Jun-2019 21:32:00 by jjlee,
@@ -15,6 +15,7 @@ classdef (Sealed) ResourcesRegistry < handle & mlpatterns.Singleton2
     
     properties (Dependent)
         alpha % significance level
+        debug % env
         defaultN % imgreg_4dfp
         ignoreFinishMark % *T4ResolveBuilder
         matlabDrive
@@ -28,9 +29,35 @@ classdef (Sealed) ResourcesRegistry < handle & mlpatterns.Singleton2
         function g = get.alpha(this)
             g = this.alpha_;
         end
-        function     set.alpha(this, s)
+        function set.alpha(this, s)
             assert(isnumeric(s) && eps < s && s < 1);
             this.alpha_ = s;
+        end
+        function g = get.debug(~)
+            g = getenv('DEBUG');
+            g = ~isempty(g);
+        end
+        function     set.debug(~, s)
+            if (isempty(s))
+                setenv('DEBUG', '');
+                return
+            end
+            if (islogical(s))
+                if (s)
+                    s = 'TRUE';
+                else
+                    s = '';
+                end
+            end
+            if (isnumeric(s))
+                if (s ~= 0)
+                    s = 'TRUE';
+                else
+                    s = '';
+                end
+            end
+            assert(ischar(s));
+            setenv('DEBUG', s);            
         end
         function g = get.defaultN(this)
             g = this.defaultN_;
@@ -83,6 +110,9 @@ classdef (Sealed) ResourcesRegistry < handle & mlpatterns.Singleton2
 
 	methods (Access = private)		  
  		function this = ResourcesRegistry(varargin)
+ 			%% RESOURCESREGISTRY
+ 			%  @param .
+
             this.alpha_ = 0.05;
             this.defaultN_ = true;            
             this.ignoreFinishMark_ = false;

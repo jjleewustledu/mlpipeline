@@ -53,7 +53,6 @@ classdef (Abstract) ISessionData
         obj  = freesurferObject(this)
         tf   = isequal(this)
         tf   = isequaln(this)
-        loc  = saveWorkspace(this)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
