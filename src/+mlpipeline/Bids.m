@@ -7,10 +7,10 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
  	%% It was developed on Matlab 9.11.0.1769968 (R2021b) for MACI64.  Copyright 2021 John Joowon Lee.
  	
     methods (Static)
-        function dcm2niix(varargin)
+        function [s,r] = dcm2niix(varargin)
             ip = inputParser;
             addRequired(ip, 'folder', @isfolder)
-            addParameter(ip, 'f', 'sub-%n_ses-%t-%d-%s', @ischar) 
+            addParameter(ip, 'f', 'sub-%n_ses-%t-%d-%s', @istext) 
                 % filename (%a=antenna  (coil) number, 
                 %           %b=basename, 
                 %           %c=comments, 
@@ -30,16 +30,22 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
                 %           %v=vendor, 
                 %           %x=study ID; 
                 %           %z=sequence name; default 'twilite')
-            addParameter(ip, 'i', 'n') % ignore derived, localizer and 2D images (y/n, default n)
-            addParameter(ip, 'o', pwd) % output directory (omit to save to input folder)
+            addParameter(ip, 'i', 'n', @istext) % ignore derived, localizer and 2D images (y/n, default n)
+            addParameter(ip, 'o', pwd, @isfolder) % output directory (omit to save to input folder)
             addParameter(ip, 'fourdfp', false, @islogical) % also create 4dfp
             parse(ip, varargin{:})
             ipr = ip.Results;
             
-            [~,w] = mlbash('which dcm2niix');
-            assert(~isempty(w))            
-            [~,w] = mlbash('which pigz');
-            if ~isempty(w)
+            if strcmp(computer, 'GLNXA64')
+                exe = 'dcm2niix_20180627';
+            else
+                exe = 'dcm2niix';
+            end
+
+            [~,wd] = mlbash(['which ' exe]);
+            assert(~isempty(wd))            
+            [~,wp] = mlbash('which pigz');
+            if ~isempty(wp)
                 z = 'y';
             else
                 z = 'n';
@@ -48,7 +54,7 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
                 mkdir(ipr.o)
             end
             
-            mlbash(sprintf('dcm2niix -f %s -i %s -o %s -z %s %s', ipr.f, ipr.i, ipr.o, z, ipr.folder))
+            [s,r] = mlbash(sprintf('%s -f %s -i %s -o %s -z %s %s', exe, ipr.f, ipr.i, ipr.o, z, ipr.folder));
             for g = globT(fullfile(ipr.o, '*.*'))
                 if contains(g{1}, '(') || contains(g{1}, ')') 
                     fn = strrep(g{1}, '(', '_');
@@ -58,7 +64,7 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
             end
             if ipr.fourdfp
                 for g = globT(fullfile(ipr.o, '*.nii.gz'))
-                    if ~isfile([myfileprefix(g{1}) '.4dfp.hdr'])
+                    if ~isfile(strcat(myfileprefix(g{1}), '.4dfp.hdr'))
                         ic = mlfourd.ImagingContext2(g{1});
                         ic.fourdfp.save()
                     end
