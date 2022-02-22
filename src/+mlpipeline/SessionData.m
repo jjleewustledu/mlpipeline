@@ -402,7 +402,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                         return
                     case {'.4dfp.ifh' '.4dfp.hdr' '.4dfp.img' '.4dfp.img.rec'}
                         fqfp = fullfile(p, f);
-                        this.nifti_4dfp_n(fqfp);
+                        ic = mlfourd.ImagingContext2(my4dfpname(fqfp));
+                        ic.selectNiftiTool();
+                        ic.save();
                         return
                     otherwise
                         fqfn = fullfile(p, [f '.nii.gz']);
