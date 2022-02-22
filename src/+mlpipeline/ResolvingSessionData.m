@@ -1,4 +1,4 @@
-classdef ResolvingSessionData < mlpipeline.BidsSessionData
+classdef ResolvingSessionData < mlpipeline.SessionData
 	%% RESOLVINGSESSIONDATA  
 
 	%  $Revision$
@@ -144,7 +144,7 @@ classdef ResolvingSessionData < mlpipeline.BidsSessionData
             %  @param 'resolveTag' is char
             %  @param 'rnumber'    is numeric
 
- 			this = this@mlpipeline.BidsSessionData(varargin{:});
+ 			this = this@mlpipeline.SessionData(varargin{:});
             ip = inputParser;
             ip.KeepUnmatched = true;           
             addParameter(ip, 'resolveTag', '', @ischar);

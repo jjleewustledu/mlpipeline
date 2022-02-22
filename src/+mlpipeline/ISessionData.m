@@ -8,54 +8,35 @@ classdef (Abstract) ISessionData
  	%  and checked into repository /Users/jjlee/MATLAB-Drive/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.
 	
-	properties (Abstract)        
-        rawdataPath
-        rawdataFolder % \in sessionFolder
-        
+	properties (Abstract)  
         studyData
+        projectData
+        subjectData     
         
+        projectsFolder
         projectsDir % homolog of __Freesurfer__ subjectsDir
         projectsPath
-        projectsFolder
-        projectData
-        projectPath
         projectFolder % \in projectsFolder
+        projectPath
         
+        subjectsFolder
         subjectsDir % __Freesurfer__ convention
         subjectsPath
-        subjectsFolder
-        subjectData
-        subjectPath
         subjectFolder % \in subjectsFolder
+        subjectPath
         
-        sessionPath
         sessionFolder % \in projectFolder
+        sessionPath
         
-        scanPath
         scanFolder % \in sessionFolder
-        
-        absScatterCorrected
-        attenuationCorrected
-        frame
-        isotope
-        region
-        tracer
+        scanPath
     end
     
 	methods (Abstract)
-        obj  = ctObject(this)
-               diaryOff(this)
-               diaryOn(this)
-        obj  = mrObject(this)
-        obj  = petObject(this)
-        dt   = datetime(this)
-        obj  = fqfilenameObject(this)
-        obj  = freesurferObject(this)
-        tf   = isequal(this)
-        tf   = isequaln(this)
+        dt = datetime(this)
+        %ds = datestr(this)
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
     
- end
-
+end
