@@ -79,12 +79,12 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
         destinationPath 		
         mriPath
         petPath
-        projPath
+        projectPath
         rawdataPath
         sourcedataPath
         sourceAnatPath
         sourcePetPath
-        subFolder
+        subjectFolder
  	end
 
 	methods 
@@ -95,59 +95,59 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
             g = this.derivAnatPath;
         end
         function g = get.derivAnatPath(this)
-            g = fullfile(this.derivativesPath, this.subFolder, 'anat', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, 'anat', '');
         end
         function g = get.derivativesPath(this)
-            g = fullfile(this.projPath, 'derivatives', '');
+            g = fullfile(this.projectPath, 'derivatives', '');
         end
         function g = get.derivPetPath(this)
-            g = fullfile(this.derivativesPath, this.subFolder, 'pet', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, 'pet', '');
         end
         function g = get.destinationPath(this)
             g = this.destPath_;
         end
         function g = get.mriPath(this)
-            g = fullfile(this.derivativesPath, this.subFolder, 'mri', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, 'mri', '');
         end
         function g = get.petPath(this)
             g = this.derivPetPath;
         end
-        function g = get.projPath(this)
-            g = this.projPath_;
+        function g = get.projectPath(this)
+            g = this.projectPath_;
         end
         function g = get.rawdataPath(this)
-            g = fullfile(this.projPath, 'rawdata', '');
+            g = fullfile(this.projectPath, 'rawdata', '');
         end
         function g = get.sourcedataPath(this)
-            g = fullfile(this.projPath, 'sourcedata', '');
+            g = fullfile(this.projectPath, 'sourcedata', '');
         end
         function g = get.sourceAnatPath(this)
-            g = fullfile(this.sourcedataPath, this.subFolder, 'anat', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, 'anat', '');
         end
         function g = get.sourcePetPath(this)
-            g = fullfile(this.sourcedataPath, this.subFolder, 'pet', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, 'pet', '');
         end
-        function g = get.subFolder(this)
-            g = this.subFolder_;
+        function g = get.subjectFolder(this)
+            g = this.subjectFolder_;
         end
 
         %%
 		  
  		function this = Bids(varargin)
             %  @param destPath will receive outputs.
-            %  @projPath belongs to a CCIR project.
-            %  @subFolder is the BIDS-adherent string for subject identity.
+            %  @projectPath belongs to a CCIR project.
+            %  @subjectFolder is the BIDS-adherent string for subject identity.
 
             ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'destPath', pwd, @isfolder)
-            addParameter(ip, 'projPath', fullfile(getenv('SINGULARITY_HOME'), this.projectFolder), @istext)
-            addParameter(ip, 'subFolder', '', @istext)
+            addParameter(ip, 'projectPath', fullfile(getenv('SINGULARITY_HOME'), this.projectFolder), @istext)
+            addParameter(ip, 'subjectFolder', '', @istext)
             parse(ip, varargin{:})
             ipr = ip.Results;
             this.destPath_ = ipr.destPath;
-            this.projPath_ = ipr.projPath;
-            this.subFolder_ = ipr.subFolder;
+            this.projectPath_ = ipr.projectPath;
+            this.subjectFolder_ = ipr.subjectFolder;
         end
 
         function n = tracername(~, str)
@@ -175,8 +175,8 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
     
     properties (Access = protected)
         destPath_
-        projPath_
-        subFolder_
+        projectPath_
+        subjectFolder_
     end
 
 	%  Created with Newcl by John J. Lee after newfcn by Frank Gonzalez-Morphy
