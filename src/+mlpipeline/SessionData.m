@@ -9,31 +9,36 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
     
-	properties (Dependent)
-        rawdataPath
-        rawdataFolder % \in sessionFolder
-        
-        studyData
-        
+    properties (Abstract)
         projectsDir % homolog of __Freesurfer__ subjectsDir
         projectsPath
         projectsFolder
-        projectData
         projectPath
         projectFolder % \in projectsFolder        
         
         subjectsDir % __Freesurfer__ convention
         subjectsPath 
         subjectsFolder 
-        subjectData
         subjectPath
         subjectFolder % \in subjectsFolder  
         
+        sessionsDir % __Freesurfer__ convention
+        sessionsPath 
+        sessionsFolder 
         sessionPath
         sessionFolder % \in projectFolder        
         
+        scansDir % __Freesurfer__ convention
+        scansPath 
+        scansFolder 
         scanPath
         scanFolder % \in sessionFolder
+    end
+
+	properties (Dependent)        
+        studyData % delegate class
+        projectData % delegate class
+        subjectData % delegate class
         
         frame
         metric
@@ -65,14 +70,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
     methods
         
         %% GET/SET
-                
-        function g    = get.rawdataPath(this)
-            g = fullfile(this.sessionPath, this.rawdataFolder);
-        end
-        function g    = get.rawdataFolder(~)
-            g = 'rawdata';
-        end
-        
+
         function g    = get.studyData(this)
             g = this.studyData_;
         end
@@ -80,110 +78,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             warning('mlpipeline:RuntimeWarning', 'SessionData.set.studyData is DEPRECATED')
             assert(isa(s, 'mlpipeline.IStudyData'));
             this.studyData_ = s;
-        end 
-        
-        function g    = get.projectsDir(this)
-            if ~isempty(this.studyData_)
-                g = this.studyData_.projectsDir;
-                return
-            end
-            if ~isempty(this.projectData_)
-                g = this.projectData_.projectsDir;
-                return
-            end
-            error('mlpipeline:RuntimeError', 'SessionData.get.projectsDir')
         end
-        function g    = get.projectsPath(this)
-            g = this.projectsDir;
-        end
-        function g    = get.projectsFolder(this)
-            g = this.projectsDir;
-            if (strcmp(g(end), filesep))
-                g = g(1:end-1);
-            end
-            g = mybasename(g);
-        end     
         function g    = get.projectData(this)
             g = this.projectData_;
         end
-        function g    = get.projectPath(this)
-            g = fullfile(this.projectsPath, this.projectFolder);
-        end
-        function g    = get.projectFolder(this)
-            g = this.projectData.projectFolder;
-        end
-        
-        function g    = get.subjectsDir(this)
-            g = this.studyData_.subjectsDir;
-        end
-        function this = set.subjectsDir(this, s)
-            assert(ischar(s));
-            this.studyData_.subjectsDir = s;
-        end
-        function g    = get.subjectsPath(this)
-            g = this.subjectsDir;
-        end
-        function this = set.subjectsPath(this, s)
-            this.subjectsDir = s;
-        end
-        function g    = get.subjectsFolder(this)
-            g = this.subjectsDir;
-            if (strcmp(g(end), filesep))
-                g = g(1:end-1);
-            end
-            g = mybasename(g);
-        end
-        function this = set.subjectsFolder(this, s)
-            assert(ischar(s));
-            this.studyData_.subjectsDir = fullfile(fileparts(this.subjectsDir), s, '');            
-        end
         function g    = get.subjectData(this)
             g = this.subjectData_;
-        end     
-        function g    = get.subjectPath(this)
-            g = this.subjectData.subjectPath;
-        end
-        function this = set.subjectPath(this, s)
-            assert(ischar(s));
-            this.subjectData_.subjectPath = s;
-        end
-        function g    = get.subjectFolder(this)
-            g = this.subjectData.subjectFolder;
-        end        
-        function this = set.subjectFolder(this, s)
-            assert(ischar(s));
-            this.subjectData_.subjectFolder = s;            
         end    
-        
-        function g    = get.sessionPath(this)
-            g = fullfile(this.projectPath, this.sessionFolder);
-        end
-        function this = set.sessionPath(this, s)
-            assert(ischar(s));
-            [this.projectPath,this.sessionFolder] = fileparts(s);
-        end
-        function g    = get.sessionFolder(this)
-            g = this.sessionFolder_;
-        end        
-        function this = set.sessionFolder(this, s)
-            assert(ischar(s));
-            this.sessionFolder_ = s;            
-        end    
-        
-        function g    = get.scanPath(this)
-            g = fullfile(this.sessionPath, this.scanFolder);
-        end
-        function this = set.scanPath(this, s)
-            assert(ischar(s));
-            [this.sessionPath,this.scanFolder] = myfileparts(s);
-        end
-        function g    = get.scanFolder(this)
-            g = this.getScanFolder();
-        end
-        function this = set.scanFolder(this, s)
-            this = this.setScanFolder(s);
-        end
-              
+
         function g    = get.frame(this)
             g = this.frame_;
         end
@@ -464,9 +366,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             parse(ip, varargin{:});
             
             loc = locationType(ip.Results.typ, fullfile(this.sessionPath, 'fsl', ''));
-        end
-        function g    = getScanFolder(this)
-            g = this.scanFolder_;
         end
         function [ipr,this] = iprLocation(this, varargin)
             %% IPRLOCATION
