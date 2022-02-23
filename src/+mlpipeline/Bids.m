@@ -140,7 +140,7 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
         %%
 		  
  		function this = Bids(varargin)
-            %  @param destPath will receive outputs.
+            %  @param destPath will receive outputs.  Must specify project ID & subject ID.
             %  @projectPath belongs to a CCIR project.
             %  @subjectFolder is the BIDS-adherent string for subject identity.
 
