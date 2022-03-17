@@ -11,6 +11,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
  	
     properties (Dependent)
         buildVisitor
+        debug
         finished
         ignoreFinishMark % KLUDGE
         keepForensics
@@ -25,6 +26,9 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
         
         function g = get.buildVisitor(this)
             g = this.buildVisitor_;
+        end
+        function g = get.debug(~)
+            g = ~isempty(getenv('DEBUG'));
         end
         function g = get.finished(this)
             g = this.finished_;
@@ -131,11 +135,12 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
             addParameter(ip, 'path', this.getLogPath, @isfolder);
             addParameter(ip, 'tag', this.productTag, @ischar);
             parse(ip, varargin{:});
+            ipr = ip.Results;
             
             ensuredir(this.getLogPath);
             this.finished_ = mlpipeline.Finished(this, ...
-                'path', ip.Results.path, ...
-                'tag',  ip.Results.tag);
+                'path', ipr.path, ...
+                'tag',  ipr.tag);
         end    
         function this = packageProduct(this, prod, varargin)
             %  @param required prod, an objects understood by mlfourd.ImagingContext2.
@@ -145,6 +150,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
             ip = inputParser;
             addParameter(ip, 'imagingContext', true, @islogical);
             parse(ip, varargin{:});
+            ipr = ip.Results;
             
             if (isempty(prod))
                 this.product_ = [];
@@ -154,7 +160,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
                 this.product_ = prod;
                 return
             end
-            if (~ip.Results.imagingContext)
+            if (~ipr.imagingContext)
                 if (isa(prod, 'mlpipeline.AbstractHandleBuilder') && length(prod) > 1)
                     this.product_ = [];
                     for p = 1:length(prod)
@@ -183,20 +189,21 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
             %% ABSTRACTBUILDER
             %  @param named buildVisitor.
             %  @param named logPath is char; will be created as needed.
-            %  @param named logger is mlpipeline.ILogger.
+            %  @param named logger is mlpipeline.ILogger; will be configured with logPath.
             %  @param named product is the initial state of the product to build; default := [].
             
  			ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'buildVisitor',  mlfourdfp.FourdfpVisitor);
             addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also prepareLogger.
-            addParameter(ip, 'logger', mlpipeline.Logger(fullfile(pwd, 'Log', '')), @(x) isa(x, 'mlpipeline.ILogger'));
+            addParameter(ip, 'logger', mlpipeline.Logger2(), @(x) isa(x, 'mlpipeline.ILogger'));
             addParameter(ip, 'product', []);
             parse(ip, varargin{:});
+            ipr = ip.Results;
             
-            this.buildVisitor_ = ip.Results.buildVisitor;
-            this               = this.prepareLogger(ip.Results);
-            this.product_      = ip.Results.product;            
+            this.buildVisitor_ = ipr.buildVisitor;
+            this               = this.prepareLogger(ipr);
+            this.product_      = ipr.product;            
             this.finished_     = mlpipeline.Finished(this, 'path', this.getLogPath, 'tag', this.productTag);
         end
     end
