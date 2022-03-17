@@ -33,14 +33,20 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
             addParameter(ip, 'i', 'n', @istext) % ignore derived, localizer and 2D images (y/n, default n)
             addParameter(ip, 'o', pwd, @isfolder) % output directory (omit to save to input folder)
             addParameter(ip, 'fourdfp', false, @islogical) % also create 4dfp
+            addParameter(ip, 'version', [], @isnumeric)
             parse(ip, varargin{:})
             ipr = ip.Results;
             
-            if strcmp(computer, 'GLNXA64')
-                exe = 'dcm2niix_20180627';
-            else
-                exe = 'dcm2niix';
-            end
+            exe = 'dcm2niix';
+            if ipr.version == 20180622 || ipr.version == 20180627
+                switch computer
+                    case 'MACI64'
+                        exe = 'dcm2niix_20180622';
+                    case 'GLNXA64'
+                        exe = 'dcm2niix_20180627';
+                    otherwise
+                end
+            end           
 
             [~,wd] = mlbash(['which ' exe]);
             assert(~isempty(wd))            
