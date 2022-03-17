@@ -104,6 +104,10 @@ classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & ml
             empty = logical(this.cellArrayList_.isempty);
         end
         function           add(this, varargin) 
+            if iscell(varargin{1})
+                this.addCell(varargin{1})
+                return
+            end
             if (this.echoToCommandWindow)
                 fprintf(varargin{:}); fprintf('\n');
             end
@@ -114,6 +118,20 @@ classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & ml
                 return
             end
             this.cellArrayList_.add(sprintf(varargin{:}));
+        end
+        function           addCell(this, varargin)
+            if (this.echoToCommandWindow)
+                disp(varargin{1});
+            end
+            if (this.includeTimeStamp)
+                this.cellArrayList_.add(sprintf('%s:  ', datestr(now, this.TIMESTR_FORMAT)));
+                this.cellArrayList_.add(varargin{1});
+                return
+            end
+            this.cellArrayList_.add(varargin{1});
+        end
+        function           addNoEcho(this, varargin)
+            this.add(varargin{:});
         end
         function elts    = get(this,locs)
             elts = this.cellArrayList_.get(locs);
