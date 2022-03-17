@@ -20,7 +20,7 @@ classdef SubjectData < mlpipeline.ISubjectData
             g = this.subjectFolder_;
         end
         function this = set.subjectFolder(this, s)
-            assert(ischar(s));
+            assert(istext(s));
             this.subjectFolder_ = s;
         end
         function g    = get.subjectPath(this)
@@ -28,7 +28,7 @@ classdef SubjectData < mlpipeline.ISubjectData
         end
         function this = set.subjectPath(this, s)
            assert(isfolder(s)); 
-           [this.subjectsDir,this.subjectFolder] = fileparts(s);
+           [this.subjectsDir,this.subjectFolder] = myfileparts(s);
         end
         function g    = get.subjectsDir(this)
             g = this.studyRegistry_.subjectsDir;
@@ -56,7 +56,7 @@ classdef SubjectData < mlpipeline.ISubjectData
  			%  @param subjectFolder is char.
 
             ip = inputParser;
-            addParameter(ip, 'subjectFolder', '', @ischar);
+            addParameter(ip, 'subjectFolder', '', @istext);
             parse(ip, varargin{:});
             
             this.subjectFolder_ = ip.Results.subjectFolder;

@@ -1,4 +1,4 @@
-classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Copyable  
+classdef (Abstract) Bids < handle & mlpipeline.IBids  
 	%% BIDS  
 
 	%  $Revision$
@@ -77,10 +77,21 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
                 end
             end
         end
+        function fld = parseFolderFromPath(patt, pth)
+            %  Args:
+            %      patt (text): e.g., 'sub-', 'ses-'.
+            %      pth (folder): from which to find 1st folder name matching patt.
+
+            if contains(pth, patt)
+                ss = strsplit(pth, filesep);
+                fld = ss{contains(ss, patt)}; % picks first occurance
+            end
+        end
     end
 
     properties (Abstract, Constant)
-        projectFolder
+        PROJECT_FOLDER % e.g., 'CCIR_01211'
+        SURFER_VERSION % e.g., '7.2.0'
     end
 
 	properties (Dependent)
@@ -93,10 +104,13 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
         petPath
         projectPath
         rawdataPath
+        sessionFolderAnat
+        sessionFolderPet
         sourcedataPath
         sourceAnatPath
         sourcePetPath
         subjectFolder
+        surferFolder
  	end
 
 	methods 
@@ -107,19 +121,19 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
             g = this.derivAnatPath;
         end
         function g = get.derivAnatPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, 'anat', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderAnat, 'anat', '');
         end
         function g = get.derivativesPath(this)
             g = fullfile(this.projectPath, 'derivatives', '');
         end
         function g = get.derivPetPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, 'pet', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderPet, 'pet', '');
         end
         function g = get.destinationPath(this)
-            g = this.destPath_;
+            g = this.destinationPath_;
         end
         function g = get.mriPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, 'mri', '');
+            g = fullfile(this.derivativesPath, this.surferFolder, 'mri', '');
         end
         function g = get.petPath(this)
             g = this.derivPetPath;
@@ -130,64 +144,83 @@ classdef (Abstract) Bids < handle & matlab.mixin.Heterogeneous & matlab.mixin.Co
         function g = get.rawdataPath(this)
             g = fullfile(this.projectPath, 'rawdata', '');
         end
+        function g = get.sessionFolderAnat(this)
+            g = this.sessionFolderAnat_;
+        end
+        function g = get.sessionFolderPet(this)
+            g = this.sessionFolderPet_;
+        end
         function g = get.sourcedataPath(this)
             g = fullfile(this.projectPath, 'sourcedata', '');
         end
         function g = get.sourceAnatPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, 'anat', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderAnat, 'anat', '');
         end
         function g = get.sourcePetPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, 'pet', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderPet, 'pet', '');
         end
         function g = get.subjectFolder(this)
             g = this.subjectFolder_;
+        end
+        function g = get.surferFolder(this)
+            g = strcat(this.subjectFolder, '_ses-surfer-v', this.SURFER_VERSION);
         end
 
         %%
 		  
  		function this = Bids(varargin)
-            %  @param destPath will receive outputs.  Must specify project ID & subject ID.
-            %  @projectPath belongs to a CCIR project.
-            %  @subjectFolder is the BIDS-adherent string for subject identity.
+            %  Args:
+            %      destinationPath (folder): will receive outputs.  Specify project ID & subject ID.
+            %      projectPath (folder): belongs to a CCIR project.  
+            %      subjectFolder (text): is the BIDS-adherent string for subject identity.
+            %      subjectFolder (text): is the BIDS-adherent string for subject identity.
 
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'destPath', pwd, @isfolder)
-            addParameter(ip, 'projectPath', fullfile(getenv('SINGULARITY_HOME'), this.projectFolder), @istext)
+            addParameter(ip, 'destinationPath', pwd, @isfolder)
+            addParameter(ip, 'projectPath', fullfile(getenv('SINGULARITY_HOME'), this.PROJECT_FOLDER, ''), @istext)
             addParameter(ip, 'subjectFolder', '', @istext)
+            addParameter(ip, 'sessionFolderAnat', '', @istext)
             parse(ip, varargin{:})
             ipr = ip.Results;
-            this.destPath_ = ipr.destPath;
+            this.destinationPath_ = ipr.destinationPath;
             this.projectPath_ = ipr.projectPath;
             this.subjectFolder_ = ipr.subjectFolder;
-        end
+            this.sessionFolderAnat_ = ipr.sessionFolderAnat;
 
-        function n = tracername(~, str)
-            if contains(str, 'co', 'IgnoreCase', true) || contains(str, 'oc', 'IgnoreCase', true)
-                n = 'CO';
-                return
+            try
+                if isempty(this.subjectFolder_)
+                    this.subjectFolder_ = this.parseFolderFromPath('sub-', this.destinationPath_);
+                end
+            catch
+                this.subjectFolder_ = '';
             end
-            if contains(str, 'oo', 'IgnoreCase', true)
-                n = 'OO';
-                return
+            try
+                if isempty(this.sessionFolderAnat_)
+                    g = glob(fullfile(this.sourcedataPath, this.subjectFolder, 'ses-*', 'anat'));
+                    this.sessionFolderAnat_ = this.parseFolderFromPath('ses-', g{end});
+                end
+            catch
+                this.sessionFolderAnat_ = '';
             end
-            if contains(str, 'ho', 'IgnoreCase', true)
-                n = 'HO';
-                return
+            try
+                if isempty(this.sessionFolderPet_)
+                    g = glob(fullfile(this.sourcedataPath, this.subjectFolder, 'ses-*', 'pet'));
+                    this.sessionFolderPet_ = this.parseFolderFromPath('ses-', g{end});
+                end
+            catch
+                this.sessionFolderPet_ = '';
             end
-            if contains(str, 'fdg', 'IgnoreCase', true)
-                n = 'FDG';
-                return
-            end
-            error('mlpipeline:ValueError', 'Bids.tracername() did not recognize %s', str)
         end
     end
     
     %% PROTECTED
     
     properties (Access = protected)
-        destPath_
+        destinationPath_
         projectPath_
+        sessionFolderAnat_
+        sessionFolderPet_
         subjectFolder_
     end
 

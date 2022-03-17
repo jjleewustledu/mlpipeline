@@ -49,6 +49,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         snumber
         taus
         times
+        timesMid
         version
     end
 
@@ -150,13 +151,17 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function g    = get.times(this)
             g = cumsum(this.taus);
         end
+        function g    = get.timesMid(this)
+            g = this.times;
+            g = g + this.taus/2;
+        end
         function g    = get.version(this)
             g = this.version_;
         end
                 
         %% IMRData
         
-        function obj  = adc(this, varargin)
+        function obj = adc(this, varargin)
             obj = this.mrObject('ep2d_diff_26D_lgfov_nopat_ADC', varargin{:});
         end
         function obj = aparcA2009sAseg(this, varargin)

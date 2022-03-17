@@ -151,14 +151,14 @@ classdef (Abstract) DicomSorter
             ip = inputParser;
             ip.KeepUnmatched = true;
             addRequired( ip, 'srcPath',            @isfolder); % top-level folder for session raw data
-            addOptional( ip, 'destPath', pwd,      @ischar);
+            addOptional( ip, 'destinationPath', pwd,      @ischar);
             addParameter(ip, 'sessionData', [],      @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'seriesFilter', {[]}, @(x) iscell(x) || ischar(x));
             addParameter(ip, 'preferredInfoFields', {'SeriesDescription'}, @iscell);
             addParameter(ip, 'preferredName', 'unknown', @ischar);
             parse(ip, varargin{:});            
-            if (~isfolder(ip.Results.destPath))
-                mkdir(ip.Results.destPath);
+            if (~isfolder(ip.Results.destinationPath))
+                mkdir(ip.Results.destinationPath);
             end
             
             import mlfourdfp.* mlsystem.* mlio.*;
@@ -169,11 +169,11 @@ classdef (Abstract) DicomSorter
             filteredNames = {};
             for idns = 1:length(fqdns)
                 try
-                    canonFp = this.dcm2imagingFormat(infos{idns}, fqdns{idns}, ip.Results.destPath);
-                    if (~this.lexistConverted(fullfile(ip.Results.destPath, canonFp)))
-                        movefile([canonFp '.*'], ip.Results.destPath);
+                    canonFp = this.dcm2imagingFormat(infos{idns}, fqdns{idns}, ip.Results.destinationPath);
+                    if (~this.lexistConverted(fullfile(ip.Results.destinationPath, canonFp)))
+                        movefile([canonFp '.*'], ip.Results.destinationPath);
                     end
-                    canonFqfp = fullfile(ip.Results.destPath, canonFp);
+                    canonFqfp = fullfile(ip.Results.destinationPath, canonFp);
                     filteredNames = [filteredNames canonFqfp]; %#ok<AGROW>
                 catch ME
                     handwarning(ME);
@@ -190,7 +190,7 @@ classdef (Abstract) DicomSorter
             ip = inputParser;
             ip.KeepUnmatched = true;
             addParameter(ip, 'srcPath',       @isfolder); % top-level folder for session raw data
-            addParameter(ip, 'destPath', pwd, @ischar);
+            addParameter(ip, 'destinationPath', pwd, @ischar);
             addParameter(ip, 'sessionData', [], @(x) isa(x, 'mlpipeline.ISessionData'));
             addParameter(ip, 'ct', false, @islogical);
             parse(ip, varargin{:});
@@ -205,7 +205,7 @@ classdef (Abstract) DicomSorter
             for s = 1:length(seriesList)
                 try
                     this = this.sessionDcmConvert( ...
-                        ip.Results.srcPath, ip.Results.destPath, ...
+                        ip.Results.srcPath, ip.Results.destinationPath, ...
                         'seriesFilter', seriesList{s}, ...
                         'sessionData', ip.Results.sessionData, ...
                         'preferredName', targetList{s});
