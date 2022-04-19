@@ -179,7 +179,7 @@ classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & ml
             addOptional(ip, 'fqfileprefix', tempname, @istext);
             addOptional(ip, 'callerid', this);
             addParameter(ip, 'tag', '', @istext);
-            addParameter(ip, 'echoToCommandWindow', ~isempty(getenv('DEBUG')), @islogical);
+            addParameter(ip, 'echoToCommandWindow', false, @islogical); % ~isempty(getenv('DEBUG'))
             addParameter(ip, 'includeTimeStamp', true, @islogical);
             parse(ip, varargin{:});  
             ipr = ip.Results;

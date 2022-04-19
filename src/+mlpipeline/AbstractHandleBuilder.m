@@ -236,7 +236,7 @@ classdef (Abstract) AbstractHandleBuilder < handle & matlab.mixin.Copyable & mlp
                 return
             end
             t = [t '_' myclass(p)];
-            if (~isprop(p, 'fileprefix'))
+            if (~isa(p, 'mlio.IOInterface'))
                 return
             end
             t = [t '_' p.fileprefix];

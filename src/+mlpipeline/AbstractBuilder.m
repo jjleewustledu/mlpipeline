@@ -27,8 +27,8 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
         function g = get.buildVisitor(this)
             g = this.buildVisitor_;
         end
-        function g = get.debug(~)
-            g = ~isempty(getenv('DEBUG'));
+        function g = get.debug(this)
+            g = this.debug_;
         end
         function g = get.finished(this)
             g = this.finished_;
@@ -198,6 +198,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
             addParameter(ip, 'logPath', fullfile(pwd, 'Log', ''), @ischar); % See also prepareLogger.
             addParameter(ip, 'logger', mlpipeline.Logger2(), @(x) isa(x, 'mlpipeline.ILogger'));
             addParameter(ip, 'product', []);
+            addParameter(ip, 'debug', ~isempty(getenv('DEBUG')), @islogical)
             parse(ip, varargin{:});
             ipr = ip.Results;
             
@@ -205,6 +206,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
             this               = this.prepareLogger(ipr);
             this.product_      = ipr.product;            
             this.finished_     = mlpipeline.Finished(this, 'path', this.getLogPath, 'tag', this.productTag);
+            this.debug_        = ipr.debug;
         end
     end
     
@@ -212,6 +214,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
     
     properties (Access = protected)
         buildVisitor_
+        debug_
         finished_
         logger_
         product_
@@ -233,7 +236,7 @@ classdef (Abstract) AbstractBuilder < mlpipeline.IBuilder
                 return
             end
             t = [t '_' myclass(p)];
-            if (~isprop(p, 'fileprefix'))
+            if (~isa(p, 'mlio.IOInterface'))
                 return
             end
             t = [t '_' p.fileprefix];

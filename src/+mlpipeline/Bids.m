@@ -38,7 +38,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             ipr = ip.Results;
             
             exe = 'dcm2niix';
-            if ipr.version == 20180622 || ipr.version == 20180627
+            if ~isempty(ipr.version) && (ipr.version == 20180622 || ipr.version == 20180627)
                 switch computer
                     case 'MACI64'
                         exe = 'dcm2niix_20180622';
@@ -95,12 +95,15 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
     end
 
 	properties (Dependent)
+        anatFolder
         anatPath
         derivAnatPath
         derivativesPath
         derivPetPath
-        destinationPath 		
+        destinationPath
+        mriFolder
         mriPath
+        petFolder
         petPath
         projectPath
         rawdataPath
@@ -117,23 +120,32 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
 
         %% GET
 
+        function g = get.anatFolder(~)
+            g = 'anat';
+        end
         function g = get.anatPath(this)
             g = this.derivAnatPath;
         end
         function g = get.derivAnatPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderAnat, 'anat', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderAnat, this.anatFolder, '');
         end
         function g = get.derivativesPath(this)
             g = fullfile(this.projectPath, 'derivatives', '');
         end
         function g = get.derivPetPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderPet, 'pet', '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderPet, this.petFolder, '');
         end
         function g = get.destinationPath(this)
             g = this.destinationPath_;
         end
+        function g = get.mriFolder(~)
+            g = 'mri';
+        end
         function g = get.mriPath(this)
-            g = fullfile(this.derivativesPath, this.surferFolder, 'mri', '');
+            g = fullfile(this.derivativesPath, this.surferFolder, this.mriFolder, '');
+        end
+        function g = get.petFolder(~)
+            g = 'pet';
         end
         function g = get.petPath(this)
             g = this.derivPetPath;
@@ -154,10 +166,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = fullfile(this.projectPath, 'sourcedata', '');
         end
         function g = get.sourceAnatPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderAnat, 'anat', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderAnat, this.anatFolder, '');
         end
         function g = get.sourcePetPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderPet, 'pet', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderPet, this.petFolder, '');
         end
         function g = get.subjectFolder(this)
             g = this.subjectFolder_;
@@ -211,6 +223,40 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             catch
                 this.sessionFolderPet_ = '';
             end
+        end
+
+        function icd = prepare_derivatives(this, ic)
+            %% PREPARE_DERIVATIVES refreshes imaging in this.derivativesPath reoriented to the MNI standard and
+            %  radiologic orientation.
+
+            if ~isa(ic, 'mlfourd.ImagingContext2')
+                ic = mlfourd.ImagingContext2(ic);
+            end
+
+            assert(isfile(ic.fqfn))
+
+            icd = copy(ic);
+            if ~contains(ic.filepath, this.derivativesPath) % copy to derivatives
+                if contains(ic.filepath, this.anatFolder)
+                    icd.filepath = this.derivAnatPath;
+                end
+                if contains(ic.filepath, this.petFolder)
+                    icd.filepath = this.derivPetPath;
+                end
+                if ~isfolder(icd.filepath)
+                    mkdir(icd.filepath);
+                end
+                mlbash(sprintf('cp -f %s %s', ic.fqfn, icd.filepath), 'echo', true);
+                if isfile(strcat(ic.fqfp, '.json'))
+                    mlbash(sprintf('cp -f %s %s', strcat(ic.fqfp, '.json'), icd.filepath), 'echo', true);
+                end
+                mlbash(sprintf('chmod -R 755 %s', icd.filepath));
+            end
+            if ~contains(icd.fileprefix, '_orient-std') && ~isfile(strcat(icd.fqfp, '_orient-std.nii.gz'))
+                icd.reorient2std();  
+                icd.selectNiftiTool();
+                icd.save();
+            end          
         end
     end
     

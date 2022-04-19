@@ -54,7 +54,7 @@ classdef AbstractHandleSessionBuilder < handle & mlpipeline.AbstractHandleBuilde
                 return
             end
             t = [t '_' myclass(p)];
-            if (~isprop(p, 'fileprefix'))
+            if (~isa(p, 'mlio.IOInterface'))
                 return
             end
             t = [t '_' p.fileprefix];
