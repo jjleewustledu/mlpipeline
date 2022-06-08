@@ -38,6 +38,9 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             ipr = ip.Results;
             
             exe = 'dcm2niix';
+            if isempty(ipr.version)
+                exe = 'dcm2niix'; %fullfile(getenv('RELEASE'), 'dcm2niix');
+            end
             if ~isempty(ipr.version) && (ipr.version == 20180622 || ipr.version == 20180627)
                 switch computer
                     case 'MACI64'
@@ -85,6 +88,26 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             if contains(pth, patt)
                 ss = strsplit(pth, filesep);
                 fld = ss{contains(ss, patt)}; % picks first occurance
+            end
+        end
+        function obj = sourcedata2derivatives(obj)
+            %% Replaces specification for sourcedata folder with derivatives folder.
+            %  Args:
+            %      obj (various)
+            %  Returns:
+            %      obj: sourcedata folder replaced with derivatives folder.
+
+            if isa(obj, 'mlfourd.ImagingContext2')
+                obj.selectImagingTool();
+                obj.filepath = strrep(obj.filepath, 'sourcedata', 'derivatives');
+                return
+            end
+            if isa(obj, 'mlfourd.ImagingFormatContext2')
+                obj.filepath = strrep(obj.filepath, 'sourcedata', 'derivatives');
+                return
+            end
+            if istext(obj)
+                obj = strrep(obj, 'sourcedata', 'derivatives');
             end
         end
     end
