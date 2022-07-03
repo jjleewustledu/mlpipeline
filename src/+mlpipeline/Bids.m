@@ -34,12 +34,19 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             addParameter(ip, 'o', pwd, @isfolder) % output directory (omit to save to input folder)
             addParameter(ip, 'fourdfp', false, @islogical) % also create 4dfp
             addParameter(ip, 'version', [], @isnumeric)
+            addParameter(ip, 'terse', false, @islogical)
             parse(ip, varargin{:})
             ipr = ip.Results;
             
             exe = 'dcm2niix';
             if isempty(ipr.version)
-                exe = 'dcm2niix'; %fullfile(getenv('RELEASE'), 'dcm2niix');
+                switch computer
+                    case 'MACI64'
+                        exe = 'dcm2niix';
+                    case 'GLNXA64'
+                        exe = fullfile(getenv('RELEASE'), 'dcm2niix');
+                    otherwise
+                end
             end
             if ~isempty(ipr.version) && (ipr.version == 20180622 || ipr.version == 20180627)
                 switch computer
@@ -49,7 +56,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
                         exe = 'dcm2niix_20180627';
                     otherwise
                 end
-            end           
+            end
 
             [~,wd] = mlbash(['which ' exe]);
             assert(~isempty(wd))            
@@ -63,6 +70,9 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
                 mkdir(ipr.o)
             end
             
+            if ipr.terse && isempty(ipr.version)
+                exe = sprintf('%s --terse', exe);
+            end
             [s,r] = mlbash(sprintf('%s -f %s -i %s -o %s -z %s %s', exe, ipr.f, ipr.i, ipr.o, z, ipr.folder));
             for g = globT(fullfile(ipr.o, '*.*'))
                 if contains(g{1}, '(') || contains(g{1}, ')') 

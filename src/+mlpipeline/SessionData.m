@@ -352,7 +352,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             obj = imagingType(ip.Results.typ, [ip.Results.fqfp ip.Results.tag]);
         end
         function loc  = freesurferLocation(this, varargin)
-            loc = this.sessionLocation(varargin{:});
+            ip = inputParser;
+            addParameter(ip, 'typ', 'path', @ischar);
+            parse(ip, varargin{:});
+
+            loc = locationType(ip.Results.typ, fullfile(this.sessionLocation, ''));
         end
         function obj  = freesurferObject(this, varargin)
             ip = inputParser;
