@@ -1,5 +1,5 @@
-classdef (Abstract) IStudyData
-	%% ISTUDYHANDLE specifies a scientifically coherent study.
+classdef (Abstract) IStudyData2 < handle
+	%% ISTUDYDATA2 specifies a scientifically coherent study.
     %  IScanData \in ISessionData \in ISubjectData \in IProjectData \in IStudyData
     %
 	%  $Revision$

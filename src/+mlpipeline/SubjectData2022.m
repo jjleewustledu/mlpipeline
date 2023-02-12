@@ -1,5 +1,5 @@
-classdef SubjectData < mlpipeline.ISubjectData
-	%% SUBJECTDATA  
+classdef SubjectData2022 
+	%% SUBJECTDATA2022  
 
 	%  $Revision$
  	%  was created 05-May-2019 22:07:32 by jjlee,
@@ -51,8 +51,8 @@ classdef SubjectData < mlpipeline.ISubjectData
             diary(loc);
         end
 		  
- 		function this = SubjectData(varargin)
- 			%% SUBJECTDATA
+ 		function this = SubjectData2022(varargin)
+ 			%% SubjectData2022
  			%  @param subjectFolder is char.
 
             ip = inputParser;

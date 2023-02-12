@@ -1,5 +1,6 @@
-classdef (Abstract) SessionData < mlpipeline.ISessionData 
-	%% SESSIONDATA  
+classdef (Abstract) SessionData2022
+	%% SESSIONDATA2022 
+    %  @deprecated
     %  @param builder is an mlpipeline.IBuilder.
 
 	%  $Revision$
@@ -8,32 +9,6 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
  	%  last modified $LastChangedDate$
  	%  and checked into repository /Users/jjlee/Local/src/mlcvl/mlpipeline/src/+mlpipeline.
  	%% It was developed on Matlab 9.0.0.307022 (R2016a) Prerelease for MACI64.  Copyright 2017 John Joowon Lee.
-    
-    properties (Abstract)
-        projectsDir % homolog of __Freesurfer__ subjectsDir
-        projectsPath
-        projectsFolder
-        projectPath
-        projectFolder % \in projectsFolder        
-        
-        subjectsDir % __Freesurfer__ convention
-        subjectsPath 
-        subjectsFolder 
-        subjectPath
-        subjectFolder % \in subjectsFolder  
-        
-        sessionsDir % __Freesurfer__ convention
-        sessionsPath 
-        sessionsFolder 
-        sessionPath
-        sessionFolder % \in projectFolder        
-        
-        scansDir % __Freesurfer__ convention
-        scansPath 
-        scansFolder 
-        scanPath
-        scanFolder % \in sessionFolder
-    end
 
 	properties (Dependent)        
         studyData % delegate class
@@ -42,6 +17,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         
         frame
         metric
+        modelConstraints
         noclobber
         parcellation
         pnumber
@@ -76,8 +52,8 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             g = this.studyData_;
         end
         function this = set.studyData(this, s)
-            warning('mlpipeline:RuntimeWarning', 'SessionData.set.studyData is DEPRECATED')
-            assert(isa(s, 'mlpipeline.IStudyData'));
+            warning('mlpipeline:RuntimeWarning', 'SessionData2022.set.studyData is DEPRECATED')
+            assert(isa(s, 'mlnipet.StudyData'));
             this.studyData_ = s;
         end
         function g    = get.projectData(this)
@@ -100,6 +76,12 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         function this = set.metric(this, s)
             assert(ischar(s))
             this.metric_ = s;
+        end
+        function g    = get.modelConstraints(this)
+            g = this.modelConstraints_;
+        end
+        function this = set.modelConstraints(this, s)
+            this.modelConstraints_ = s;
         end
         function g    = get.noclobber(this)
             g = this.studyData.noclobber;
@@ -263,7 +245,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         %%
         
         function        alternativeTaus(~)
-            error('mlpipeline:NotImplementedError', 'SessionData.alternativeTaus');
+            error('mlpipeline:NotImplementedError', 'SessionData2022.alternativeTaus');
         end
         function        diaryOff(~)
             diary off;
@@ -280,7 +262,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             %  @param fn is a filename for an existing filesystem object; it may alternatively be an mlfourd.ImagingContext2.
             %  @returns changes on the filesystem so that input fn manifests as an imaging file of type NIFTI_GZ 
             %  per the notation of fsl's fslchfiletype.
-            %  See also:  mlpipeline.SessionData.fslchfiletype, mlpipeline.SessionData.mri_convert.
+            %  See also:  mlpipeline.SessionData2022.fslchfiletype, mlpipeline.SessionData2022.mri_convert.
             
             if (isa(obj, 'mlfourd.ImagingContext2'))   
                 fqfn = obj.fqfilename;             
@@ -291,7 +273,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end
             if (ischar(obj))
                 if (~lexist(obj, 'file'))
-                    fprintf('Info: SessionData.ensureNIFTI_GZ could not find file %s\n', obj);
+                    fprintf('Info: SessionData2022.ensureNIFTI_GZ could not find file %s\n', obj);
                     fqfn = obj;
                     return
                 end
@@ -320,7 +302,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 end
             end            
             error('mlpipeline:unsupportedTypeclass', ...
-                  'class(SessionData.ensureNIFTI_GZ.obj) -> %s', class(obj));
+                  'class(SessionData2022.ensureNIFTI_GZ.obj) -> %s', class(obj));
         end
         function loc  = fourdfpLocation(this, varargin)
             loc = this.sessionLocation(varargin{:});
@@ -409,7 +391,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end
         end 
         function f    = jsonFilename(~) %#ok<STOUT>
-            error('mlpipeline:NotImplementedError', 'SessionData.jsonFilename')
+            error('mlpipeline:NotImplementedError', 'SessionData2022.jsonFilename')
         end
         function loc  = logLocation(this, varargin)
             ip = inputParser;
@@ -467,11 +449,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             loc = this.subjectLocation(varargin{:});
         end 
         
- 		function this = SessionData(varargin)
- 			%% SESSIONDATA
+ 		function this = SessionData2022(varargin)
+ 			%% SESSIONDATA2022
  			%  @param [param-name, param-value[, ...]]
             %
-            %         'studyData'    is a mlpipeline.IStudyData, simpler than projectData
+            %         'studyData'    is a mlnipet.StudyData, simpler than projectData
             %
             %         'projectsDir'  <-> env PROJECTS_DIR
             %         'projectData'  is a mlpipeline.IProjectData
@@ -499,6 +481,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             ip.KeepUnmatched = true;
             addParameter(ip, 'frame', nan,        @isnumeric);
             addParameter(ip, 'metric', '',        @ischar);
+            addParameter(ip, 'modelConstraints', []);
             addParameter(ip, 'parcellation', '',  @ischar);
             addParameter(ip, 'projectData', []);
             addParameter(ip, 'projectFolder', '', @ischar);
@@ -521,6 +504,9 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             addParameter(ip, 'version', '20200102', @ischar);
             parse(ip, varargin{:}); 
             ipr = ip.Results;
+
+            warning('mlpipeline:deprecated', ...
+                'SessionData2022.ctor is deprecated; prefer SessionData')
             
             this.frame_ = ipr.frame;            
             this.pnumber_ = ipr.pnumber;  
@@ -533,10 +519,10 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             end
             this.version_ = ipr.version;
             
-            %% mlpipeline.StudyData, containing some kind of registry; legacy support
+            %% mlnipet.StudyData, containing some kind of registry; legacy support
             this.studyData_ = ipr.studyData;
             
-            %% mlpipeline.ProjectData
+            %% mlpipeline.ProjectData2022
             this.projectData_ = ipr.projectData;
             if (~isempty(this.projectData_))  
                 if (~isempty(ipr.projectFolder))
@@ -547,7 +533,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 end
             end
             
-            %% mlpipeline.SubjectData
+            %% mlpipeline.SubjectData2022
             this.subjectData_ = ipr.subjectData;
             if (~isempty(this.subjectData_))  
                 if (~isempty(ipr.subjectFolder))
@@ -558,14 +544,14 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 end
             end
             
-            %% mlpipeline.SessionData
+            %% mlpipeline.SessionData2022
             
             this.sessionFolder_ = ipr.sessionFolder;
             if (~isempty(ipr.sessionPath))
                 [~,this.sessionFolder_] = fileparts(ipr.sessionPath);
             end 
             
-            %% (proposing mlpipeline.ScanData)
+            %% (proposing *ScanData*)
             
             this.scanFolder_ = ipr.scanFolder;
             if (~isempty(ipr.scanPath))
@@ -580,6 +566,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             %%
             
             this.metric_ = ipr.metric;
+            this.modelConstraints_ = ipr.modelConstraints;
             this.region_ = ipr.parcellation;
             this.region_ = ipr.region;
         end
@@ -591,6 +578,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
         builder_
         frame_
         metric_
+        modelConstraints_
         pnumber_
         projectData_
         projectFolder_
@@ -615,11 +603,11 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                 try
                     if (~isequaln(obj1.(flds{f}), obj2.(flds{f})))
                         tf = false;
-                        msg = sprintf('SessionData.checkFields:  mismatch at field %s.', flds{f});
+                        msg = sprintf('SessionData2022.checkFields:  mismatch at field %s.', flds{f});
                         return
                     end
                 catch ME %#ok<NASGU>
-                    dispwarning('mlpipelinen:RuntimeWarning', 'SessionData.checkFields will ignore %s', flds{f});
+                    dispwarning('mlpipelinen:RuntimeWarning', 'SessionData2022.checkFields will ignore %s', flds{f});
                 end
             end
         end 
@@ -709,7 +697,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
             popd(pwd0);
         end    
         function [tf,msg] = fieldsequaln(this, obj)
-            [tf,msg] = mlpipeline.SessionData.checkFields(this, obj);
+            [tf,msg] = mlpipeline.SessionData2022.checkFields(this, obj);
         end
         function fqfp = orientedFileprefix(~, fqfp, orient)
             assert(mlfourdfp.FourdfpVisitor.lexist_4dfp(fqfp));
@@ -740,7 +728,7 @@ classdef (Abstract) SessionData < mlpipeline.ISessionData
                     o = 'sagittal';
                 otherwise
                     error('mlnipet:switchCaseNotSupported', ...
-                          'SessionData.readOrientation.o -> %s', o);
+                          'SessionData2022.readOrientation.o -> %s', o);
             end
         end
         function tf   = useDeprecatedVersion(this)

@@ -1,5 +1,5 @@
-classdef (Abstract) ISubjectData 
-	%% ISUBJECTDATA specifies a unique subject identity.
+classdef (Abstract) ISubjectData2 < handle
+	%% ISUBJECTDATA2 specifies a unique subject identity.
     %  IScanData \in ISessionData \in ISubjectData \in IProjectData \in IStudyData
     %
 	%  $Revision$

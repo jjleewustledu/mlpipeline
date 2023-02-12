@@ -1,4 +1,4 @@
-classdef StudyDataSingleton < handle & mlpipeline.StudyData
+classdef StudyDataSingleton < handle
 	%% STUDYDATASINGLETON  
 
 	%  $Revision$
@@ -19,6 +19,9 @@ classdef StudyDataSingleton < handle & mlpipeline.StudyData
         end
         function this = replaceSessionData(this, varargin)
         end
+        function dns  = subjectsDirFqdns(~)
+            dns = {};
+        end
     end
     
     %% PROTECTED
@@ -28,17 +31,12 @@ classdef StudyDataSingleton < handle & mlpipeline.StudyData
     end
     
     methods (Access = protected)
-        function that = copyElement(this)
-            that = mlpipeline.StudyData;
-            that.comments = this.comments;
-            that.sessionDataComposite_ = this.sessionDataComposite_;
-        end
         function this = StudyDataSingleton(varargin)
             %% STUDYDATASINGLETON 
             %  @param [1] that is a mlpattern.CellComposite:  this replaces internal this.sessionDataComposite_ and returns.
-            %  @param [1...N] that is a mlpipeline.SessionData:  
+            %  @param [1...N] that is a mlpipeline.ISessionData:  
             %  this adds everything to this.sessionDataCompoaite_ and returns.
-            %  @param [1...N] that is a valid param for mlpipeline.IStudyData.assignSessionDataCompositeFromPaths:
+            %  @param [1...N] that is a valid param for assignSessionDataCompositeFromPaths:
             %  this adds to this.sessionDataComposite_ according to assignSessionDataCompositeFromPaths.
             %  @returns this.
             
@@ -48,7 +46,7 @@ classdef StudyDataSingleton < handle & mlpipeline.StudyData
                     this.sessionDataComposite_ = varargin{v};
                     return
                 end
-                if (isa(varargin{v}, 'mlpipeline.SessionData'))
+                if (isa(varargin{v}, 'mlpipeline.ISessionData'))
                     this.sessionDataComposite_ = this.sessionDataComposite_.add(varargin{v});
                 end
             end            
@@ -61,6 +59,11 @@ classdef StudyDataSingleton < handle & mlpipeline.StudyData
             this.register;
         end
         
+        function that = copyElement(this)
+            that = mlpipeline.StudyData2022;
+            that.comments = this.comments;
+            that.sessionDataComposite_ = this.sessionDataComposite_;
+        end
         function this = assignSessionDataCompositeFromPaths(this, varargin)
         end
     end

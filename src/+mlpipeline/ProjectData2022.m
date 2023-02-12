@@ -1,5 +1,5 @@
-classdef ProjectData < mlpipeline.IProjectData
-	%% PROJECTDATA  
+classdef ProjectData2022
+	%% PROJECTDATA2022  
 
 	%  $Revision$
  	%  was created 08-May-2019 19:15:11 by jjlee,
@@ -35,7 +35,7 @@ classdef ProjectData < mlpipeline.IProjectData
             diary(loc);
         end
 		  
- 		function this = ProjectData(varargin)
+ 		function this = ProjectData2022(varargin)
             %  @param projectFolder is char.
             
             ip = inputParser;

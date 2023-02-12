@@ -1,5 +1,5 @@
-classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
-	%% STUDYDATA  
+classdef (Abstract) StudyData2022 < handle & mlpipeline.IStudyData
+	%% STUDYDATA2022  
 
 	%  $Revision$
  	%  was created 21-Jan-2016 15:29:29
@@ -59,7 +59,7 @@ classdef (Abstract) StudyData < handle & mlpipeline.IStudyData
             diary(loc);
         end
         
- 		function this = StudyData(varargin)
+ 		function this = StudyData2022(varargin)
             ip = inputParser;
             addRequired(ip, 'registry')
             parse(ip, varargin{:});

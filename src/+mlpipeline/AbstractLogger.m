@@ -162,8 +162,14 @@ classdef (Abstract) AbstractLogger < handle & matlab.mixin.Heterogeneous & matla
             
             this.creationDate_       = datestr(now, this.DATESTR_FORMAT);
             this.hostname_           = hostname;
-            [~,this.id_]             = mlbash('id -u -n');   this.id_       = strtrim(this.id_);   
-            [~,this.uname_]          = mlbash('uname -srm'); this.uname_    = strtrim(this.uname_);
+            if isunix
+                [~,this.id_]         = mlbash('id -u -n');   this.id_    = strtrim(this.id_);
+                [~,this.uname_]      = mlbash('uname -srm'); this.uname_ = strtrim(this.uname_);
+            elseif ispc
+                [~,this.id_]         = mlbash('whoami');     this.id_    = strtrim(this.id_);
+                [~,this.uname_]      = mlbash('ver');        this.uname_ = strtrim(this.uname_);
+            else
+            end
             this.cellArrayList_      = mlpatterns.CellArrayList;
             if (~isempty(this.header))
                 this.cellArrayList_.add(this.header);

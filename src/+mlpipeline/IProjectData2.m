@@ -1,5 +1,5 @@
-classdef (Abstract) IProjectData 
-	%% IPROJECTDATA specifies a unique project, e.g., XNAT project.
+classdef (Abstract) IProjectData2 < handle
+	%% IPROJECTDATA2 specifies a unique project, e.g., XNAT project.
     %  IScanData \in ISessionData \in ISubjectData \n IProjectData \n IStudyData
     %
 	%  $Revision$
