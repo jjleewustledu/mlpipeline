@@ -37,19 +37,6 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
     end
 
     methods
-        function this = ScanData2(mediator, varargin)
-            this = this@mlpipeline.ImagingData(mediator);
-            this.pipelineData_ = mlpipeline.PipelineData(varargin{:});
-        end
-    end
-
-    %% PROTECTED
-    
-    properties (Access = protected)
-        pipelineData_
-    end
-
-    methods (Access = protected)
         function dt = datetime_bids_filename(this, varargin)
             ic = this.mediator_.imagingContext;
             re = regexp(ic.fileprefix, "ses-(?<dt>\d{14})", "names");
@@ -64,9 +51,22 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
             end
             dt = NaT;
         end
-        function dt = datetime_mlnipet(this, varargin)
+        function dt = datetime_mlnipet(~, varargin)
             dt = NaT;
         end
+        function this = ScanData2(mediator, varargin)
+            this = this@mlpipeline.ImagingData(mediator);
+            this.pipelineData_ = mlpipeline.PipelineData(varargin{:});
+        end
+    end
+
+    %% PROTECTED
+    
+    properties (Access = protected)
+        pipelineData_
+    end
+
+    methods (Access = protected)
     end
 
     %  Created with mlsystem.Newcl, inspired by Frank Gonzalez-Morphy's newfcn.

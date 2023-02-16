@@ -90,7 +90,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = this.subjectFolder_;
         end
         function g = get.surferFolder(this)
-            g = strcat(this.subjectFolder, '_ses-surfer-v', this.SURFER_VERSION);
+            g = strcat(this.subjectFolder, '_ses-surfer-', this.SURFER_VERSION);
         end
     end
     
@@ -302,6 +302,12 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end
         end
 
+        function dt = filename2datetime(fn)
+            s = mlpipeline.Bids.filename2struct(fn);
+            re = regexp(s.ses, 'ses-(?<dt>\d{14})', 'names');
+            assert(~isempty(re))
+            dt = datetime(re.dt, InputFormat="yyyyMMddHHmmss");
+        end
         function s = filename2struct(fn)
             fn = convertStringsToChars(fn);
             re_sub = '';
@@ -373,8 +379,13 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             s.ext = ext;
         end
         function fn = struct2filename(s)
-            fn = sprintf('%s_%s_%s_%s_%s%s%s_%s%s', ...
-                s.sub, s.ses, s.modal, s.proc, s.orient, s.modal2, s.on, s.tag, s.ext);
+            if isempty(s.tag)
+                fn = sprintf('%s_%s_%s_%s_%s%s%s%s', ...
+                    s.sub, s.ses, s.modal, s.proc, s.orient, s.modal2, s.on, s.ext);
+            else
+                fn = sprintf('%s_%s_%s_%s_%s%s%s_%s%s', ...
+                    s.sub, s.ses, s.modal, s.proc, s.orient, s.modal2, s.on, s.tag, s.ext);
+            end
             fn = convertStringsToChars(fn);
         end
     end

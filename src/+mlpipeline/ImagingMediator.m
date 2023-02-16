@@ -35,6 +35,7 @@ classdef (Abstract) ImagingMediator < handle
         imagingDlicv
         regionTag
         registry
+        timeOffsetConsole
     end
 
     methods % GET/SET
@@ -68,6 +69,15 @@ classdef (Abstract) ImagingMediator < handle
         end
         function g = get.registry(this)
             g = this.studyData_.registry;
+        end
+        function g = get.timeOffsetConsole(this)
+            g = this.sessionData_.timeOffsetConsole;
+        end
+    end
+
+    methods
+        function dt = datetime_bids_filename(this, varargin)
+            dt = this.scanData_.datetime_bids_filename(varargin{:});
         end
     end
 

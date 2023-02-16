@@ -5,15 +5,23 @@ classdef (Abstract) SessionData2 < handle & mlpipeline.ImagingData & mlpipeline.
     %  Developed on Matlab 9.13.0.2126072 (R2022b) Update 3 for MACI64.  Copyright 2023 John J. Lee.
 
 	properties (Dependent)
+        radMeasurements
         registry
         sessionsDir % __Freesurfer__ convention
         sessionsPath 
         sessionsFolder 
         sessionPath
         sessionFolder % \in sessionsFolder   
+        timeOffsetConsole
     end
 
     methods % GET/SET
+        function g = get.radMeasurements(this)
+            if isempty(this.radMeasurements_)
+                this.buildRadmeasurements();
+            end
+            g = this.radMeasurements_;
+        end
         function g = get.registry(this)
             g = this.registry_;
         end
@@ -38,7 +46,13 @@ classdef (Abstract) SessionData2 < handle & mlpipeline.ImagingData & mlpipeline.
         end        
         function     set.sessionFolder(this, s)
             this.pipelineData_.dataFolder = s;
-        end            
+        end
+        function g = get.timeOffsetConsole(this)
+            c = this.radMeasurements.clocks;
+            row_hot = contains(c.Row, 'console');
+            col_hot = contains(c.Properties.VariableNames, 'offset', IgnoreCase=true);
+            g = c{row_hot, col_hot};
+        end
     end
 
     methods
@@ -64,6 +78,7 @@ classdef (Abstract) SessionData2 < handle & mlpipeline.ImagingData & mlpipeline.
     
     properties (Access = protected)
         pipelineData_
+        radMeasurements_
         registry_
     end
     
