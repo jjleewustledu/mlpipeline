@@ -7,9 +7,13 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
  	%% It was developed on Matlab 9.11.0.1769968 (R2021b) for MACI64.  Copyright 2021 John Joowon Lee.
  	
     properties (Abstract, Constant)
+        BIDS_MODALITIES % e.g., 'DLICV'
+        DLICV_TAG
         PROJECT_FOLDER % e.g., 'CCIR_01211'
         SURFER_VERSION % e.g., '7.2.0'
     end
+
+    %%
 
 	properties (Dependent)
         anatFolder
@@ -23,9 +27,11 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         petFolder
         petPath
         projectPath
+        rawAnatPath
         rawdataPath
-        sessionFolderAnat
-        sessionFolderPet
+        rawPetPath
+        sessionFolderForAnat
+        sessionFolderForPet
         sourcedataPath
         sourceAnatPath
         sourcePetPath
@@ -34,7 +40,6 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
  	end
 
 	methods % GET
-
         function g = get.anatFolder(~)
             g = 'anat';
         end
@@ -42,13 +47,13 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = this.derivAnatPath;
         end
         function g = get.derivAnatPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderAnat, this.anatFolder, '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
         end
         function g = get.derivativesPath(this)
             g = fullfile(this.projectPath, 'derivatives', '');
         end
         function g = get.derivPetPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderPet, this.petFolder, '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
         end
         function g = get.destinationPath(this)
             g = this.destinationPath_;
@@ -68,23 +73,29 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         function g = get.projectPath(this)
             g = this.projectPath_;
         end
+        function g = get.rawAnatPath(this)
+            g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
+        end
         function g = get.rawdataPath(this)
             g = fullfile(this.projectPath, 'rawdata', '');
         end
-        function g = get.sessionFolderAnat(this)
+        function g = get.rawPetPath(this)
+            g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
+        end
+        function g = get.sessionFolderForAnat(this)
             g = this.sessionFolderAnat_;
         end
-        function g = get.sessionFolderPet(this)
+        function g = get.sessionFolderForPet(this)
             g = this.sessionFolderPet_;
+        end
+        function g = get.sourceAnatPath(this)
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
         end
         function g = get.sourcedataPath(this)
             g = fullfile(this.projectPath, 'sourcedata', '');
         end
-        function g = get.sourceAnatPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderAnat, this.anatFolder, '');
-        end
         function g = get.sourcePetPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderPet, this.petFolder, '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
         end
         function g = get.subjectFolder(this)
             g = this.subjectFolder_;
@@ -100,9 +111,9 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             %      destinationPath (folder): will receive outputs.  Specify project ID & subject ID.
             %      projectPath (folder): belongs to a CCIR project.  
             %      subjectFolder (text): is the BIDS-adherent string for subject identity.
-            %      sessionFolderAnat (text): is the BIDS-adherent string for session/anat identity; 
+            %      sessionFolderForAnat (text): is the BIDS-adherent string for session/anat identity; 
             %                                found by glob() as needed.
-            %      sessionFolderPet (text): is the BIDS-adherent string for session/pet identity; 
+            %      sessionFolderForPet (text): is the BIDS-adherent string for session/pet identity; 
             %                               found by glob() as needed.
 
             ip = inputParser;
@@ -110,15 +121,15 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             addParameter(ip, 'destinationPath', pwd, @isfolder)
             addParameter(ip, 'projectPath', fullfile(getenv('SINGULARITY_HOME'), this.PROJECT_FOLDER, ''), @istext)
             addParameter(ip, 'subjectFolder', '', @istext)
-            addParameter(ip, 'sessionFolderAnat', '', @istext)
-            addParameter(ip, 'sessionFolderPet', '', @istext)
+            addParameter(ip, 'sessionFolderForAnat', '', @istext)
+            addParameter(ip, 'sessionFolderForPet', '', @istext)
             parse(ip, varargin{:})
             ipr = ip.Results;
             this.destinationPath_ = ipr.destinationPath;
             this.projectPath_ = ipr.projectPath;
             this.subjectFolder_ = ipr.subjectFolder;
-            this.sessionFolderAnat_ = ipr.sessionFolderAnat;
-            this.sessionFolderPet_ = ipr.sessionFolderPet;
+            this.sessionFolderAnat_ = ipr.sessionFolderForAnat;
+            this.sessionFolderPet_ = ipr.sessionFolderForPet;
 
             try
                 if isempty(this.subjectFolder_)
@@ -178,6 +189,40 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
     end
     
     methods (Static)
+        function fn1 = afni_3dresample(fn)
+            if ~isfile(fn)
+                fn1 = fn;
+                return
+            end
+            fn = ensuregz(fn);
+
+            % fn ending with .nii.gz exists
+            [pth,fp,e] = myfileparts(fn);
+            re = regexp(fp, '(?<prefix>\S+)(?<suffix>(_T1\w*|_t1\w*|_pet))', 'names');
+            if isempty(re.prefix) || re.prefix == ""
+                fn1 = fn;
+                return
+            end
+            fn1 = fullfile(pth, strcat(re.prefix, '_orient-rpi', re.suffix, e));
+            if ~isfile(fn1)
+                cmd = sprintf('3dresample -debug 1 -orient rpi -prefix %s -input %s', fn1, fn);
+                assert(0 == mysystem('which 3dresample'))
+                [~,r] = mlbash(cmd);
+    
+                % manage json
+                try
+                    j0 = fileread(strcat(myfileprefix(fn), '.json'));
+                    j1.afni_3dresample.cmd = cmd;
+                    j1.afni_3dresample.cmdout = r;
+                    jsonrecode(j0, j1, 'filenameNew', strcat(myfileprefix(fn1), '.json'));       
+                catch 
+                end
+            end
+            assert(isfile(fn1));  
+            
+            % clean file that is not orient-rpi
+            deleteExisting(fn);
+        end
         function [s,r] = dcm2niix(varargin)
             %% https://github.com/rordenlab/dcm2niix
             %  Args:
@@ -216,6 +261,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             addParameter(ip, 'fourdfp', false, @islogical) % 
             addParameter(ip, 'version', [], @isnumeric)
             addParameter(ip, 'terse', false, @islogical)
+            addParameter(ip, 'depth', 5, @isscalar)
             parse(ip, varargin{:})
             ipr = ip.Results;
             
@@ -254,7 +300,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             if ipr.terse && isempty(ipr.version)
                 exe = sprintf('%s --terse', exe);
             end
-            [s,r] = mlbash(sprintf('%s -f %s -i %s -o %s -z %s %s', exe, ipr.f, ipr.i, ipr.o, z, ipr.folder));
+            [s,r] = mlbash(sprintf('%s -f %s -i %s -o %s -d %i -z %s %s', exe, ipr.f, ipr.i, ipr.o, ipr.depth, z, ipr.folder));
             for g = globT(fullfile(ipr.o, '*.*'))
                 if contains(g{1}, '(') || contains(g{1}, ')') 
                     fn = strrep(g{1}, '(', '_');

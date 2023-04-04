@@ -42,6 +42,7 @@ classdef (Abstract) SubjectData2 < handle & mlpipeline.ImagingData & mlpipeline.
         function this = SubjectData2(mediator, varargin)
             this = this@mlpipeline.ImagingData(mediator);
             this.pipelineData_ = mlpipeline.PipelineData(varargin{:});
+            setenv('SUBJECTS_DIR', this.subjectsDir);
  		end
     end 
     
