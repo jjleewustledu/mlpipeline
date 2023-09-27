@@ -16,7 +16,7 @@ classdef (Abstract) StudyData2 < handle & mlpipeline.ImagingData & mlpipeline.IS
     
     methods % GET
         function g = get.registry(this)
-            g = this.registry_;
+            g = this.registry_.instance();
         end
     end
 

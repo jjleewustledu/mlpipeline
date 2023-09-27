@@ -22,8 +22,8 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         derivativesPath
         derivPetPath
         destinationPath
-        mriFolder
-        mriPath
+        mriFolder % for FreeSurfer
+        mriPath % for FreeSurfer
         petFolder
         petPath
         projectPath
@@ -32,8 +32,8 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         rawPetPath
         sessionFolderForAnat
         sessionFolderForPet
-        sourcedataPath
         sourceAnatPath
+        sourcedataPath
         sourcePetPath
         subjectFolder
         surferFolder
@@ -83,10 +83,30 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
         end
         function g = get.sessionFolderForAnat(this)
-            g = this.sessionFolderAnat_;
+            if ~isempty(this.sessionFolderAnat_)
+                g = this.sessionFolderAnat_;
+                return
+            end
+
+            globbed = globFolders(convertStringsToChars( ...
+                fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "anat")));
+            assert(~isempty(globbed), stackstr())
+            ss = split(globbed{1}, filesep);
+            g = ss{end-1};
+            this.sessionFolderAnat_ = g;
         end
         function g = get.sessionFolderForPet(this)
-            g = this.sessionFolderPet_;
+            if ~isempty(this.sessionFolderPet_)
+                g = this.sessionFolderPet_;
+                return
+            end
+
+            globbed = globFolders(convertStringsToChars( ...
+                fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "pet")));
+            assert(~isempty(globbed), stackstr())
+            ss = split(globbed{1}, filesep);
+            g = ss{end-1};
+            this.sessionFolderPet_ = g;
         end
         function g = get.sourceAnatPath(this)
             g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
@@ -140,6 +160,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end
             try
                 if isempty(this.sessionFolderAnat_)
+                    g = glob(fullfile(this.rawdataPath, this.subjectFolder, 'ses-*', 'anat'));
+                    this.sessionFolderAnat_ = this.parseFolderFromPath('ses-', g{end});
+                end
+                if isempty(this.sessionFolderAnat_)
                     g = glob(fullfile(this.sourcedataPath, this.subjectFolder, 'ses-*', 'anat'));
                     this.sessionFolderAnat_ = this.parseFolderFromPath('ses-', g{end});
                 end
@@ -147,6 +171,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
                 this.sessionFolderAnat_ = '';
             end
             try
+                if isempty(this.sessionFolderPet_)
+                    g = glob(fullfile(this.rawdataPath, this.subjectFolder, 'ses-*', 'pet'));
+                    this.sessionFolderPet_ = this.parseFolderFromPath('ses-', g{end});
+                end
                 if isempty(this.sessionFolderPet_)
                     g = glob(fullfile(this.sourcedataPath, this.subjectFolder, 'ses-*', 'pet'));
                     this.sessionFolderPet_ = this.parseFolderFromPath('ses-', g{end});
@@ -198,7 +226,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
 
             % fn ending with .nii.gz exists
             [pth,fp,e] = myfileparts(fn);
-            re = regexp(fp, '(?<prefix>\S+)(?<suffix>(_T1\w*|_t1\w*|_pet))', 'names');
+            re = regexp(fp, '(?<prefix>\S+)(?<suffix>(_T1\w*|_t1\w*|_mpr\w*|_pet))', 'names');
             if isempty(re.prefix) || re.prefix == ""
                 fn1 = fn;
                 return
@@ -225,8 +253,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         end
         function [s,r] = dcm2niix(varargin)
             %% https://github.com/rordenlab/dcm2niix
+            %  e.g., $ dcm2niix -f sub-%n_ses-%t_%d-%s -i 'n' -o $(pwd) -d 5 -v 0 -w 1 -z y $(pwd)
             %  Args:
             %      folder (folder):  for recursive searching
+            %      d : directory search depth. Convert DICOMs in sub-folders of in_folder? (0..9, default 5)
             %      f (text):  filename specification; default 'sub-%n_ses-%t-%d-%s';
             %           %a=antenna (coil) number, 
             %           %b=basename, 
@@ -247,21 +277,28 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             %           %v=vendor, 
             %           %x=study ID; 
             %           %z=sequence name
+            %      fourdfp (logical):  also create 4dfp
             %      i (y/n):  ignore derived, localizer and 2D images (y/n; default n)
             %      o (folder):  output directory (omit to save to input folder); default pwd
-            %      fourdfp (logical):  also create 4dfp
+            %      terse : omit filename post-fixes (can cause overwrites)
+            %      u : up-to-date check
+            %      v : verbose (0/1/2, default 0) [no, yes, logorrheic]
             %      version (numeric):  [] | 20180622 | 20180627
-            %      terse (logical):
+            %      w : write behavior for name conflicts (0,1,2, default 2: 0=skip duplicates, 1=overwrite, 2=add suffix)
+            %      z : gz compress images (y/o/i/n/3, default n) [y=pigz, o=optimal pigz, i=internal:zlib, n=no, 3=no,3D]
 
             ip = inputParser;
             addOptional(ip, 'folder', pwd, @isfolder)
-            addParameter(ip, 'f', 'sub-%n_ses-%t-%d-%s', @istext) 
-            addParameter(ip, 'i', 'n', @istext) % 
-            addParameter(ip, 'o', pwd, @isfolder) % 
-            addParameter(ip, 'fourdfp', false, @islogical) % 
-            addParameter(ip, 'version', [], @isnumeric)
+            addParameter(ip, 'd', 5, @isscalar)
+            addParameter(ip, 'f', 'sub-%n_ses-%t_%d-%s', @istext) 
+            addParameter(ip, 'fourdfp', false, @islogical)
+            addParameter(ip, 'i', 'n', @istext)
+            addParameter(ip, 'o', pwd, @isfolder)
             addParameter(ip, 'terse', false, @islogical)
-            addParameter(ip, 'depth', 5, @isscalar)
+            addParameter(ip, 'u', false, @islogical)
+            addParameter(ip, 'v', 0, @isscalar)
+            addParameter(ip, 'version', [], @isnumeric)
+            addParameter(ip, 'w', 1, @isscalar)
             parse(ip, varargin{:})
             ipr = ip.Results;
             
@@ -269,27 +306,18 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             if isempty(ipr.version)
                 switch computer
                     case 'MACI64'
-                        exe = 'dcm2niix';
+                        exe = 'dcm2niix_20230411';
                     case 'GLNXA64'
-                        exe = fullfile(getenv('RELEASE'), 'dcm2niix');
+                        exe  = 'dcm2niix_20230411';
                     case 'PCWIN64'
                         exe = 'dcm2niix.exe';
                     otherwise
                 end
             end
-            if ~isempty(ipr.version) && (ipr.version == 20180622 || ipr.version == 20180627)
-                switch computer
-                    case 'MACI64'
-                        exe = 'dcm2niix_20180622';
-                    case 'GLNXA64'
-                        exe = 'dcm2niix_20180627';
-                    otherwise
-                end
-            end
 
-            [~,wd] = mlbash(['which ' exe]);
+            [~,wd] = mysystem(sprintf('which %s', exe));
             assert(~isempty(wd))            
-            [~,wp] = mlbash('which pigz');
+            [~,wp] = mysystem('which pigz');
             if ~isempty(wp)
                 z = 'y';
             else
@@ -300,19 +328,22 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             if ipr.terse && isempty(ipr.version)
                 exe = sprintf('%s --terse', exe);
             end
-            [s,r] = mlbash(sprintf('%s -f %s -i %s -o %s -d %i -z %s %s', exe, ipr.f, ipr.i, ipr.o, ipr.depth, z, ipr.folder));
+            if ipr.u
+                exe = sprintf('%s -u', exe);
+            end
+            [s,r] = mysystem(sprintf('%s -f %s -i %s -o %s -d %i -v %i -w %i -z %s %s', exe, ipr.f, ipr.i, ipr.o, ipr.d, ipr.v, ipr.w, z, ipr.folder));
             for g = globT(fullfile(ipr.o, '*.*'))
                 if contains(g{1}, '(') || contains(g{1}, ')') 
                     fn = strrep(g{1}, '(', '_');
                     fn = strrep(fn,   ')', '_');
-                    movefile(g{1}, fn)
+                    movefile(g{1}, fn);
                 end
             end
             if ipr.fourdfp
                 for g = globT(fullfile(ipr.o, '*.nii.gz'))
                     if ~isfile(strcat(myfileprefix(g{1}), '.4dfp.hdr'))
                         ic = mlfourd.ImagingContext2(g{1});
-                        ic.fourdfp.save()
+                        ic.fourdfp.save();
                     end
                 end
             end

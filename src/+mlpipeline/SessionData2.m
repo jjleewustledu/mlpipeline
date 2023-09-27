@@ -22,8 +22,11 @@ classdef (Abstract) SessionData2 < handle & mlpipeline.ImagingData & mlpipeline.
             end
             g = this.radMeasurements_;
         end
+        function     set.radMeasurements(this, s)
+            this.radMeasurements_ = s;
+        end
         function g = get.registry(this)
-            g = this.registry_;
+            g = this.registry_.instance();
         end
 
         function g = get.sessionsDir(this)
@@ -48,10 +51,20 @@ classdef (Abstract) SessionData2 < handle & mlpipeline.ImagingData & mlpipeline.
             this.pipelineData_.dataFolder = s;
         end
         function g = get.timeOffsetConsole(this)
-            c = this.radMeasurements.clocks;
-            row_hot = contains(c.Row, 'console');
-            col_hot = contains(c.Properties.VariableNames, 'offset', IgnoreCase=true);
-            g = c{row_hot, col_hot};
+            try
+                c = this.radMeasurements.clocks;
+                row_hot = contains(c.Row, 'console');
+                col_hot = contains(c.Properties.VariableNames, 'offset', IgnoreCase=true);
+                g = c{row_hot, col_hot};
+            catch ME
+                g = 0;
+                if ~contains(ME.identifier, "MATLAB:noSuchMethodOrField")
+                    handwarning(ME)
+                end
+            end
+            if ~isduration(g)
+                g = seconds(g);
+            end
         end
     end
 
@@ -80,6 +93,8 @@ classdef (Abstract) SessionData2 < handle & mlpipeline.ImagingData & mlpipeline.
         pipelineData_
         radMeasurements_
         registry_
+
+        % see also mlkinetics.KineticsKit
     end
     
     %  Created with mlsystem.Newcl, inspired by Frank Gonzalez-Morphy's newfcn.

@@ -225,7 +225,7 @@ classdef (Abstract) DicomSorter
             parse(ip, varargin{:});            
             this.sessionData_  = ip.Results.sessionData; 
             
-            [~,found] = mlbash(['which ' this.dcmConverter]);
+            [~,found] = mlbash(strcat('which ', this.dcmConverter));
             assert(~isempty(found), 'mlfourd:unixError', [this.dcmConverter ' not found']);
  		end
  	end 

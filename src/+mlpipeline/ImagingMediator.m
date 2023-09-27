@@ -5,10 +5,6 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
     %  Created 05-Feb-2023 13:24:09 by jjlee in repository /Users/jjlee/MATLAB-Drive/mlpipeline/src/+mlpipeline.
     %  Developed on Matlab 9.13.0.2126072 (R2022b) Update 3 for MACI64.  Copyright 2023 John J. Lee.
     
-    methods (Abstract)
-        imagingChanged(this, imdata) % ensures that colleagues (widgets) work together properly
-    end
-
     methods (Abstract, Access = protected)
         buildImaging(this) % keeps track of colleagues; builds the colleagues (widgets) and initializes
         % this mediator's (director's) references to them
@@ -21,6 +17,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
     end
 
     %%
+
+    properties (Constant)
+        BIDS_FOLDERS = {'derivatives', 'rawdata', 'sourcedata'};
+    end
 
     properties (Dependent)
         projectsDir % homolog of __Freesurfer__ subjectsDir
@@ -47,9 +47,29 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         scanPath
         scanFolder % \in sessionFolder
 
-        isotope
-        reconstructionMethod
-        tracer
+        anatPath
+        derivAnatPath
+        derivativesPath
+        derivPetPath
+        listmodePath
+        mriPath
+        petPath
+        rawdataPath
+        sourcedataPath
+        sourceAnatPath
+        sourcePetPath
+
+        atlas_ic
+        dlicv_ic
+        flair_ic
+        T1_ic % FreeSurfer
+        T1_on_t1w_ic
+        t1w_ic
+        t2w_ic
+        tof_ic
+        tof_on_t1w_ic
+        wmparc_ic % FreeSurfer
+        wmparc_on_t1w_ic % FreeSurfer
 
         atlasTag
         bids
@@ -57,12 +77,17 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         imagingAtlas
         imagingContext
         imagingDlicv
+        imagingFormat
+        isotope
+        radMeasurements % supporting legacy interfaces
+        reconstructionMethod
         regionTag
         registry
         timeOffsetConsole
+        tracer
     end
 
-    methods % GET/SET
+    methods %% GET/SET
         function g = get.projectsDir(this)
             g = this.projectData_.projectsDir;
         end
@@ -151,17 +176,74 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             this.scanData_.scanFolder = s;
         end
 
-        function g = get.isotope(this)
-            g = this.scanData_.isotope;
+        function g = get.anatPath(this)
+            g = this.bids.anatPath;
+        end      
+        function g = get.derivAnatPath(this)
+            g = this.bids.derivAnatPath;
         end
-        function g = get.reconstructionMethod(this)
-            g = this.scanData_.reconstructionMethod;
+        function g = get.derivativesPath(this)
+            g = this.bids.derivativesPath;
         end
-        function g = get.tracer(this)
-            g = this.scanData_.tracer;
+        function g = get.derivPetPath(this)
+            g = this.bids.derivPetPath;
+        end        
+        function g = get.mriPath(this)
+            g = this.bids.mriPath;
         end
-
-
+        function g = get.listmodePath(this)
+            g = fullfile(this.rawdataPath, this.subjectFolder, this.bids.sessionFolderForPet, 'lm', '');
+        end
+        function g = get.petPath(this)
+            g = this.bids.petPath;
+        end
+        function g = get.rawdataPath(this)
+            g = this.bids.rawdataPath;
+        end
+        function g = get.sourcedataPath(this)
+            g = this.bids.sourcedataPath;
+        end
+        function g = get.sourceAnatPath(this)
+            g = this.bids.sourceAnatPath;
+        end
+        function g = get.sourcePetPath(this)
+            g = this.bids.sourcePetPath;
+        end
+        
+        function g = get.atlas_ic(this)
+            g = this.bids.atlas_ic;
+        end  
+        function g = get.dlicv_ic(this)
+            g = this.bids.dlicv_ic;
+        end
+        function g = get.flair_ic(this)
+            g = this.bids.flair_ic;
+        end
+        function g = get.T1_ic(this) % FreeSurfer
+            g = this.bids.T1_ic;
+        end
+        function g = get.T1_on_t1w_ic(this)
+            g = this.bids.T1__on_t1w_ic;
+        end
+        function g = get.t1w_ic(this)
+            g = this.bids.t1w_ic;
+        end
+        function g = get.t2w_ic(this)
+            g = this.bids.t2w_ic;
+        end
+        function g = get.tof_ic(this)
+            g = this.bids.tof_ic;
+        end
+        function g = get.tof_on_t1w_ic(this)
+            g = this.bids.tof_on_t1w_ic;
+        end
+        function g = get.wmparc_ic(this) % FreeSurfer
+            g = this.bids.wmparc_ic;
+        end
+        function g = get.wmparc_on_t1w_ic(this)
+            g = this.bids.wmparc_on_t1w_ic;
+        end
+        
         function g = get.atlasTag(this)
             g = this.registry.atlasTag;
         end
@@ -169,7 +251,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             g = this.bids_;
         end
         function     set.bids(this, s)
-            assert(isa(s, 'mlpipeline.IBids'))
+            assert(isa(s, 'mlpipeline.IBids') || isstruct(s))
+            this.bids_ = s;
         end
         function g = get.blurTag(this)
             g = this.registry.blurTag;
@@ -178,13 +261,28 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             this.registry.blurTag = s;
         end
         function g = get.imagingAtlas(this)
-            g = this.imagingAtlas_;
+            g = copy(this.imagingAtlas_);
         end
         function g = get.imagingContext(this)
-            g = this.imagingContext_;
+            g = copy(this.imagingContext_);
         end
         function g = get.imagingDlicv(this)
-            g = this.imagingDlicv_;
+            g = copy(this.imagingDlicv_);
+        end
+        function g = get.imagingFormat(this)
+            g = this.imagingContext.imagingFormat;
+        end
+        function g = get.isotope(this)
+            g = this.scanData_.isotope;
+        end
+        function g = get.radMeasurements(this)
+            g = this.sessionData_.radMeasurements;
+        end
+        function     set.radMeasurements(this, s)
+            this.sessionData_.radMeasurements = s;
+        end
+        function g = get.reconstructionMethod(this)
+            g = this.scanData_.reconstructionMethod;
         end
         function g = get.regionTag(this)
             g = this.regionTag_;
@@ -199,14 +297,42 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function g = get.timeOffsetConsole(this)
             g = this.sessionData_.timeOffsetConsole;
         end
+        function g = get.tracer(this)
+            g = this.scanData_.tracer;
+        end
     end
 
     methods
         function dt = datetime(this, varargin)
             dt = this.scanData_.datetime(varargin{:});
         end
+        function dt = datetime_console_adjusted(this, varargin)
+            dt = this.scanData_.datetime_console_adjusted(varargin{:});
+        end
         function dt = datetime_bids_filename(this, varargin)
             dt = this.scanData_.datetime_bids_filename(varargin{:});
+        end
+        function imagingChanged(this, imdata)
+            %% subclasses override to affect mlpipeline.ImagingData
+            %  complexity of mediator design patterns arise here
+
+            arguments
+                this mlpipeline.ImagingMediator
+                imdata mlpipeline.ImagingData
+            end
+
+            if imdata == this.scanData_
+            elseif imdata == this.sessionData_
+            elseif imdata == this.subjectData_
+            elseif imdata == this.projectData_
+            elseif imdata == this.studyData_
+            else
+                error('mlpipeline:ValueError', stackstr());
+            end
+        end
+        function this = load(~, varargin)
+            ld = load(varargin{:});
+            this = ld.this;
         end
         function ic = metricOnAtlas(this, varargin)
             ic = this.scanData_.metricOnAtlas(varargin{:});
@@ -215,12 +341,32 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             reg = this.sessionData_.registry;
             ps = reg.petPointSpread(varargin{:});
         end
+        function save(this, fn)
+            save(fn, 'this')
+        end
         function t = taus(this, varargin)
-            if isempty(varargin)
-                t = this.scanData_.taus(upper(this.tracer));
+            t = asrow(this.imagingContext.json_metadata.taus);
+        end
+        function t = times(this, varargin)
+            try
+                t = asrow(this.imagingContext.json_metadata.times);
+            catch ME
+                handwarning(ME)
+                t = [];
+            end
+        end
+        function t = timesMid(this, varargin)
+            t = asrow(this.imagingContext.json_metadata.timesMid);
+        end
+        function ic = tracerOnAtlas(this, varargin)
+            if endsWith(this.imagingContext.fileprefix, this.registry.atlasTag)
+                ic = this.imagingContext;
                 return
             end
-            t = this.scanData_.taus(varargin{:});
+            s = this.bids.filename2struct(this.imagingContext.fqfn);
+            s.tag = this.atlasTag;
+            fqfn = this.bids.struct2filename(s);
+            ic = mlfourd.ImagingContext2(fqfn);
         end
     end
 
@@ -231,18 +377,56 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         imagingAtlas_
         imagingContext_
         imagingDlicv_
+        projectData_
+        regionTag_
         scanData_
         sessionData_
         subjectData_
-        projectData_
-        regionTag_
         studyData_
     end
 
     methods (Access = protected)
         function this = ImagingMediator(varargin)
-            if ~isempty([varargin{:}])
-                this.imagingContext_ = mlfourd.ImagingContext2(varargin{:});
+            if isempty(varargin)
+                error("mlpipeline:ValueError", ...
+                    "ImagingMediator requires inputs understood by mlfourd.ImagingContext2");                    
+            end
+            if isa(varargin{1}, 'mlpipeline.ImagingMediator')
+                this.imagingContext_ = varargin{1}.imagingContext_;
+                return
+            end
+            this.imagingContext_ = mlfourd.ImagingContext2(varargin{:});
+        end
+        
+        function that = copyElement(this)
+            that = copyElement@matlab.mixin.Copyable(this);
+            if ~isempty(this.bids_)
+                that.bids_ = copy(this.bids_); end
+            if ~isempty(this.imagingAtlas_)
+                that.imagingAtlas_ = copy(this.imagingAtlas_); end
+            if ~isempty(this.imagingContext_)
+                that.imagingContext_ = copy(this.imagingContext_); end
+            if ~isempty(this.imagingDlicv_)
+                that.imagingDlicv_ = copy(this.imagingDlicv_); end
+        end    
+        function ic = ensureTimingData(this, ic)
+            arguments
+                this mlpipeline.ImagingMediator
+                ic mlfourd.ImagingContext2
+            end
+
+            j = ic.json_metadata;
+            if ~isfield(j, "taus")
+                % make timing data from this.scanData_, which may make best guesses
+                taus_ = asrow(this.scanData_.taus());
+                times_ = cumsum(taus_) - taus_;
+                timesMid_ = cumsum(taus_) - taus_/2;
+                j_toadd = struct( ...
+                    "taus", taus_, ...
+                    "times", times_, ...
+                    "timesMid", timesMid_, ...
+                    "timeUnit", "second");
+                ic.addJsonMetadata(j_toadd);
             end
         end
         function pth = omit_bids_folders(this, pth)

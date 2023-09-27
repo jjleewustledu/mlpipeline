@@ -71,6 +71,7 @@ classdef SimpleBids < handle & mlpipeline.IBids
             end
             try                
                 if mysystem('which nvidia-docker') > 0
+                    g = [];
                     return
                 end
                 this.dlicv_ic_ = mlfourd.ImagingContext2( ...
@@ -87,7 +88,8 @@ classdef SimpleBids < handle & mlpipeline.IBids
                 end
                 g = copy(this.dlicv_ic_);
             catch ME
-                %handwarning(ME)
+                handwarning(ME)
+                g = [];
             end
         end
         function g = get.flair_ic(this)
@@ -338,9 +340,11 @@ classdef SimpleBids < handle & mlpipeline.IBids
             try
                 warning('off', 'mfiles:ChildProcessWarning')
                 image = 'jjleewustledu/deepmrseg_image:20220615';
+                pwd0 = pushd(t1w.filepath);
                 cmd = sprintf('nvidia-docker run -it -v %s:/data --rm %s --task dlicv --inImg %s --outImg %s', ...
-                    t1w.filepath, image, t1w.fqfn, dlicv.fqfn);
+                    t1w.filepath, image, t1w.filename, dlicv.filename);
                 [s,r] = mlbash(cmd);
+                popd(pwd0)
                 warning('on', 'mfiles:ChildProcessWarning')
             catch
             end
@@ -395,7 +399,7 @@ classdef SimpleBids < handle & mlpipeline.IBids
             %      ic mlfourd.ImagingContext2
 
             arguments %(Input)
-                this mlsiemens.BiographBids
+                this mlpipeline.SimpleBids
                 dyn {mustBeNonempty}
                 t1w {mustBeNonempty}
                 opts.taus double = []
@@ -427,7 +431,7 @@ classdef SimpleBids < handle & mlpipeline.IBids
             %      ic mlfourd.ImagingContext2
 
             arguments % (Input)
-                this mlsiemens.BiographBids
+                this mlpipeline.SimpleBids
                 static {mustBeNonempty}
                 t1w {mustBeNonempty}
             end

@@ -92,7 +92,7 @@ classdef Finished < handle
             end
             this.markerFilename_ = this.markerFilename(varargin{:});
             ensuredir(fileparts(this.markerFilename_));
-            mlbash(['touch ' this.markerFilename_]);
+            mlbash(strcat('touch ', this.markerFilename_));
         end
     end 
     

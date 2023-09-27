@@ -26,23 +26,40 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
     methods % GET/SET
         function g = get.scansDir(this)
             g = this.pipelineData_.datasetDir;
+            if ~contains(g, "sub-") || ~contains(g, "ses-")
+                warning("mlpipeline:ValueWarning", "%s: scansDir->%s", stackstr(), g);
+            end
         end
         function g = get.scansPath(this)
             g = this.pipelineData_.datasetPath;
+            if ~contains(g, "sub-") || ~contains(g, "ses-")
+                warning("mlpipeline:ValueWarning", "%s: scansPath->%s", stackstr(), g);
+            end
         end
         function g = get.scansFolder(this)
             g = this.pipelineData_.datasetFolder;
+            if ~contains(g, "ses-")
+                warning("mlpipeline:ValueWarning", "%s: scansFolder->%s", stackstr(), g);
+            end
         end
         function g = get.scanPath(this)
             g = this.pipelineData_.dataPath;
+            if ~contains(g, "sub-") || ~contains(g, "ses-")
+                warning("mlpipeline:ValueWarning", "%s: scansDir->%s", stackstr(), g);
+            end
         end
         function     set.scanPath(this, s)
+            if ~contains(s, "sub-") || ~contains(s, "ses-")
+                warning("mlpipeline:ValueWarning", "%s: scansDir->%s", stackstr(), s);
+            end
             this.pipelineData_.dataPath = s;
         end
         function g = get.scanFolder(this)
             g = this.pipelineData_.dataFolder;
+            assert(~isemptytext(g))
         end        
         function     set.scanFolder(this, s)
+            assert(~isemptytext(s))
             this.pipelineData_.dataFolder = s;
         end
 
@@ -72,26 +89,40 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
                 return
             end
             g = this.mediator_.registry.tracer;
-            assert(~isempty(g))
+            %assert(~isempty(g)) % ic may not be PET
         end
     end
 
     methods
         function dt = datetime(this, varargin)
             dt = this.datetime_bids_filename(varargin{:});
-            deltadt = seconds(this.mediator_.timeOffsetConsole);
-            dt = dt - deltadt;
         end
-        function dt = datetime_bids_filename(this, varargin)
-            ic = this.mediator_.imagingContext;
-            re = regexp(ic.fileprefix, "ses-(?<dt>\d{14})", "names");
+        function dt = datetime_console_adjusted(this, varargin)
+            dt = datetime(this) - this.mediator_.timeOffsetConsole;
+        end
+        function dt = datetime_bids_filename(this, fn)
+            arguments
+                this mlpipeline.ScanData2
+                fn = this.mediator_.imagingContext.filename
+            end
+
+            try
+                [~,fp] = myfileparts(fn);
+                assert(~isempty(fp), stackstr())
+            catch ME
+                handwarning(ME)
+                fn = this.mediator_.imagingContext.filename;
+                [~,fp] = myfileparts(fn);
+            end
+            
+            re = regexp(fp, "ses-(?<dt>\d{14})", "names");
             if ~isempty(re.dt)
-                dt = datetime(re.dt, varargin{:}, InputFormat="yyyyMMddHHmmss", TimeZone="local");
+                dt = datetime(re.dt, InputFormat="yyyyMMddHHmmss", TimeZone="local");
                 return
             end
-            re = regexp(ic.fileprefix, "ses-(?<dt>\d{8})", "names");
+            re = regexp(fp, "ses-(?<dt>\d{8})", "names");
             if ~isempty(re.dt)
-                dt = datetime(re.dt, varargin{:}, InputFormat="yyyyMMdd", TimeZone="local");
+                dt = datetime(re.dt, InputFormat="yyyyMMdd", TimeZone="local");
                 return
             end
             dt = NaT;
@@ -122,7 +153,7 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
         function t = taus(this, trc)
             arguments
                 this mlpipeline.ScanData2
-                trc {mustBeTextScalar} = this.tracer
+                trc = this.tracer
             end
             t = this.consoleTaus(trc);
         end
