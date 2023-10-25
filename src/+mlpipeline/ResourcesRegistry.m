@@ -21,8 +21,7 @@ classdef (Sealed) ResourcesRegistry < handle & mlpatterns.Singleton2
         neverMarkFinished % *T4ResolveBuilder
     end
     
-    methods
-        
+    methods        
         %% GET, SET
         
         function g = get.alpha(this)

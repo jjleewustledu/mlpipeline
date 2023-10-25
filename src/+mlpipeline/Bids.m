@@ -24,6 +24,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         destinationPath
         mriFolder % for FreeSurfer
         mriPath % for FreeSurfer
+        originationPath
         petFolder
         petPath
         projectPath
@@ -47,25 +48,29 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = this.derivAnatPath;
         end
         function g = get.derivAnatPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder);
         end
         function g = get.derivativesPath(this)
-            g = fullfile(this.projectPath, 'derivatives', '');
+            g = fullfile(this.projectPath, "derivatives");
         end
         function g = get.derivPetPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
+            re = regexp(this.sessionFolderForPet, "ses-(?<date>\d{8})(?<time>(|\d{6}))", "names");            
+            g = fullfile(this.derivativesPath, this.subjectFolder, "ses-"+re.date, this.petFolder);
         end
         function g = get.destinationPath(this)
             g = this.destinationPath_;
         end
         function g = get.mriFolder(~)
-            g = 'mri';
+            g = "mri";
         end
         function g = get.mriPath(this)
-            g = fullfile(this.derivativesPath, this.surferFolder, this.mriFolder, '');
+            g = fullfile(this.derivativesPath, this.surferFolder, this.mriFolder);
+        end
+        function g = get.originationPath(this)
+            g = this.originationPath_;
         end
         function g = get.petFolder(~)
-            g = 'pet';
+            g = "pet";
         end
         function g = get.petPath(this)
             g = this.derivPetPath;
@@ -74,48 +79,58 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = this.projectPath_;
         end
         function g = get.rawAnatPath(this)
-            g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
+            g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder);
         end
         function g = get.rawdataPath(this)
-            g = fullfile(this.projectPath, 'rawdata', '');
+            g = fullfile(this.projectPath, "rawdata");
         end
         function g = get.rawPetPath(this)
-            g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
+            g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
         end
         function g = get.sessionFolderForAnat(this)
-            if ~isempty(this.sessionFolderAnat_)
-                g = this.sessionFolderAnat_;
+            if ~isempty(this.sessionFolderForAnat_)
+                g = this.sessionFolderForAnat_;
                 return
             end
 
-            globbed = globFolders(convertStringsToChars( ...
-                fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "anat")));
-            assert(~isempty(globbed), stackstr())
-            ss = split(globbed{1}, filesep);
-            g = ss{end-1};
-            this.sessionFolderAnat_ = g;
+            globbed = mglob( ...
+                fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "anat"));
+            if length(globbed) > 1
+                globbed = globbed(1);
+            end
+            try
+                g = this.parseFolderFromPath("ses-", globbed);
+            catch ME
+                handwarning(ME)
+                g = "";
+            end
+            this.sessionFolderForAnat_ = g;
         end
         function g = get.sessionFolderForPet(this)
-            if ~isempty(this.sessionFolderPet_)
-                g = this.sessionFolderPet_;
+            if ~isempty(this.sessionFolderForPet_)
+                g = this.sessionFolderForPet_;
                 return
             end
 
-            globbed = globFolders(convertStringsToChars( ...
-                fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "pet")));
-            assert(~isempty(globbed), stackstr())
-            ss = split(globbed{1}, filesep);
-            g = ss{end-1};
-            this.sessionFolderPet_ = g;
+            globbed = mglob( ...
+                fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "pet"));
+            globbed = this.selectOriginationSession(globbed);
+            try
+                g = this.parseFolderFromPath("ses-", globbed);
+            catch ME
+                handwarning(ME)
+                g = "";
+            end
+            this.sessionFolderForPet_ = g;
         end
         function g = get.sourceAnatPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder, '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder);
         end
         function g = get.sourcedataPath(this)
-            g = fullfile(this.projectPath, 'sourcedata', '');
+            g = fullfile(this.projectPath, "sourcedata");
         end
         function g = get.sourcePetPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder, '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
         end
         function g = get.subjectFolder(this)
             g = this.subjectFolder_;
@@ -129,6 +144,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
  		function this = Bids(varargin)
             %  Args:
             %      destinationPath (folder): will receive outputs.  Specify project ID & subject ID.
+            %      originationPath (folder): contains inputs.  Specify project ID & subject ID.
             %      projectPath (folder): belongs to a CCIR project.  
             %      subjectFolder (text): is the BIDS-adherent string for subject identity.
             %      sessionFolderForAnat (text): is the BIDS-adherent string for session/anat identity; 
@@ -138,81 +154,103 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
 
             ip = inputParser;
             ip.KeepUnmatched = true;
-            addParameter(ip, 'destinationPath', pwd, @isfolder)
-            addParameter(ip, 'projectPath', fullfile(getenv('SINGULARITY_HOME'), this.PROJECT_FOLDER, ''), @istext)
+            addParameter(ip, 'destinationPath', '', @istext)
+            addParameter(ip, 'originationPath', pwd, @isfolder)
+            addParameter(ip, 'projectPath', fullfile(getenv("SINGULARITY_HOME"), this.PROJECT_FOLDER), @istext)
             addParameter(ip, 'subjectFolder', '', @istext)
             addParameter(ip, 'sessionFolderForAnat', '', @istext)
             addParameter(ip, 'sessionFolderForPet', '', @istext)
             parse(ip, varargin{:})
             ipr = ip.Results;
             this.destinationPath_ = ipr.destinationPath;
+            this.originationPath_ = ipr.originationPath;
             this.projectPath_ = ipr.projectPath;
             this.subjectFolder_ = ipr.subjectFolder;
-            this.sessionFolderAnat_ = ipr.sessionFolderForAnat;
-            this.sessionFolderPet_ = ipr.sessionFolderForPet;
+            this.sessionFolderForAnat_ = ipr.sessionFolderForAnat;
+            this.sessionFolderForPet_ = ipr.sessionFolderForPet;
 
-            try
-                if isempty(this.subjectFolder_)
-                    this.subjectFolder_ = this.parseFolderFromPath('sub-', this.destinationPath_);
-                end
-            catch
-                this.subjectFolder_ = '';
+            if isempty(this.destinationPath_)
+                this.destinationPath_ = this.originationPath_;
+            end
+            if isempty(this.subjectFolder_)
+                this.subjectFolder_ = this.parseFolderFromPath('sub-', this.originationPath_);
             end
             try
-                if isempty(this.sessionFolderAnat_)
-                    g = glob(fullfile(this.rawdataPath, this.subjectFolder, 'ses-*', 'anat'));
-                    this.sessionFolderAnat_ = this.parseFolderFromPath('ses-', g{end});
+                if isempty(this.sessionFolderForAnat_)
+                    g = mglob(fullfile(this.sourcedataPath, this.subjectFolder, "ses-*", "anat"));
+                    if ~isempty(g)
+                        this.sessionFolderForAnat_ = this.parseFolderFromPath("ses-", g(1));
+                    end
                 end
-                if isempty(this.sessionFolderAnat_)
-                    g = glob(fullfile(this.sourcedataPath, this.subjectFolder, 'ses-*', 'anat'));
-                    this.sessionFolderAnat_ = this.parseFolderFromPath('ses-', g{end});
-                end
-            catch
-                this.sessionFolderAnat_ = '';
+            catch ME
+                handwarning(ME)
+                this.sessionFolderForAnat_ = '';
             end
             try
-                if isempty(this.sessionFolderPet_)
-                    g = glob(fullfile(this.rawdataPath, this.subjectFolder, 'ses-*', 'pet'));
-                    this.sessionFolderPet_ = this.parseFolderFromPath('ses-', g{end});
+                if isempty(this.sessionFolderForPet_)
+                    this.sessionFolderForPet_ = this.parseFolderFromPath("ses-", this.originationPath);
                 end
-                if isempty(this.sessionFolderPet_)
-                    g = glob(fullfile(this.sourcedataPath, this.subjectFolder, 'ses-*', 'pet'));
-                    this.sessionFolderPet_ = this.parseFolderFromPath('ses-', g{end});
-                end
-            catch
-                this.sessionFolderPet_ = '';
+            catch ME
+                handwarning(ME)
+                this.sessionFolderForPet_ = '';
             end
         end
-        function icd = prepare_derivatives(this, ic)
-            %% PREPARE_DERIVATIVES refreshes imaging in this.derivativesPath reoriented to the MNI standard and
-            %  radiologic orientation.
+        function ic = prepare_derivatives(this, ic)
+            %% PREPARE_DERIVATIVES prepares imaging in this.derivativesPath.
 
-            if ~isa(ic, 'mlfourd.ImagingContext2')
-                ic = mlfourd.ImagingContext2(ic);
+            arguments
+                this mlpipeline.Bids
+                ic {mustBeNonempty}
             end
 
-            assert(isfile(ic.fqfn))
+            ic = mlfourd.ImagingContext2(ic);
+            if ~isfile(ic.fqfn)
+                ic.save();
+            end
 
-            icd = copy(ic);
             if ~contains(ic.filepath, this.derivativesPath) % copy to derivatives
+                ic.selectImagingTool();
                 if contains(ic.filepath, this.anatFolder)
-                    icd.filepath = this.derivAnatPath;
+                    ic.filepath = this.derivAnatPath;
                 end
                 if contains(ic.filepath, this.petFolder)
-                    icd.filepath = this.derivPetPath;
+                    ic.filepath = this.derivPetPath;
                 end
-                ensuredir(icd.filepath);
-                mysystem(sprintf('cp -f %s %s', ic.fqfn, icd.filepath), '-echo');
-                if isfile(strcat(ic.fqfp, '.json'))
-                    mysystem(sprintf('cp -f %s %s', strcat(ic.fqfp, '.json'), icd.filepath), '-echo');
+                ensuredir(ic.filepath);
+
+                if ~isfile(ic.fqfn)
+                    ic.save();
                 end
-                mysystem(sprintf('chmod -R 755 %s', icd.filepath));
+                if isunix
+                    mysystem(sprintf('chmod -R 755 %s', ic.filepath));
+                end
+                if ispc
+                    mysystem(sprintf("icacls %s /reset /t /c /q", ic.filepath));
+                end
+            end      
+        end
+        function ic = prepare_orient_std(~, ic)
+            %% PREPARE_DERIVATIVES prepares imaging reoriented to the MNI standard and radiologic orientation.
+            
+            ic = mlfourd.ImagingContext2(ic);
+            if ~isfile(ic.fqfn)
+                ic.save();
             end
-            if ~contains(icd.fileprefix, '_orient-std') && ~isfile(strcat(icd.fqfp, '_orient-std.nii.gz'))
-                icd.reorient2std();  
-                icd.selectNiftiTool();
-                icd.save();
-            end          
+            
+            if ~contains(ic.fileprefix, '_orient-std') && ~isfile(strcat(ic.fqfp, '_orient-std.nii.gz'))
+                ic.reorient2std();  
+                ic.fqfilename = strcat(ic.fqfp, '_orient-std.nii.gz');
+            end  
+        end
+        function pth = selectOriginationSession(this, pth)
+            %% string (array) pth in; string (array) pth with origination session out.
+
+            arguments
+                this mlpipeline.Bids
+                pth string {mustBeText}
+            end
+            orig_ses_fold = this.parseFolderFromPath("ses-", this.originationPath);
+            pth = pth(contains(pth, orig_ses_fold));
         end
     end
     
@@ -305,8 +343,6 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             exe = 'dcm2niix';
             if isempty(ipr.version)
                 switch computer
-                    case 'MACI64'
-                        exe = 'dcm2niix_20230411';
                     case 'GLNXA64'
                         exe  = 'dcm2niix_20230411';
                     case 'PCWIN64'
@@ -350,12 +386,19 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         end
         function fld = parseFolderFromPath(patt, pth)
             %  Args:
-            %      patt (text): e.g., 'sub-', 'ses-'.
-            %      pth (folder): from which to find 1st folder name matching patt.
+            %      patt string {mustBeText}, e.g., "sub-", "ses-".
+            %      pth string {mustBeFolder}, from which to find 1st folder name matching patt.
 
-            if contains(pth, patt)
-                ss = strsplit(pth, filesep);
-                fld = ss{contains(ss, patt)}; % picks first occurance
+            arguments
+                patt string {mustBeText}
+                pth string {mustBeFolder}
+            end
+
+            for pidx = 1:length(pth)
+                if any(contains(pth(pidx), patt))
+                    ss = strsplit(pth(pidx), filesep);
+                    fld(pidx) = ss(contains(ss, patt)); %#ok<AGROW> % picks first occurance
+                end
             end
         end
         function obj = sourcedata2derivatives(obj)
@@ -471,9 +514,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
     
     properties (Access = protected)
         destinationPath_
+        originationPath_
         projectPath_
-        sessionFolderAnat_
-        sessionFolderPet_
+        sessionFolderForAnat_
+        sessionFolderForPet_
         subjectFolder_
     end
 
