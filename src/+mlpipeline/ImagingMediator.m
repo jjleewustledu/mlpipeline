@@ -79,6 +79,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         imagingDlicv
         imagingFormat
         isotope
+        json_metadata
         radMeasurements % supporting legacy interfaces
         reconstructionMethod
         regionTag
@@ -192,7 +193,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             g = this.bids.mriPath;
         end
         function g = get.listmodePath(this)
-            g = fullfile(this.rawdataPath, this.subjectFolder, this.bids.sessionFolderForPet, 'lm', '');
+            g = fullfile(this.sourcedataPath, this.subjectFolder, this.bids.sessionFolderForPet, strcat('lm-', lower(this.tracer)), '');
         end
         function g = get.petPath(this)
             g = this.bids.petPath;
@@ -274,6 +275,12 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         end
         function g = get.isotope(this)
             g = this.scanData_.isotope;
+        end        
+        function j = get.json_metadata(this)
+            j = this.imagingContext_.json_metadata;
+        end
+        function     set.json_metadata(this, s)
+            this.imagingContext_.json_metadata = s;
         end
         function g = get.radMeasurements(this)
             g = this.sessionData_.radMeasurements;
@@ -344,26 +351,176 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function save(this, fn)
             save(fn, 'this')
         end
-        function t = taus(this, varargin)
-            t = asrow(this.imagingContext.json_metadata.taus);
-        end
-        function t = times(this, varargin)
-            try
-                t = asrow(this.imagingContext.json_metadata.times);
-            catch ME
-                handwarning(ME)
-                t = [];
+        function st_ = start_times(this)
+            if ndims(this.imagingContext_) < 4
+                st_ = [];
+                return
             end
+            P = size(this.imagingContext_, 4);
+
+            % prefer json_metadata
+            if isfield(this.json_metadata, "start_times")
+                st_ = asrow(this.json_metadata.start_times);
+                if length(st_) == P
+                    return
+                end
+
+                % aufbau for moving averages
+                M = length(st_);
+                N = floor(P/M);
+                if M < P
+                    st__ = zeros(1, P);
+                    dt_ = st_(end) - st_(end-1);
+                    for n = 1:N
+                        for m = 1:M
+                            st__(m+M*(n-1)) = (n - 1)*(st_(M) + dt_) + st_(m);
+                        end
+                    end
+                    if mod(P,M) > 0
+                        st__(M*N+1:P) = N*(st_(M) + dt_) + st_(1:mod(P,M));
+                    end
+                    st_ = st__;
+                    return
+                end
+            end
+
+            % try console taus
+            taus_ = this.scanData_.consoleTaus(this.tracer);
+            st_ = cumsum(taus_) - taus_;
+            if length(st_) == P
+                return
+            end
+
+            % abort
+            st_ = [];
         end
-        function t = timesMid(this, varargin)
-            t = asrow(this.imagingContext.json_metadata.timesMid);
+        function taus_ = taus(this)
+            if ndims(this.imagingContext_) < 4
+                taus_ = [];
+                return
+            end
+            P = size(this.imagingContext_, 4);
+
+            % prefer json_metadata
+            if isfield(this.json_metadata, "taus")
+                taus_ = asrow(this.json_metadata.taus);
+                if length(taus_) == P
+                    return
+                end
+
+                % aufbau for moving averages
+                N = length(taus_);
+                M = floor(P/N);
+                if N < P
+                    taus__ = zeros(1, P);
+                    for n = 1:N
+                        for m = 1:M
+                            taus__(m+M*(n-1)) = taus_(n);
+                        end
+                    end
+                    if mod(P,N) > 0
+                        taus__(M*N+1:P) = taus_(N);
+                    end
+                    taus_ = taus__;
+                    return
+                end
+            end
+
+            % try console taus
+            taus_ = this.scanData_.consoleTaus(this.tracer);
+            if length(taus_) == P
+                return
+            end
+
+            % abort
+            taus_ = [];
+        end
+        function t_ = times(this)
+            if ndims(this.imagingContext_) < 4
+                t_ = [];
+                return
+            end
+            P = size(this.imagingContext_, 4);
+
+            % prefer json_metadata
+            if isfield(this.json_metadata, "times")
+                t_ = asrow(this.json_metadata.times);
+                if length(t_) == P
+                    return
+                end
+
+                % aufbau for moving averages
+                try
+                    dt = t_(end) - t_(end-1);
+                    M = length(t_);
+                    N = floor(P/M);
+                    if M < P
+                        st__ = zeros(1, P);
+                        for n = 1:N
+                            for m = 1:M
+                                st__(m+M*(n-1)) = (n - 1)*(t_(M) + dt) + t_(m);
+                            end
+                        end
+                        if mod(P,M) > 0
+                            st__(M*N+1:P) = N*(t_(M) + dt) + t_(1:mod(P,M));
+                        end
+                        t_ = st__;
+                    end
+                    return
+                catch ME
+                    handwarning(ME)
+                end
+            end
+
+            % try start_times
+            t_ = this.start_times;
+            if length(t_) == P
+                return
+            end
+
+            % try console times
+            taus_ = this.scanData_.consoleTaus(this.tracer);
+            t_ = cumsum(taus_) - taus_;
+            if length(t_) == P
+                return
+            end
+
+            % abort
+            t_ = [];
+        end
+        function tMid_ = timesMid(this)
+            if ndims(this.imagingContext_) < 4
+                tMid_ = [];
+                return
+            end
+            P = size(this.imagingContext_, 4);
+
+            % prefer json_metadata
+            if isfield(this.json_metadata, "timesMid")
+                tMid_ = asrow(this.json_metadata.timesMid);   
+                if length(tMid_) == P
+                    return
+                end
+
+                % no aufbau
+            end
+                
+            % try console taus
+            taus_ = this.scanData_.consoleTaus(this.tracer); 
+            tMid_ = cumsum(taus_) - taus_/2;
+            if length(tMid_) == P
+                return
+            end
+
+            % abort
+            tMid_ = [];
         end
         function ic = tracerOnAtlas(this, varargin)
-            if endsWith(this.imagingContext.fileprefix, this.registry.atlasTag)
+            if endsWith(this.imagingContext_.fileprefix, this.registry.atlasTag)
                 ic = this.imagingContext;
                 return
             end
-            s = this.bids.filename2struct(this.imagingContext.fqfn);
+            s = this.bids.filename2struct(this.imagingContext_.fqfn);
             s.tag = this.atlasTag;
             fqfn = this.bids.struct2filename(s);
             ic = mlfourd.ImagingContext2(fqfn);
@@ -416,18 +573,12 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             end
 
             j = ic.json_metadata;
-            if ~isfield(j, "taus")
-                % make timing data from this.scanData_, which may make best guesses
-                taus_ = asrow(this.scanData_.taus());
-                times_ = cumsum(taus_) - taus_;
-                timesMid_ = cumsum(taus_) - taus_/2;
-                j_toadd = struct( ...
-                    "taus", taus_, ...
-                    "times", times_, ...
-                    "timesMid", timesMid_, ...
-                    "timeUnit", "second");
-                ic.addJsonMetadata(j_toadd);
-            end
+            j.start_times = this.start_times;
+            j.taus = this.taus;
+            j.times = this.times;
+            j.timesMid = this.timesMid;
+            j.timeUnit = "second";
+            ic.json_metadata = j;            
         end
         function pth = omit_bids_folders(this, pth)
             folds = strsplit(pth, filesep);
