@@ -75,9 +75,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         bids
         blurTag
         imagingAtlas
-        imagingContext
         imagingDlicv
-        imagingFormat
         isotope
         json_metadata
         radMeasurements % supporting legacy interfaces
@@ -264,14 +262,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function g = get.imagingAtlas(this)
             g = copy(this.imagingAtlas_);
         end
-        function g = get.imagingContext(this)
-            g = copy(this.imagingContext_);
-        end
         function g = get.imagingDlicv(this)
             g = copy(this.imagingDlicv_);
-        end
-        function g = get.imagingFormat(this)
-            g = this.imagingContext.imagingFormat;
         end
         function g = get.isotope(this)
             g = this.scanData_.isotope;
@@ -337,6 +329,16 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 error('mlpipeline:ValueError', stackstr());
             end
         end
+
+        function ic = imagingContext(this)
+            %% slow for large data
+            ic = copy(this.imagingContext_);
+        end
+        function ifc = imagingFormat(this)
+            %% potentially slow for large data
+            ifc = this.imagingContext.imagingFormat;
+        end
+
         function this = load(~, varargin)
             ld = load(varargin{:});
             this = ld.this;
