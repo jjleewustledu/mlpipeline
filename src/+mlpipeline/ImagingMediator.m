@@ -353,7 +353,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function save(this, fn)
             save(fn, 'this')
         end
-        function st_ = start_times(this)
+        function st_ = starts(this)
             if ndims(this.imagingContext_) < 4
                 st_ = [];
                 return
@@ -361,8 +361,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             P = size(this.imagingContext_, 4);
 
             % prefer json_metadata
-            if isfield(this.json_metadata, "start_times")
-                st_ = asrow(this.json_metadata.start_times);
+            if isfield(this.json_metadata, "starts")
+                st_ = asrow(this.json_metadata.starts);
                 if length(st_) == P
                     return
                 end
@@ -474,8 +474,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 end
             end
 
-            % try start_times
-            t_ = this.start_times;
+            % try starts
+            t_ = this.starts;
             if length(t_) == P
                 return
             end
@@ -575,7 +575,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             end
 
             j = ic.json_metadata;
-            j.start_times = this.start_times;
+            j.starts = this.starts;
             j.taus = this.taus;
             j.times = this.times;
             j.timesMid = this.timesMid;
