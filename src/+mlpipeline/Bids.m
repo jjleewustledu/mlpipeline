@@ -15,6 +15,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
 
     %%
 
+    properties (Constant)
+        TAGS = ["sub", "ses", "acq", "trc", "proc", "orient"]
+    end
+
 	properties (Dependent)
         anatFolder
         anatPath
@@ -255,6 +259,72 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
     end
     
     methods (Static)
+        function s = adjust_fileprefix(s, opts)
+            %% retains any filepath and filename extension understood by myfileparts
+            %  Args:
+            % s {mustBeTextScalar}
+            % opts.new_proc {mustBeTextScalar} = ""
+            % opts.pre_proc {mustBeTextScalar} = ""
+            % opts.post_proc {mustBeTextScalar} = ""
+
+            arguments
+                s {mustBeTextScalar}
+                opts.new_mode {mustBeTextScalar} = ""
+                opts.pre_mode {mustBeTextScalar} = ""
+                opts.post_mode {mustBeTextScalar} = ""
+                opts.new_proc {mustBeTextScalar} = ""
+                opts.pre_proc {mustBeTextScalar} = ""
+                opts.post_proc {mustBeTextScalar} = ""
+                opts.remove_substring {mustBeTextScalar} = ""
+            end
+
+            [pth,fp,x] = myfileparts(s);
+
+            % adjust mode; add mode if no previous mode
+            remo = regexp(fp, "\S+_(?<mode>[a-zA-Z0-9]+)$", "names");
+            if ~isempty(remo)
+                newmode = remo.mode;
+                if ~isemptytext(opts.new_mode)
+                    newmode = opts.new_mode;
+                end
+                if ~isemptytext(opts.pre_mode)
+                    newmode = strcat(opts.pre_mode, "_", newmode);
+                end
+                if ~isemptytext(opts.post_mode)
+                    newmode = strcat(newmode, "_", opts.post_mode);
+                end
+                fp = strrep(fp, remo.mode, newmode);
+            end
+            if isempty(remo) && ...
+                    ~isemptytext(strcat(opts.pre_mode, opts.new_mode, opts.post_mode))
+                fp = strcat(fp, "_", opts.pre_mode, opts.new_mode, opts.post_mode);
+            end
+
+            % adjust proc
+            repr = regexp(fp, "\S+_proc-(?<proc>[a-zA-Z0-9\-]+)", "names");
+            if ~isempty(repr)
+                newproc = repr.proc;
+                if ~isemptytext(opts.new_proc)
+                    newproc = opts.new_proc;
+                end
+                if ~isemptytext(opts.pre_proc)
+                    newproc = strcat(opts.pre_proc, "-", newproc);
+                end
+                if ~isemptytext(opts.post_proc)
+                    newproc = strcat(newproc, "-", opts.post_proc);                
+                end
+                newproc = strrep(newproc, "_", "-");
+                fp = strrep(fp, "proc-"+repr.proc, "proc-"+newproc);
+            end
+
+            % remove substring
+            ress = regexp(fp, "\S*(?<substring>"+opts.remove_substring+")\S*", "names");
+            if ~isempty(ress)
+                fp = strrep(fp, ress.substring, "");
+            end
+
+            s = fullfile(pth, strcat(fp, x));
+        end
         function fn1 = afni_3dresample(fn)
             if ~isfile(fn)
                 fn1 = fn;
