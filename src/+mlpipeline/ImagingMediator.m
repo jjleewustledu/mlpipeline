@@ -363,15 +363,16 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             this.imagingContext.saveas(fn);
         end
         function st_ = starts(this)
-            if ndims(this.imagingContext_) < 4
+            if isempty(this.imagingContext_)
                 st_ = [];
                 return
             end
-            P = size(this.imagingContext_, 4);
+            P = size(this.imagingContext_, ndims(this.imagingContext_));
 
             % prefer json_metadata
             if isfield(this.json_metadata, "starts")
-                st_ = asrow(this.json_metadata.starts);
+                j = this.ensureNumericTimingData(this.json_metadata);
+                st_ = asrow(j.starts);
                 if length(st_) == P
                     return
                 end
@@ -406,15 +407,16 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             st_ = [];
         end
         function taus_ = taus(this)
-            if ndims(this.imagingContext_) < 4
+            if isempty(this.imagingContext_)
                 taus_ = [];
                 return
             end
-            P = size(this.imagingContext_, 4);
+            P = size(this.imagingContext_, ndims(this.imagingContext_));
 
             % prefer json_metadata
             if isfield(this.json_metadata, "taus")
-                taus_ = asrow(this.json_metadata.taus);
+                j = this.ensureNumericTimingData(this.json_metadata);
+                taus_ = asrow(j.taus);
                 if length(taus_) == P
                     return
                 end
@@ -447,15 +449,16 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             taus_ = [];
         end
         function t_ = times(this)
-            if ndims(this.imagingContext_) < 4
+            if isempty(this.imagingContext_)
                 t_ = [];
                 return
             end
-            P = size(this.imagingContext_, 4);
+            P = size(this.imagingContext_, ndims(this.imagingContext_));
 
             % prefer json_metadata
-            if isfield(this.json_metadata, "times")
-                t_ = asrow(this.json_metadata.times);
+            if isfield(this.json_metadata, "times")                
+                j = this.ensureNumericTimingData(this.json_metadata);
+                t_ = asrow(j.times);
                 if length(t_) == P
                     return
                 end
@@ -483,8 +486,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 end
             end
 
-            % try starts
-            t_ = this.starts;
+            % try timesMid - taus/2
+            t_ = this.timesMid - this.taus/2;
             if length(t_) == P
                 return
             end
@@ -500,15 +503,16 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             t_ = [];
         end
         function tMid_ = timesMid(this)
-            if ndims(this.imagingContext_) < 4
+            if isempty(this.imagingContext_)
                 tMid_ = [];
                 return
             end
-            P = size(this.imagingContext_, 4);
+            P = size(this.imagingContext_, ndims(this.imagingContext_));
 
             % prefer json_metadata
-            if isfield(this.json_metadata, "timesMid")
-                tMid_ = asrow(this.json_metadata.timesMid);   
+            if isfield(this.json_metadata, "timesMid")                
+                j = this.ensureNumericTimingData(this.json_metadata);
+                tMid_ = asrow(j.timesMid);   
                 if length(tMid_) == P
                     return
                 end
