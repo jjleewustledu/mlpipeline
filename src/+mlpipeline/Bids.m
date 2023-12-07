@@ -58,8 +58,9 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = fullfile(this.projectPath, "derivatives");
         end
         function g = get.derivPetPath(this)
-            re = regexp(this.sessionFolderForPet, "ses-(?<date>\d{8})(?<time>(|\d{6}))", "names");            
-            g = fullfile(this.derivativesPath, this.subjectFolder, "ses-"+re.date, this.petFolder);
+            % re = regexp(this.sessionFolderForPet, "ses-(?<date>\d{8})(?<time>(|\d{6}))", "names");            
+            % g = fullfile(this.derivativesPath, this.subjectFolder, "ses-"+re.date, this.petFolder);
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
         end
         function g = get.destinationPath(this)
             g = this.destinationPath_;
