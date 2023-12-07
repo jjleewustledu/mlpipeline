@@ -191,7 +191,13 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             g = this.bids.mriPath;
         end
         function g = get.listmodePath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.bids.sessionFolderForPet, strcat('lm-', lower(this.tracer)), '');
+            mg = mglob(fullfile(this.sourcedataPath, this.subjectFolder, this.bids.sessionFolderForPet, "lm*"));
+            if isempty(mg)
+                g = pwd;
+                return
+            end
+            mg = natsort(mg);
+            g = mg(1);
         end
         function g = get.petPath(this)
             g = this.bids.petPath;
