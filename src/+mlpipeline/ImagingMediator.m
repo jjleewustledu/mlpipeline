@@ -542,6 +542,117 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         end
     end
 
+    methods (Static)
+        function ic = ensureFiniteImagingContext(ic)
+            arguments
+                ic mlfourd.ImagingContext2
+            end
+
+            try
+                j = mlpipeline.ImagingMediator.ensureNumericTimingData(ic.json_metadata);
+                select = asrow(isfinite(j.timesMid));
+                j.starts = j.starts(select);
+                j.taus = j.taus(select);
+                j.times = j.times(select);
+                j.timesMid = j.timesMid(select);
+                j.timeUnit = "second";
+                ic.json_metadata = j;
+                
+                img = ic.imagingFormat.img;
+                switch ndims(img)
+                    case 2
+                        img = img(:, select);
+                    case 3
+                        img = img(:,:,select);
+                    case 4
+                        img = img(:,:,:,select);
+                    otherwise
+                        error("mlpipeline:RunTimeError", stackstr())
+                end
+                ic.selectImagingTool(img=img);
+                ic.fileprefix = ic.fileprefix + "_finite";
+            catch ME
+                handwarning(ME)
+            end
+        end
+        function j = ensureNumericJsonField(j, fld)
+            if isnumeric(j)
+                return
+            end
+            if iscell(j)
+                j = cellfun(@asrow, asrow(j), UniformOutput=false); % -> rows
+                j = ascol(cell2mat(j)); % -> cols
+                return
+            end
+            if isstruct(j) && isfield(j, fld)
+                obj = j.(fld);
+                row_vec = mlpipeline.ImagingMediator.ensureNumericJsonField(obj);
+                j.(fld) = row_vec;
+                return
+            end
+            error("mlpipeline:RunTimeError", stackstr())
+        end
+        function j = ensureNumericStarts(j)
+            j = mlpipeline.ImagingMediator.ensureNumericJsonField(j, "starts");
+        end
+        function j = ensureNumericTaus(j)
+            j = mlpipeline.ImagingMediator.ensureNumericJsonField(j, "taus");
+        end
+        function j = ensureNumericTimes(j)
+            j = mlpipeline.ImagingMediator.ensureNumericJsonField(j, "times");
+        end
+        function j = ensureNumericTimesMid(j)
+            j = mlpipeline.ImagingMediator.ensureNumericJsonField(j, "timesMid");
+        end
+        function j = ensureNumericTimingData(j)
+            %% P = M*N; P ~ #timesMid; M ~ #starts; N ~ #taus
+
+            assert(isstruct(j))
+            if isnumeric(j.timesMid) && isnumeric(j.taus) && isnumeric(j.starts)
+                return
+            end
+            assert(iscell(j.timesMid) && iscell(j.taus) && iscell(j.starts))
+            
+            j1 = j;
+            Ncells = length(j.timesMid);
+
+            % timesMid
+            tM = mlpipeline.ImagingMediator.ensureNumericTimesMid(j.timesMid);
+
+            % taus
+            for icell = 1:Ncells
+                P = numel(j.timesMid{icell});
+                N = numel(j.taus{icell});
+                if N < P
+                    j1.taus{icell} = repelem(j.taus{icell}, P/N);
+                end
+            end
+            ta = mlpipeline.ImagingMediator.ensureNumericTaus(j1.taus);
+            
+            % starts
+            for icell = 1:Ncells
+                P = numel(j.timesMid{icell});
+                M = numel(j.starts{icell});
+                if M < P
+                    j1.starts{icell} = repmat(j.starts{icell}, [P/M, 1]);
+                end
+            end
+            st = mlpipeline.ImagingMediator.ensureNumericStarts(j1.starts);
+
+            % times
+            if isfield(j, "times")
+                ti = mlpipeline.ImagingMediator.ensureNumericTimes(j.times);
+            else
+                ti = tM - ta/2;
+            end
+
+            j.timesMid = tM;
+            j.taus = ta;
+            j.starts = st;
+            j.times = ti;
+        end
+    end
+
     %% PROTECTED
 
     properties (Access = protected)
@@ -581,20 +692,6 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             if ~isempty(this.imagingDlicv_)
                 that.imagingDlicv_ = copy(this.imagingDlicv_); end
         end    
-        function ic = ensureTimingData(this, ic)
-            arguments
-                this mlpipeline.ImagingMediator
-                ic mlfourd.ImagingContext2
-            end
-
-            j = ic.json_metadata;
-            j.starts = this.starts;
-            j.taus = this.taus;
-            j.times = this.times;
-            j.timesMid = this.timesMid;
-            j.timeUnit = "second";
-            ic.json_metadata = j;            
-        end
         function pth = omit_bids_folders(this, pth)
             folds = strsplit(pth, filesep);
             folds = folds(~contains(folds, this.BIDS_FOLDERS));
