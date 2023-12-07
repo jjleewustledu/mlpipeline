@@ -356,8 +356,11 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             reg = this.sessionData_.registry;
             ps = reg.petPointSpread(varargin{:});
         end
-        function save(this, fn)
-            save(fn, 'this')
+        function save(this)
+            this.imagingContext.save();
+        end
+        function saveas(this, fn)
+            this.imagingContext.saveas(fn);
         end
         function st_ = starts(this)
             if ndims(this.imagingContext_) < 4
