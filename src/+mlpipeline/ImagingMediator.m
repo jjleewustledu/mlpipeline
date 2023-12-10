@@ -569,8 +569,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                     otherwise
                         error("mlpipeline:RunTimeError", stackstr())
                 end
-                ic.selectImagingTool(img=img);
-                ic.fileprefix = ic.fileprefix + "_finite";
+                ic.selectImagingTool(img=img);                
+                if ~contains(ic.fileprefix, "-finite")
+                    ic.fileprefix = mlpipeline.Bids.adjust_fileprefix(ic.fileprefix, post_proc="finite");
+                end
             catch ME
                 handwarning(ME)
             end

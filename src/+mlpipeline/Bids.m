@@ -319,10 +319,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end
 
             % remove substring
-            ress = regexp(fp, "\S*(?<substring>"+opts.remove_substring+")\S*", "names");
-            if ~isempty(ress)
-                fp = strrep(fp, ress.substring, "");
-            end
+            fp = strrep(fp, opts.remove_substring, "");
 
             s = fullfile(pth, strcat(fp, x));
         end
