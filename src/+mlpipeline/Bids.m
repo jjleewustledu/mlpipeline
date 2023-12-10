@@ -569,6 +569,29 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             s.tag = re_tag;
             s.ext = ext;
         end
+        function re = regexp_fileprefix(fp)
+            %% Args:
+            %      fp, text scalar or understood by mlfourd.ImagingContext2
+            %
+            %  Returns:
+            %      re struct with fields
+            %      sub: "108293"
+            %      ses: "20210421154248"
+            %      trc: "oo"
+            %      proc: "delay0-BrainMoCo2-createNiftiMovingAvgFrames-ScannerKit-do-make-activity-density"
+            %      suff: "_timeAppend-4_finite_pet"
+
+            arguments
+                fp
+            end
+            if ~istext(fp)
+                ic = mlfourd.ImagingContext2(fp);
+                fp = ic.fileprefix;
+            end
+
+            [~,fp] = myfileparts(fp);
+            re = regexp(fp, "sub-(?<sub>\S+)_ses-(?<ses>\d+)_trc-(?<trc>\S+)_proc-(?<proc>[0-9a-zA-Z\-\+,;]+)(?<suff>\S*$)", "names");
+        end
         function fn = struct2filename(s)
             if isempty(s.tag)
                 fn = sprintf('%s_%s_%s_%s_%s%s%s%s', ...
