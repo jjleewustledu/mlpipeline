@@ -543,9 +543,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
     end
 
     methods (Static)
-        function ic = ensureFiniteImagingContext(ic)
+        function ic = ensureFiniteImagingContext(ic, opts)
             arguments
                 ic mlfourd.ImagingContext2
+                opts.ensure_single logical = true
             end
 
             try
@@ -558,7 +559,11 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 j.timeUnit = "second";
                 ic.json_metadata = j;
                 
-                img = ic.imagingFormat.img;
+                if opts.ensure_single
+                    img = single(ic.imagingFormat.img);
+                else
+                    img = ic.imagingFormat.img;
+                end
                 switch ndims(img)
                     case 2
                         img = img(:, select);
