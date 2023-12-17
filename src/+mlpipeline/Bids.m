@@ -571,7 +571,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             %      fp, text scalar or understood by mlfourd.ImagingContext2
             %
             %  Returns:
-            %      re struct with fields
+            %      re struct with e.g. fields
             %      sub: "108293"
             %      ses: "20210421154248"
             %      trc: "oo"
