@@ -615,9 +615,21 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             %% P = M*N; P ~ #timesMid; M ~ #starts; N ~ #taus
 
             assert(isstruct(j))
-            if isnumeric(j.timesMid) && isnumeric(j.taus) && isnumeric(j.starts)
-                return
+
+            %%
+
+            if isnumeric(j.timesMid)
+                j.timesMid = {j.timesMid};
             end
+            if isnumeric(j.taus)  
+                j.taus = {j.taus};
+            end
+            if isnumeric(j.starts)
+                j.starts = {j.starts};
+            end
+
+            %%
+
             assert(iscell(j.timesMid) && iscell(j.taus) && iscell(j.starts))
             
             j1 = j;
