@@ -579,7 +579,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                     ic.fileprefix = mlpipeline.Bids.adjust_fileprefix(ic.fileprefix, post_proc="finite");
                 end
             catch ME
-                handwarning(ME)
+                fprintf("%s: aborting for lack of json timing data; retaining ImagingContext2\n", stackstr())
             end
         end
         function j = ensureNumericJsonField(j, fld)

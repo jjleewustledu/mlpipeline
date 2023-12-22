@@ -105,14 +105,15 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
                 this mlpipeline.ScanData2
                 fn = this.mediator_.imagingContext.filename
             end
+            if isempty(fn) % erroneously passed fn = {}
+                fn = this.mediator_.imagingContext.filename;
+            end
 
             try
                 [~,fp] = myfileparts(fn);
                 assert(~isempty(fp), stackstr())
             catch ME
-                handwarning(ME)
-                fn = this.mediator_.imagingContext.filename;
-                [~,fp] = myfileparts(fn);
+                handexcept(ME)
             end
             
             re = regexp(fp, "ses-(?<dt>\d{14})", "names");
