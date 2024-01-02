@@ -332,8 +332,12 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
 
             % fn ending with .nii.gz exists
             [pth,fp,e] = myfileparts(fn);
+            if contains(fp, "_orient_rpi")
+                fn1 = fn;
+                return
+            end
             re = regexp(fp, '(?<prefix>\S+)(?<suffix>(_T1\w*|_t1\w*|_mpr\w*|_pet))', 'names');
-            if isempty(re.prefix) || re.prefix == ""
+            if isemptytext(re.prefix)
                 fn1 = fn;
                 return
             end
@@ -355,7 +359,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             assert(isfile(fn1));  
             
             % clean file that is not orient-rpi
-            deleteExisting(fn);
+            deleteExisting(strrep(fn, "_orient-rpi", ""));
         end
         function [s,r] = dcm2niix(varargin)
             %% https://github.com/rordenlab/dcm2niix

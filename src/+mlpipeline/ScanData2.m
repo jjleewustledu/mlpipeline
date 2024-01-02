@@ -95,6 +95,22 @@ classdef (Abstract) ScanData2 < handle & mlpipeline.ImagingData & mlpipeline.ISc
 
     methods
         function dt = datetime(this, varargin)
+            ic = this.mediator_.imagingContext;
+            if ~isempty(ic.json_metadata) && isfield(ic.json_metadata, "AcquisitionDateTime")
+                adt = ic.json_metadata.AcquisitionDateTime;
+                dt = datetime(adt, InputFormat='yyyy-MM-dd''T''HH:mm:ss.SSS', TimeZone="local");
+                return
+            end
+            % if ~isempty(ic.json_metadata) && ...
+            %         isfield(ic.json_metadata, "lm_start0_BMC_LM_00_ac_mc") && ...
+            %         isfield(ic.json_metadata, "AcquisitionTime")
+            %     mhdr = ic.json_metadata.lm_start0_BMC_LM_00_ac_mc.mhdr;
+            %     at = ic.json_metadata.AcquisitionTime;
+            %     re = cell2mat(regexp(mhdr, "study date \(yyyy:mm:dd\):=(?<date>\d{4}:\d{2}:\d{2})", "names"));
+            %     dt = datetime(sprintf('%s %s', re.date, at), InputFormat="yyyy:MM:dd HH:mm:ss.SSSSSS", TimeZone="local");
+            %     return
+            % end
+            fprintf("%s: guessing datetime from filename %s\n", stackstr(), ic.fqfn)
             dt = this.datetime_bids_filename(varargin{:});
         end
         function dt = datetime_console_adjusted(this, varargin)

@@ -74,6 +74,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         atlasTag
         bids
         blurTag
+        fqfilename
+        fqfileprefix
         imagingAtlas
         imagingDlicv
         isotope
@@ -264,6 +266,14 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         end
         function     set.blurTag(this, s)
             this.registry.blurTag = s;
+        end
+        function g = get.fqfilename(this)
+            ic = this.imagingContext();
+            g = ic.fqfilename;
+        end
+        function g = get.fqfileprefix(this)
+            ic = this.imagingContext();
+            g = ic.fqfileprefix;
         end
         function g = get.imagingAtlas(this)
             g = copy(this.imagingAtlas_);
@@ -552,11 +562,11 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             try
                 j = mlpipeline.ImagingMediator.ensureNumericTimingData(ic.json_metadata);
                 select = asrow(isfinite(j.timesMid));
-                j.starts = j.starts(select);
+                j.timeUnit = "second";
+                j.timesMid = j.timesMid(select);
                 j.taus = j.taus(select);
                 j.times = j.times(select);
-                j.timesMid = j.timesMid(select);
-                j.timeUnit = "second";
+                j.starts = j.starts(select);
                 ic.json_metadata = j;
                 
                 if opts.ensure_single
@@ -618,57 +628,84 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
 
             %%
 
-            if isnumeric(j.timesMid)
+            if isfield(j, "FrameReferenceTime") && isnumeric(j.FrameReferenceTime)
+                j.timesMid = {j.FrameReferenceTime};
+            end
+            if isfield(j, "FrameDuration") && isnumeric(j.FrameDuration)
+                j.taus = {j.FrameDuration};
+            end
+            if isfield(j, "FrameTimesStart") && isnumeric(j.FrameTimesStart)
+                j.times = {j.FrameTimesStart};
+            end
+            if isfield(j, "timesMid") && isnumeric(j.timesMid)
                 j.timesMid = {j.timesMid};
             end
-            if isnumeric(j.taus)  
+            if isfield(j, "taus") && isnumeric(j.taus)  
                 j.taus = {j.taus};
             end
-            if isnumeric(j.starts)
+            if isfield(j, "starts") && isnumeric(j.starts)
                 j.starts = {j.starts};
             end
 
             %%
 
-            assert(iscell(j.timesMid) && iscell(j.taus) && iscell(j.starts))
+            %assert(iscell(j.timesMid) && iscell(j.taus) && iscell(j.starts))
             
-            j1 = j;
-            Ncells = length(j.timesMid);
 
             % timesMid
-            tM = mlpipeline.ImagingMediator.ensureNumericTimesMid(j.timesMid);
+            try
+                tM = mlpipeline.ImagingMediator.ensureNumericTimesMid(j.timesMid);
+            catch
+                tM = [];
+            end
 
             % taus
-            for icell = 1:Ncells
-                P = numel(j.timesMid{icell});
-                N = numel(j.taus{icell});
-                if N < P
-                    j1.taus{icell} = repelem(j.taus{icell}, P/N);
+            try
+                j1 = j;
+                Ncells = length(j.timesMid);
+                for icell = 1:Ncells
+                    P = numel(j.timesMid{icell});
+                    N = numel(j.taus{icell});
+                    if N < P
+                        j1.taus{icell} = repelem(j.taus{icell}, P/N);
+                    end
                 end
+                ta = mlpipeline.ImagingMediator.ensureNumericTaus(j1.taus);
+            catch 
+                ta = [];
             end
-            ta = mlpipeline.ImagingMediator.ensureNumericTaus(j1.taus);
-            
-            % starts
-            for icell = 1:Ncells
-                P = numel(j.timesMid{icell});
-                M = numel(j.starts{icell});
-                if M < P
-                    j1.starts{icell} = repmat(j.starts{icell}, [P/M, 1]);
-                end
-            end
-            st = mlpipeline.ImagingMediator.ensureNumericStarts(j1.starts);
 
             % times
-            if isfield(j, "times")
-                ti = mlpipeline.ImagingMediator.ensureNumericTimes(j.times);
-            else
-                ti = tM - ta/2;
+            try
+                if isfield(j, "times")
+                    ti = mlpipeline.ImagingMediator.ensureNumericTimes(j.times);
+                else
+                    ti = tM - ta/2;
+                end
+            catch
+                ti = [];
+            end
+            
+            % starts
+            try
+                j1 = j;
+                Ncells = length(j.timesMid);
+                for icell = 1:Ncells
+                    P = numel(j.timesMid{icell});
+                    M = numel(j.starts{icell});
+                    if M < P
+                        j1.starts{icell} = repmat(j.starts{icell}, [P/M, 1]);
+                    end
+                end
+                st = mlpipeline.ImagingMediator.ensureNumericStarts(j1.starts);
+            catch
+                st= ti;
             end
 
             j.timesMid = tM;
             j.taus = ta;
-            j.starts = st;
             j.times = ti;
+            j.starts = st;
         end
     end
 
