@@ -560,6 +560,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             end
 
             try
+                ic.selectImagingTool();
                 j = mlpipeline.ImagingMediator.ensureNumericTimingData(ic.json_metadata);
                 select = asrow(isfinite(j.timesMid));
                 j.timeUnit = "second";
