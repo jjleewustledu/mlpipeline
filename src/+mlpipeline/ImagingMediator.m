@@ -51,6 +51,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         derivAnatPath
         derivativesPath
         derivPetPath
+        derivSesPath
+        derivSubPath
         listmodePath
         mriPath
         petPath
@@ -58,6 +60,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         sourcedataPath
         sourceAnatPath
         sourcePetPath
+        sourceSesPath
+        sourceSubPath
 
         atlas_ic
         dlicv_ic
@@ -74,8 +78,13 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         atlasTag
         bids
         blurTag
+        filename
+        filepath
+        fileprefix
         fqfilename
         fqfileprefix
+        fqfn
+        fqfp
         imagingAtlas
         imagingDlicv
         isotope
@@ -188,6 +197,36 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         end
         function g = get.derivPetPath(this)
             g = this.bids.derivPetPath;
+        end  
+        function g = get.derivSesPath(this)
+            g = this.sessionPath;
+            s = split(g, filesep);
+            if any(strcmp(s, "derivatives"))
+                return
+            end
+            if any(strcmp(s, "sourcedata"))
+                g = strrep(g, "sourcedata", "derivatives");
+                return
+            end
+            if any(strcmp(s, "rawdata"))
+                g = strrep(g, "rawdata", "derivatives");
+                return
+            end
+        end  
+        function g = get.derivSubPath(this)
+            g = this.subjectPath;
+            s = split(g, filesep);
+            if any(strcmp(s, "derivatives"))
+                return
+            end
+            if any(strcmp(s, "sourcedata"))
+                g = strrep(g, "sourcedata", "derivatives");
+                return
+            end
+            if any(strcmp(s, "rawdata"))
+                g = strrep(g, "rawdata", "derivatives");
+                return
+            end
         end        
         function g = get.mriPath(this)
             g = this.bids.mriPath;
@@ -216,6 +255,36 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function g = get.sourcePetPath(this)
             g = this.bids.sourcePetPath;
         end
+        function g = get.sourceSesPath(this)
+            g = this.sessionPath;
+            s = split(g, filesep);
+            if any(strcmp(s, "sourcedata"))
+                return
+            end
+            if any(strcmp(s, "derivatives"))
+                g = strrep(g, "derivatives", "sourcedata");
+                return
+            end
+            if any(strcmp(s, "rawdata"))
+                g = strrep(g, "rawdata", "sourcedata");
+                return
+            end
+        end  
+        function g = get.sourceSubPath(this)
+            g = this.subjectPath;
+            s = split(g, filesep);
+            if any(strcmp(s, "sourcedata"))
+                return
+            end
+            if any(strcmp(s, "derivatives"))
+                g = strrep(g, "derivatives", "sourcedata");
+                return
+            end
+            if any(strcmp(s, "rawdata"))
+                g = strrep(g, "rawdata", "sourcedata");
+                return
+            end
+        end  
         
         function g = get.atlas_ic(this)
             g = this.bids.atlas_ic;
@@ -267,6 +336,18 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function     set.blurTag(this, s)
             this.registry.blurTag = s;
         end
+        function g = get.filename(this)
+            ic = this.imagingContext();
+            g = ic.filename;
+        end
+        function g = get.filepath(this)
+            ic = this.imagingContext();
+            g = ic.filepath;
+        end
+        function g = get.fileprefix(this)
+            ic = this.imagingContext();
+            g = ic.fileprefix;
+        end
         function g = get.fqfilename(this)
             ic = this.imagingContext();
             g = ic.fqfilename;
@@ -274,6 +355,12 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function g = get.fqfileprefix(this)
             ic = this.imagingContext();
             g = ic.fqfileprefix;
+        end
+        function g = get.fqfn(this)
+            g = this.fqfilename;
+        end
+        function g = get.fqfp(this)
+            g = this.fqfileprefix;
         end
         function g = get.imagingAtlas(this)
             g = copy(this.imagingAtlas_);
@@ -562,13 +649,21 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             try
                 ic.selectImagingTool();
                 j = mlpipeline.ImagingMediator.ensureNumericTimingData(ic.json_metadata);
-                select = asrow(isfinite(j.timesMid));
+                selected = asrow(isfinite(j.timesMid));
                 j.timeUnit = "second";
-                j.timesMid = j.timesMid(select);
-                j.taus = j.taus(select);
-                j.times = j.times(select);
-                j.starts = j.starts(select);
+                j.timesMid = j.timesMid(selected);
+                j.taus = j.taus(selected);
+                j.times = j.times(selected);
+                j.starts = j.starts(selected);
                 ic.json_metadata = j;
+
+                if all(selected)              
+                    %if ~contains(ic.fileprefix, "-finite") % forces -> ImagingTool
+                    %    ic.fileprefix = mlpipeline.Bids.adjust_fileprefix(ic.fileprefix, post_proc="finite");
+                    %end
+                    %ic.save();
+                    return
+                end
                 
                 if opts.ensure_single
                     img = single(ic.imagingFormat.img);
@@ -577,20 +672,22 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 end
                 switch ndims(img)
                     case 2
-                        img = img(:, select);
+                        img = img(:, selected);
                     case 3
-                        img = img(:,:,select);
+                        img = img(:,:,selected);
                     case 4
-                        img = img(:,:,:,select);
+                        img = img(:,:,:,selected);
                     otherwise
                         error("mlpipeline:RunTimeError", stackstr())
                 end
                 ic.selectImagingTool(img=img);                
-                if ~contains(ic.fileprefix, "-finite")
-                    ic.fileprefix = mlpipeline.Bids.adjust_fileprefix(ic.fileprefix, post_proc="finite");
-                end
+                %ic.save();
+                % if ~contains(ic.fileprefix, "-finite")
+                %     ic.fileprefix = mlpipeline.Bids.adjust_fileprefix(ic.fileprefix, post_proc="finite");
+                % end
             catch ME
                 fprintf("%s: aborting for lack of json timing data; retaining ImagingContext2\n", stackstr())
+                fprintf("%s\n", ME.message);
             end
         end
         function j = ensureNumericJsonField(j, fld)
