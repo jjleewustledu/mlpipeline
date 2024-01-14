@@ -106,7 +106,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             try
                 g = this.parseFolderFromPath("ses-", globbed);
             catch ME
-                handwarning(ME)
+                fprintf("%s: %s\n", stackstr(), ME.message)
                 g = "";
             end
             this.sessionFolderForAnat_ = g;
@@ -123,19 +123,27 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             try
                 g = this.parseFolderFromPath("ses-", globbed);
             catch ME
-                handwarning(ME)
+                fprintf("%s: %s\n", stackstr(), ME.message)
                 g = "";
             end
             this.sessionFolderForPet_ = g;
         end
         function g = get.sourceAnatPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder);
+            try
+                g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForAnat, this.anatFolder);
+            catch
+                fprintf("%s: folder not found; using pwd->%s\n", stackstr(), pwd);
+            end
         end
         function g = get.sourcedataPath(this)
             g = fullfile(this.projectPath, "sourcedata");
         end
         function g = get.sourcePetPath(this)
-            g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
+            try
+                g = fullfile(this.sourcedataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
+            catch
+                fprintf("%s: folder not found; using pwd->%s\n", stackstr(), pwd);
+            end
         end
         function g = get.subjectFolder(this)
             g = this.subjectFolder_;
