@@ -475,21 +475,25 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 end
 
                 % aufbau for moving averages
-                M = length(st_);
-                N = floor(P/M);
-                if M < P
-                    st__ = zeros(1, P);
-                    dt_ = st_(end) - st_(end-1);
-                    for n = 1:N
-                        for m = 1:M
-                            st__(m+M*(n-1)) = (n - 1)*(st_(M) + dt_) + st_(m);
+                try
+                    M = length(st_);
+                    N = floor(P/M);
+                    if M < P
+                        st__ = zeros(1, P);
+                        dt_ = st_(end) - st_(end-1);
+                        for n = 1:N
+                            for m = 1:M
+                                st__(m+M*(n-1)) = (n - 1)*(st_(M) + dt_) + st_(m);
+                            end
                         end
+                        if mod(P,M) > 0
+                            st__(M*N+1:P) = N*(st_(M) + dt_) + st_(1:mod(P,M));
+                        end
+                        st_ = st__;
+                        return
                     end
-                    if mod(P,M) > 0
-                        st__(M*N+1:P) = N*(st_(M) + dt_) + st_(1:mod(P,M));
-                    end
-                    st_ = st__;
-                    return
+                catch ME
+                    handwarning(ME)
                 end
             end
 
@@ -519,20 +523,24 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 end
 
                 % aufbau for moving averages
-                N = length(taus_);
-                M = floor(P/N);
-                if N < P
-                    taus__ = zeros(1, P);
-                    for n = 1:N
-                        for m = 1:M
-                            taus__(m+M*(n-1)) = taus_(n);
+                try
+                    N = length(taus_);
+                    M = floor(P/N);
+                    if N < P
+                        taus__ = zeros(1, P);
+                        for n = 1:N
+                            for m = 1:M
+                                taus__(m+M*(n-1)) = taus_(n);
+                            end
                         end
+                        if mod(P,N) > 0
+                            taus__(M*N+1:P) = taus_(N);
+                        end
+                        taus_ = taus__;
+                        return
                     end
-                    if mod(P,N) > 0
-                        taus__(M*N+1:P) = taus_(N);
-                    end
-                    taus_ = taus__;
-                    return
+                catch ME
+                    handwarning(ME)
                 end
             end
 
