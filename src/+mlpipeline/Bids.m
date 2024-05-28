@@ -35,6 +35,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         rawAnatPath
         rawdataPath
         rawPetPath
+        schaefferPath
         sessionFolderForAnat
         sessionFolderForPet
         sourceAnatPath
@@ -91,6 +92,9 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         end
         function g = get.rawPetPath(this)
             g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
+        end
+        function g = get.schaefferPath(this)
+            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForAnat, "Parcellations");
         end
         function g = get.sessionFolderForAnat(this)
             if ~isempty(this.sessionFolderForAnat_)

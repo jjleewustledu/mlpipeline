@@ -66,6 +66,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         atlas_ic
         dlicv_ic
         flair_ic
+        schaeffer_ic
         T1_ic % FreeSurfer
         T1_on_t1w_ic
         t1w_ic
@@ -295,6 +296,9 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function g = get.flair_ic(this)
             g = this.bids.flair_ic;
         end
+        function g = get.schaeffer_ic(this) % Nick Metcalf
+            g = this.bids.schaeffer_ic;
+        end
         function g = get.T1_ic(this) % FreeSurfer
             g = this.bids.T1_ic;
         end
@@ -440,6 +444,26 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function ifc = imagingFormat(this)
             %% potentially slow for large data
             ifc = this.imagingContext.imagingFormat;
+        end
+        function ic = imagingReference(this)
+            if 3 == ndims(this.imagingContext)
+                ic = this.imagingContext;
+                return
+            end
+            if 4 == ndims(this.imagingContext)
+                if contains(this.imagingContext.fqfn, "pet")
+                    mg = mglob(this.bids.pet_static_toglob);
+                    ic = mlfourd.ImagingContext2(mg(1));
+                    return
+                end
+                if contains(this.imagingContext.fqfn, "func") || ...
+                        contains(this.imagingContext.fqfn, "fmri", IgnoreCase=true)
+                    ic = this.imagingContext.timeAveraged();
+                    return
+                end
+                error("mlpipeline:RuntimeError", stackstr())
+            end
+            error("mlpipeline:RuntimeError", stackstr())
         end
 
         function this = load(~, varargin)
