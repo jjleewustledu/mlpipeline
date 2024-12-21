@@ -201,11 +201,17 @@ classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & ml
             this.creationDate_  = datestr(now, this.DATESTR_FORMAT);
             this.hostname_      = hostname;
             if isunix
-                [~,this.id_]    = mlbash('id -u -n');   this.id_    = strtrim(this.id_);
-                [~,this.uname_] = mlbash('uname -srm'); this.uname_ = strtrim(this.uname_);
+                try
+                    [~,this.id_]    = mlbash('id -u -n');   this.id_    = strtrim(this.id_);
+                    [~,this.uname_] = mlbash('uname -srm'); this.uname_ = strtrim(this.uname_);
+                catch
+                end
             elseif ispc
-                [~,this.id_]    = mlbash('whoami');   this.id_    = strtrim(this.id_);
-                [~,this.uname_] = mlbash('ver'); this.uname_ = strtrim(this.uname_);
+                try
+                    [~,this.id_]    = mlbash('whoami');   this.id_    = strtrim(this.id_);
+                    [~,this.uname_] = mlbash('ver'); this.uname_ = strtrim(this.uname_);
+                catch
+                end
             else
             end
             this.cellArrayList_ = mlpatterns.CellArrayList;
