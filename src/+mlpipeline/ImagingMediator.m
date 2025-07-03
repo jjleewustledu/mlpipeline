@@ -679,7 +679,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             end
 
             try
-                ic.selectImagingTool();
+                % ic.selectImagingTool();
                 j = mlpipeline.ImagingMediator.ensureNumericTimingData(ic.json_metadata);
                 selected = asrow(isfinite(j.timesMid));
                 j.timeUnit = "second";
@@ -697,6 +697,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                     return
                 end
                 
+                ic.selectImagingTool();
                 if opts.ensure_single
                     img = single(ic.imagingFormat.img);
                 else

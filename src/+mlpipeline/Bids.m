@@ -247,7 +247,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end      
         end
         function ic = prepare_orient_std(~, ic)
-            %% PREPARE_DERIVATIVES prepares imaging reoriented to the MNI standard and radiologic orientation.
+            %% prepares imaging reoriented to the MNI standard and radiologic orientation.
             
             ic = mlfourd.ImagingContext2(ic);
             if ~isfile(ic.fqfn)
@@ -255,8 +255,11 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end
             
             if ~contains(ic.fileprefix, '_orient-std') && ~isfile(strcat(ic.fqfp, '_orient-std.nii.gz'))
-                ic.reorient2std();  
-                ic.fqfilename = strcat(ic.fqfp, '_orient-std.nii.gz');
+                
+                ic.afni_3dresample(orient_std=true);
+
+                % adni_3dresample is more robust for pipelines than reorien2std
+                % ic.reorient2std();
             end  
         end
         function pth = selectOriginationSession(this, pth)
@@ -335,43 +338,10 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
 
             s = fullfile(pth, strcat(fp, x));
         end
-        function fn1 = afni_3dresample(fn)
-            if ~isfile(fn)
-                fn1 = fn;
-                return
-            end
-            fn = ensuregz(fn);
-
-            % fn ending with .nii.gz exists
-            [pth,fp,e] = myfileparts(fn);
-            if contains(fp, "_orient_rpi")
-                fn1 = fn;
-                return
-            end
-            re = regexp(fp, '(?<prefix>\S+)(?<suffix>(_T1\w*|_t1\w*|_mpr\w*|_pet))', 'names');
-            if isemptytext(re.prefix)
-                fn1 = fn;
-                return
-            end
-            fn1 = fullfile(pth, strcat(re.prefix, '_orient-rpi', re.suffix, e));
-            if ~isfile(fn1)
-                cmd = sprintf('3dresample -debug 1 -orient rpi -prefix %s -input %s', fn1, fn);
-                assert(0 == mysystem('which 3dresample'))
-                [~,r] = mlbash(cmd);
-    
-                % manage json
-                try
-                    j0 = fileread(strcat(myfileprefix(fn), '.json'));
-                    j1.afni_3dresample.cmd = cmd;
-                    j1.afni_3dresample.cmdout = r;
-                    jsonrecode(j0, j1, 'filenameNew', strcat(myfileprefix(fn1), '.json'));       
-                catch 
-                end
-            end
-            assert(isfile(fn1));  
-            
-            % clean file that is not orient-rpi
-            deleteExisting(strrep(fn, "_orient-rpi", ""));
+        function fn1 = afni_3dresample(fn, varargin)
+            ic = mlfourd.ImagingContext2(fn);
+            ic.afni_3dresample(varargin{:});
+            fn1 = ic.fqfilename;
         end
         function [s,r] = dcm2niix(varargin)
             %% https://github.com/rordenlab/dcm2niix
@@ -466,6 +436,61 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
                         ic.fourdfp.save();
                     end
                 end
+            end
+        end
+        function linked_fqfn = link_for_3dresample(source_fqfn, opts)
+            arguments
+                source_fqfn {mustBeFile}
+                opts.dest {mustBeFolder} = pwd
+                opts.expression {mustBeTextScalar} = "T1w"  % "tof"
+                opts.modality_folder {mustBeTextScalar} = "anat"
+                opts.do_overwrite logical = true
+            end
+            if strcmp(opts.expression, "T1w")
+                opts.expression = "(?<subid>108\d{3})_\S*(?<modality>T1w\S*)_(?<sesid>20\d{12})\S*";
+            end
+            if strcmp(opts.expression, "tof")
+                opts.expression = "(?<subid>108\d{3})_\S*(?<modality>tof_fl3d\S*)_(?<sesid>20\d{12})\S*";
+            end
+            source_fqfn = convertCharsToStrings(source_fqfn);
+            if numel(source_fqfn) > 1
+                if contains(opts.expression, "T1w")
+                    source_fqfn = source_fqfn(end);
+                else
+                    source_fqfn = source_fqfn(1);
+                end
+            end
+
+            % construct linked_fqfn
+            linked_fqfn = "";
+            try
+                [~,source_fp,x] = myfileparts(source_fqfn);
+                re = regexp(source_fp, opts.expression, "names");
+                target_fp = sprintf("sub-%s_ses-%s_%s", re.subid, re.sesid, re.modality);
+                sesid8 = extractBefore(re.sesid, 9);
+                target_pth = fullfile(opts.dest, "sub-"+re.subid, "ses-"+sesid8, opts.modality_folder);
+                if opts.do_overwrite && ...
+                        isfolder(target_pth) && ...
+                        ~isempty(mglob(fullfile(target_pth, "*.nii.gz"))) && ...
+                        ~isempty(mglob(fullfile(target_pth, "*.json")))
+                    % linked files already exist
+                    return
+                end
+            catch ME
+                fprintf("%s\n", ME.message);
+                fprintf("%s: could not parse %s\n", stackstr(), source_fqfn);
+                fprintf("\n");
+                return
+            end
+            ensuredir(target_pth);
+            linked_fqfn = fullfile(target_pth, target_fp + x);
+
+            % ln -s
+            system(sprintf("ln -s %s %s", source_fqfn, linked_fqfn));
+
+            % manage json
+            if endsWith(source_fqfn, ".nii.gz")
+                linked_fqfn = link_for_3dresample(strrep(source_fqfn, ".nii.gz", ".json"), dest=opts.dest);
             end
         end
         function fld = parseFolderFromPath(patt, pth)
