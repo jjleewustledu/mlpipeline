@@ -72,9 +72,15 @@ classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & ml
         end
         function g = get.id(this)
             g = this.id_;
+            if isempty(g)
+                g = "";
+            end
         end
         function g = get.uname(this)
             g = this.uname_;
+            if isempty(g)
+                g = "";
+            end
         end
         
         %% mlio.AbstractHandleIO
