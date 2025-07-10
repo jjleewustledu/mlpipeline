@@ -208,14 +208,14 @@ classdef Logger2 < handle & matlab.mixin.Heterogeneous & mlpipeline.ILogger & ml
             this.hostname_      = hostname;
             if isunix
                 try
-                    [~,this.id_]    = mlbash('id -u -n');   this.id_    = strtrim(this.id_);
-                    [~,this.uname_] = mlbash('uname -srm'); this.uname_ = strtrim(this.uname_);
+                    [~,this.id_]    = system('id -u -n');   this.id_    = strtrim(this.id_);
+                    [~,this.uname_] = system('uname -srm'); this.uname_ = strtrim(this.uname_);
                 catch
                 end
             elseif ispc
                 try
-                    [~,this.id_]    = mlbash('whoami');   this.id_    = strtrim(this.id_);
-                    [~,this.uname_] = mlbash('ver'); this.uname_ = strtrim(this.uname_);
+                    [~,this.id_]    = system('whoami');   this.id_    = strtrim(this.id_);
+                    [~,this.uname_] = system('ver'); this.uname_ = strtrim(this.uname_);
                 catch
                 end
             else

@@ -275,6 +275,38 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
     end
     
     methods (Static)
+        function out = deepmrseg_apply(mpr, out, opts)
+            arguments
+                mpr {mustBeNonempty}  % understood by ImagingContext2
+                out = []
+                opts.on_cluster logical = true                
+            end
+
+            mpr = mlfourd.ImagingContext2(mpr);
+            if isempty(out)
+                out = mlfourd.ImagingContext2(strcat(mpr.fqfp, '_dlicv.nii.gz'));
+            else
+                out = mlfourd.ImagingContext2(out);
+            end
+            
+            if opts.on_cluster
+                sif = fullfile(getenv('SINGULARITY_HOME'), 'deepmrseg_image_20220515.sif');
+                cmd = sprintf('singularity exec --bind %s:/data %s "deepmrseg_apply" "--task" "dlicv" "--inImg" "/data/%s" "--outImg" "/data/%s"', ...
+                    mpr.filepath, sif, mpr.filename, out.filename);
+            else
+                mlbash(sprintf('chmod 777 %s', mpr.filepath));
+                dock = 'jjleewustledu/deepmrseg_image:20220615';
+                cmd = sprintf('nvidia-docker run -it -v %s:/data --rm %s --task dlicv --inImg %s --outImg %s', ...
+                    mpr.filepath, dock, mpr.filename, out.filename);
+            end
+            mlbash(cmd);
+
+            mladni.FDG.jsonrecode( ...
+                mpr, ...
+                struct('bash', cmd), ...
+                out);
+        end
+
         function s = adjust_fileprefix(s, opts)
             %% retains any filepath and filename extension understood by myfileparts
             %  Args:

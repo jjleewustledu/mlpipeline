@@ -488,7 +488,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 st_ = [];
                 return
             end
-            P = size(this.imagingContext_, ndims(this.imagingContext_));
+            size_ = size(this.imagingContext_);
+            P = size_(end);
 
             % prefer json_metadata
             if isfield(this.json_metadata, "starts")
@@ -536,7 +537,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 taus_ = [];
                 return
             end
-            P = size(this.imagingContext_, ndims(this.imagingContext_));
+            size_ = size(this.imagingContext_);
+            P = size_(end);
 
             % prefer json_metadata
             if isfield(this.json_metadata, "taus")
@@ -582,7 +584,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 t_ = [];
                 return
             end
-            P = size(this.imagingContext_, ndims(this.imagingContext_));
+            size_ = size(this.imagingContext_);
+            P = size_(end);
 
             % prefer json_metadata
             if isfield(this.json_metadata, "times")                
@@ -636,7 +639,8 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 tMid_ = [];
                 return
             end
-            P = size(this.imagingContext_, ndims(this.imagingContext_));
+            size_ = size(this.imagingContext_);
+            P = size_(end);
 
             % prefer json_metadata
             if isfield(this.json_metadata, "timesMid")                
@@ -833,10 +837,11 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 st= ti;
             end
 
-            j.timesMid = tM;
-            j.taus = ta;
-            j.times = ti;
-            j.starts = st;
+            dropped_frames = asrow(isnan(tM));
+            j.timesMid = tM(~dropped_frames);
+            j.taus = ta(~dropped_frames);
+            j.times = ti(~dropped_frames);
+            j.starts = st(~dropped_frames);
         end
     end
 
