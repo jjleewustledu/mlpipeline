@@ -727,6 +727,68 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 fprintf("%s\n", ME.message);
             end
         end
+        function ic = ensureFiniteImagingContext2(ic, opts)
+            arguments
+                ic mlfourd.ImagingContext2
+                opts.ensure_single logical = true
+            end
+
+            try
+                % ic.selectImagingTool();
+                [j,selected] = mlpipeline.ImagingMediator.ensureNumericTimingData(ic.json_metadata);
+                
+                ic.selectImagingTool();
+                if opts.ensure_single
+                    img = single(ic.imagingFormat.img);
+                else
+                    img = ic.imagingFormat.img;
+                end
+                if numel(selected) == size(img, ndims(img))
+                    % trim img with reliable selected
+                    switch ndims(img)
+                        case 2
+                            img = img(:, selected);
+                        case 3
+                            img = img(:,:,selected);
+                        case 4
+                            img = img(:,:,:,selected);
+                        otherwise
+                            error("mlpipeline:RunTimeError", stackstr())
+                    end
+                else                    
+                    if numel(selected) < size(img, ndims(img))
+                        % trim img in absence of reliable selected;
+                        switch ndims(img)
+                            case 2
+                                img_on_t = sum(img, 1);
+                                img = img(:, img_on_t ~= 0);
+                            case 3
+                                img_on_t = sum(sum(img, 1), 2);
+                                img = img(:,:, img_on_t ~= 0);
+                            case 4
+                                img_on_t = sum(sum(sum(img, 1), 2), 3);
+                                img = img(:,:,:, img_on_t ~= 0);
+                            otherwise
+                                error("mlpipeline:RunTimeError", stackstr())
+                        end
+                    elseif sum(selected) == size(img, ndims(img))
+                        % img is already trimmed
+                        warning("mlpipeline:ValueWarning", "%s: trimmed j, but img appears already trimmed", stackstr());
+                    else
+                        % j and img are inconsistent
+                        error("mlpipeline:ValueError", stackstr());
+                    end
+                end
+                ic.selectImagingTool(img=img);
+                ic.json_metadata = j;
+                if ~contains(ic.fileprefix, "-finite")
+                    ic.fileprefix = mlpipeline.Bids.adjust_fileprefix(ic.fileprefix, post_proc="finite");
+                end
+            catch ME
+                fprintf("%s: aborting for lack of json timing data; retaining ImagingContext2\n", stackstr())
+                fprintf("%s\n", ME.message);
+            end
+        end
         function j = ensureNumericJsonField(j, fld)
             if isnumeric(j)
                 return
@@ -756,7 +818,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
         function j = ensureNumericTimesMid(j)
             j = mlpipeline.ImagingMediator.ensureNumericJsonField(j, "timesMid");
         end
-        function j = ensureNumericTimingData(j)
+        function [j,selected] = ensureNumericTimingData(j)
             %% P = M*N; P ~ #timesMid; M ~ #starts; N ~ #taus
 
             assert(isstruct(j))
@@ -784,8 +846,7 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
 
             %%
 
-            %assert(iscell(j.timesMid) && iscell(j.taus) && iscell(j.starts))
-            
+            %%assert(iscell(j.timesMid) && iscell(j.taus) && iscell(j.starts))            
 
             % timesMid
             try
@@ -834,14 +895,17 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 end
                 st = mlpipeline.ImagingMediator.ensureNumericStarts(j1.starts);
             catch
-                st= ti;
+                st = ti;
             end
 
             dropped_frames = asrow(isnan(tM));
+            j.timeUnit = "second";
             j.timesMid = tM(~dropped_frames);
             j.taus = ta(~dropped_frames);
             j.times = ti(~dropped_frames);
             j.starts = st(~dropped_frames);
+            selected = ~dropped_frames;
+            selected = selected & isfinite(tM');
         end
     end
 
