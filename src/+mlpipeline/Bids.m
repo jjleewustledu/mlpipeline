@@ -94,7 +94,17 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
         end
         function g = get.schaefferPath(this)
-            g = fullfile(this.derivativesPath, this.subjectFolder, this.sessionFolderForAnat, "Parcellations");
+            parc = mglob(fullfile(this.derivativesPath, this.subjectFolder, "ses-*", "Parcellations"));
+            schaefer = mglob(fullfile(parc, "Schaefer2018_200Parcels_7Networks_order"));
+            if ~isempty(schaefer)
+                g = schaefer(1);
+                return
+            end
+            if ~isempty(parc)
+                g = parc(1);
+                return
+            end
+            error("mlpipeline:FolderNotFound", stackstr())
         end
         function g = get.sessionFolderForAnat(this)
             if ~isempty(this.sessionFolderForAnat_)
