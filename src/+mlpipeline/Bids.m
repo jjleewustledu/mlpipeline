@@ -35,6 +35,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         rawAnatPath
         rawdataPath
         rawPetPath
+        schaefferFolder  % e.g.  "Schaefer2018_200Parcels_7Networks_order", "JeremyDTI+Schaeffer"
         schaefferPath
         sessionFolderForAnat
         sessionFolderForPet
@@ -93,9 +94,12 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         function g = get.rawPetPath(this)
             g = fullfile(this.rawdataPath, this.subjectFolder, this.sessionFolderForPet, this.petFolder);
         end
+        function g = get.schaefferFolder(this)
+            g = this.schaefferFolder_;
+        end
         function g = get.schaefferPath(this)
             parc = mglob(fullfile(this.derivativesPath, this.subjectFolder, "ses-*", "Parcellations"));
-            schaefer = mglob(fullfile(parc, "Schaefer2018_200Parcels_7Networks_order"));
+            schaefer = mglob(fullfile(parc, this.schaefferFolder));
             if ~isempty(schaefer)
                 g = schaefer(1);
                 return
@@ -185,6 +189,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             addParameter(ip, 'originationPath', pwd, @isfolder)
             addParameter(ip, 'projectPath', fullfile(getenv("SINGULARITY_HOME"), this.PROJECT_FOLDER), @istext)
             addParameter(ip, 'subjectFolder', '', @istext)
+            addParameter(ip, 'schaefferFolder', 'JeremyDTI+Schaeffer', @istext)
             addParameter(ip, 'sessionFolderForAnat', '', @istext)
             addParameter(ip, 'sessionFolderForPet', '', @istext)
             parse(ip, varargin{:})
@@ -193,6 +198,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             this.originationPath_ = ipr.originationPath;
             this.projectPath_ = ipr.projectPath;
             this.subjectFolder_ = ipr.subjectFolder;
+            this.schaefferFolder_ = ipr.schaefferFolder;
             this.sessionFolderForAnat_ = ipr.sessionFolderForAnat;
             this.sessionFolderForPet_ = ipr.sessionFolderForPet;
 
@@ -580,6 +586,11 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             dt = datetime(re.dt, InputFormat="yyyyMMddHHmmss");
         end
         function s = filename2struct(fn)
+            %  char =: struct with char
+            %  string =: struct with string
+
+            fn_is_string = isstring(fn);
+
             fn = convertStringsToChars(fn);
             re_sub = '';
             re_ses = '';
@@ -631,9 +642,13 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             if contains(fp, '_trc-')
                 re = regexp(fp, ...
                     '_(?<modal>trc-[^_]+)_(?<proc>proc-[^_]+)_(?<modal2>[^_]+)', 'names');
+                if isempty(re)
+                    re = regexp(fp, ...
+                        '_(?<modal>trc-[^_]+)_(?<proc>proc-[^_]+)', 'names');
+                end
                 re_modal = re.modal;
                 re_proc = re.proc;
-                re_modal2 = re.modal2;
+                re_modal2 = '';
             end
 
             s.sub = re_sub;
@@ -648,6 +663,11 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end
             s.tag = re_tag;
             s.ext = ext;
+
+            % string fn =: struct with string fields
+            if fn_is_string
+                s = structfun(@string, s, 'UniformOutput', false);
+            end
         end
         function re = regexp_fileprefix(fp)
             %% Args:
@@ -690,6 +710,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
         destinationPath_
         originationPath_
         projectPath_
+        schaefferFolder_
         sessionFolderForAnat_
         sessionFolderForPet_
         subjectFolder_
