@@ -16,6 +16,8 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
     %%
 
     properties (Constant)
+        %SCHAEFER_FOLDER = 'JeremyDTI+Schaeffer'
+        SCHAEFER_FOLDER = 'Schaefer2018_200Parcels_7Networks_order'
         TAGS = ["sub", "ses", "acq", "trc", "proc", "orient"]
     end
 
@@ -189,7 +191,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             addParameter(ip, 'originationPath', pwd, @isfolder)
             addParameter(ip, 'projectPath', fullfile(getenv("SINGULARITY_HOME"), this.PROJECT_FOLDER), @istext)
             addParameter(ip, 'subjectFolder', '', @istext)
-            addParameter(ip, 'schaefferFolder', 'JeremyDTI+Schaeffer', @istext)
+            addParameter(ip, 'schaefferFolder', this.SCHAEFER_FOLDER, @istext)
             addParameter(ip, 'sessionFolderForAnat', '', @istext)
             addParameter(ip, 'sessionFolderForPet', '', @istext)
             parse(ip, varargin{:})
@@ -626,7 +628,14 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
                 re_orient = re.orient;
                 re_modal2 = re.modal2;
             end
-            if contains(fp, '_T1w_MPR_vNav_4e_RMS_')
+            if contains(fp, '_T1w_MPR_vNav_4e_RMS') && contains(fp, 'orient-')
+                re = regexp(fp, ...
+                    '_(?<modal>T1w_MPR_vNav_4e_RMS[^_]*)_(?<orient>orient-[^_]+)(?<tag>\S*)', 'names');
+                re_modal = re.modal;
+                re_orient = re.orient;
+                re_tag = re.tag;
+            end
+            if contains(fp, '_T1w_MPR_vNav_4e_RMS')
                 re = regexp(fp, ...
                     '_(?<modal>T1w_MPR_vNav_4e_RMS[^_]*)_(?<orient>orient-[^_]+)(?<tag>\S*)', 'names');
                 re_modal = re.modal;
