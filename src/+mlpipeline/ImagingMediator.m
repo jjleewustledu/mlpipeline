@@ -484,8 +484,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             this.imagingContext.saveas(fn);
         end
         function st_ = starts(this)
+
+            st_ = [];
+            
             if isempty(this.imagingContext_)
-                st_ = [];
                 return
             end
             size_ = size(this.imagingContext_);
@@ -533,8 +535,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             st_ = [];
         end
         function taus_ = taus(this)
+
+            taus_ = [];
+
             if isempty(this.imagingContext_)
-                taus_ = [];
                 return
             end
             size_ = size(this.imagingContext_);
@@ -580,8 +584,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             taus_ = [];
         end
         function t_ = times(this)
+
+            t_ = [];
+
             if isempty(this.imagingContext_)
-                t_ = [];
                 return
             end
             size_ = size(this.imagingContext_);
@@ -635,8 +641,10 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
             t_ = [];
         end
         function tMid_ = timesMid(this)
+
+            tMid_ = [];
+
             if isempty(this.imagingContext_)
-                tMid_ = [];
                 return
             end
             size_ = size(this.imagingContext_);
@@ -949,6 +957,9 @@ classdef (Abstract) ImagingMediator < handle & mlpipeline.IBids
                 that.imagingDlicv_ = copy(this.imagingDlicv_); end
         end    
         function pth = omit_bids_folders(this, pth)
+            if startsWith(pth, "~")
+                pth = strrep(pth, "~", getenv("HOME"));
+            end
             folds = strsplit(pth, filesep);
             folds = folds(~contains(folds, this.BIDS_FOLDERS));
             if strcmp(computer, 'PCWIN64')

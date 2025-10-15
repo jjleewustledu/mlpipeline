@@ -297,7 +297,7 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             arguments
                 mpr {mustBeNonempty}  % understood by ImagingContext2
                 out = []
-                opts.on_cluster logical = true                
+                opts.on_cluster logical = isInParallelWorker()                
             end
 
             mpr = mlfourd.ImagingContext2(mpr);
@@ -308,16 +308,18 @@ classdef (Abstract) Bids < handle & mlpipeline.IBids
             end
             
             if opts.on_cluster
-                sif = fullfile(getenv('SINGULARITY_HOME'), 'deepmrseg_image_20220515.sif');
+                sif = fullfile(getenv('APPTAINER_HOME'), 'deepmrseg_image_20220515.sif');
                 cmd = sprintf('singularity exec --bind %s:/data %s "deepmrseg_apply" "--task" "dlicv" "--inImg" "/data/%s" "--outImg" "/data/%s"', ...
                     mpr.filepath, sif, mpr.filename, out.filename);
             else
                 mlbash(sprintf('chmod 777 %s', mpr.filepath));
                 dock = 'jjleewustledu/deepmrseg_image:20220615';
-                cmd = sprintf('nvidia-docker run -it -v %s:/data --rm %s --task dlicv --inImg %s --outImg %s', ...
+                cmd = sprintf('docker run -it -v %s:/data --rm %s --task dlicv --inImg %s --outImg %s', ...
                     mpr.filepath, dock, mpr.filename, out.filename);
+                % cmd = sprintf('nvidia-docker run -it -v %s:/data --rm %s --task dlicv --inImg %s --outImg %s', ...
+                %     mpr.filepath, dock, mpr.filename, out.filename);
             end
-            mlbash(cmd);
+            mysystem(cmd);
 
             mladni.FDG.jsonrecode( ...
                 mpr, ...
